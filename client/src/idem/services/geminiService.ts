@@ -751,7 +751,7 @@ Generate ${params.count} prompts as a JSON array.
         },
         fullPrompt: { 
           type: Type.STRING, 
-          description: "Complete prompt that MUST START with the subject's physical description (hair color, eye color, body type, skin tone) followed by scenario details. Never use generic 'young woman' - use specific traits." 
+          description: "Complete prompt that MUST include: 1) Subject's physical traits (hair color, eye color, body type, skin tone), 2) Outfit details, 3) Setting/location, 4) Camera specs (iPhone/smartphone, amateur angle), 5) Lighting (natural/phone flash), 6) Imperfections (motion blur, flyaways, wrinkled clothes). Must look like authentic amateur UGC, NOT professional photography." 
         }
       },
       required: ["scenario", "setting", "outfit", "pose", "lighting", "camera", "imperfections", "fullPrompt"]
@@ -784,6 +784,13 @@ Generate ${params.count} prompts as a JSON array.
         if (!hasPhysicalTraits) {
           finalPrompt = `${identitySummary} ${finalPrompt}`;
         }
+      }
+      
+      // Ensure UGC elements are appended if missing
+      const hasUGCElements = /\b(iphone|smartphone|phone camera|amateur|candid|motion blur|flyaway|imperfect)\b/i.test(finalPrompt);
+      if (!hasUGCElements && finalPrompt) {
+        const ugcSuffix = `. Shot on iPhone 15 Pro, amateur framing slightly off-center, natural smartphone lighting, subtle motion blur on hair, flyaway strands visible, authentic candid UGC aesthetic. Solo subject, single person in frame.`;
+        finalPrompt = finalPrompt.replace(/\.?\s*$/, '') + ugcSuffix;
       }
       
       return {
