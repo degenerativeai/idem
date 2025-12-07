@@ -407,20 +407,28 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                             style={{
                                 padding: '0.5rem 1rem',
                                 borderRadius: '8px',
-                                background: aspectRatio === 'source' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(0,0,0,0.3)',
-                                border: aspectRatio === 'source' ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255,255,255,0.1)',
-                                color: aspectRatio === 'source' ? '#86efac' : 'white',
+                                background: '#1a1d23',
+                                border: '1px solid rgba(34, 197, 94, 0.3)',
+                                color: '#e5e7eb',
                                 fontSize: '0.8rem',
                                 cursor: 'pointer',
-                                fontWeight: aspectRatio === 'source' ? '600' : '400'
+                                fontWeight: '500',
+                                outline: 'none',
+                                appearance: 'none',
+                                WebkitAppearance: 'none',
+                                MozAppearance: 'none',
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2322c55e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                                backgroundRepeat: 'no-repeat',
+                                backgroundPosition: 'right 0.75rem center',
+                                paddingRight: '2.5rem'
                             }}
                         >
-                            <option value="source">Keep Source</option>
-                            <option value="1:1">1:1</option>
-                            <option value="16:9">16:9</option>
-                            <option value="9:16">9:16</option>
-                            <option value="4:3">4:3</option>
-                            <option value="3:4">3:4</option>
+                            <option value="source" style={{ background: '#1a1d23', color: '#e5e7eb' }}>Keep Source</option>
+                            <option value="1:1" style={{ background: '#1a1d23', color: '#e5e7eb' }}>1:1</option>
+                            <option value="16:9" style={{ background: '#1a1d23', color: '#e5e7eb' }}>16:9</option>
+                            <option value="9:16" style={{ background: '#1a1d23', color: '#e5e7eb' }}>9:16</option>
+                            <option value="4:3" style={{ background: '#1a1d23', color: '#e5e7eb' }}>4:3</option>
+                            <option value="3:4" style={{ background: '#1a1d23', color: '#e5e7eb' }}>3:4</option>
                         </select>
                     </div>
                 </div>
