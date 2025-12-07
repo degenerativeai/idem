@@ -1,8 +1,8 @@
 # Overview
 
-This is a full-stack web application called "Idem" that generates synthetic training datasets for AI image generation models. The application uses Google's Gemini AI to analyze subject images and create detailed prompt datasets for LoRA (Low-Rank Adaptation) training. It features a three-tab workflow: image analysis and generation, dataset creation, and image synthesis using multiple providers (Google Gemini and Wavespeed).
+This is a frontend-focused web application called "Idem" that generates synthetic training datasets for AI image generation models. The application uses Google's Gemini AI to analyze subject images and create detailed prompt datasets for LoRA (Low-Rank Adaptation) training. It features a three-tab workflow: image analysis and generation, dataset creation, and image synthesis using multiple providers (Google Gemini and Wavespeed).
 
-The application is built as a monorepo with a React/TypeScript frontend using shadcn/ui components, an Express backend, and PostgreSQL database for persistent storage of identity profiles and generated datasets.
+The application is built as a monorepo with a React/TypeScript frontend using shadcn/ui components and a minimal Express backend for serving the frontend. All data is managed client-side without database persistence.
 
 # User Preferences
 
@@ -29,14 +29,11 @@ Preferred communication style: Simple, everyday language.
 - Session-based API key storage (security consideration: keys stored client-side)
 - Tab-based navigation for multi-step workflow
 - Base64 image handling for file uploads and image generation results
+- All data managed in-memory on the client (no database persistence)
 
 ## Backend Architecture
 
 **Framework**: Express.js with TypeScript, running on Node.js.
-
-**API Design**: RESTful API with routes for:
-- Identity profiles (POST, GET list, GET by ID)
-- Datasets (POST, GET list, GET by ID, PATCH for progress updates)
 
 **Server Setup**:
 - Development mode uses Vite middleware for HMR
@@ -50,35 +47,24 @@ Preferred communication style: Simple, everyday language.
 - Static file serving for production builds
 
 **Design Decisions**:
-- Monolithic server structure (all routes in single file)
-- Centralized storage abstraction layer
+- Minimal backend - serves frontend only, no API routes
+- All application logic resides in the frontend
 - Environment-based configuration (development vs production)
 
 ## Data Storage
 
-**Database**: PostgreSQL via Drizzle ORM.
+**Architecture**: No database - all data managed client-side.
 
-**Schema Design**:
+**Data Types** (defined in `shared/schema.ts`):
+- Identity profiles: Stores analyzed subject data from Gemini vision API
+- Datasets: Stores arrays of prompt items with generation progress
+- Zod schemas for runtime validation
 
-*Identity Profiles Table*:
-- Stores analyzed subject data from Gemini vision API
-- Contains JSON blob of full analysis result
-- Stores three image types: source, headshot, bodyshot (as text/base64)
-- UUID primary key with auto-generation
-
-*Datasets Table*:
-- Links to identity profiles via foreign key
-- Stores array of prompt items as JSONB
-- Tracks generation progress (target vs generated count)
-- Includes safety mode flag (SFW/NSFW)
-
-**ORM Choice Rationale**:
-- Drizzle provides type-safe database queries
-- Schema-first approach with TypeScript inference
-- Zod integration for runtime validation
-- Lightweight compared to alternatives like Prisma
-
-**Migration Strategy**: Schema defined in `shared/schema.ts`, migrations generated in `/migrations` directory using drizzle-kit.
+**Design Rationale**:
+- Simplified deployment without database dependencies
+- Application works as a stateless tool
+- Users export data via JSON/ZIP downloads
+- No server-side data persistence needed for the use case
 
 ## External Dependencies
 
@@ -92,10 +78,6 @@ Preferred communication style: Simple, everyday language.
 - Google Gemini (primary): Native integration via SDK
 - Wavespeed API (alternative): RESTful API for image generation with edit mode support
 - Both support configurable aspect ratios and resolutions
-
-**Third-Party Services**:
-- PostgreSQL database (connection via DATABASE_URL environment variable)
-- Session storage via connect-pg-simple (PostgreSQL-backed sessions)
 
 **Key Libraries**:
 - Zod: Runtime schema validation and type inference
@@ -112,5 +94,5 @@ Preferred communication style: Simple, everyday language.
 **Design Considerations**:
 - API keys managed client-side (security trade-off for simplicity)
 - Support for multiple image generation backends
-- Database connection pooling for performance
+- No external database dependencies
 - CORS and rate limiting preparation (dependencies present but not configured)
