@@ -689,12 +689,12 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
 
             <div style={{ gridColumn: 'span 8', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid #1f2937', borderRadius: '1.5rem', padding: '1.5rem', minHeight: '600px', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}>
                 <div ref={topOfListRef} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <div>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white' }}>Dataset Prompts</h2>
-                        <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{datasetPrompts.length} generated prompts</p>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Dataset</h2>
+                        <span style={{ fontSize: '1rem', color: '#6b7280' }}>{datasetPrompts.length > 0 ? `${Math.min(currentPage * ITEMS_PER_PAGE, datasetPrompts.length)} / ${datasetPrompts.length}` : ''}</span>
                     </div>
                     {datasetPrompts.length > 0 && (
-                        <button onClick={() => { const blob = new Blob([JSON.stringify(datasetPrompts, null, 2)], { type: 'application/json' }); saveAs(blob, 'prompts.json'); }} data-testid="button-download-json" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '0.5rem', border: 'none', color: 'white', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <button onClick={() => { const blob = new Blob([JSON.stringify(datasetPrompts, null, 2)], { type: 'application/json' }); saveAs(blob, 'prompts.json'); }} data-testid="button-download-json" style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.08)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', gap: '0.5rem', alignItems: 'center', transition: 'all 0.2s' }}>
                             <IconDownload style={{ width: '14px' }} /> JSON
                         </button>
                     )}
@@ -710,7 +710,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '1rem', paddingRight: '0.5rem' }}>
                             {datasetPrompts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((item, idx) => (
                                 <div key={item.id || idx} style={{ width: '100%' }}>
-                                    <PromptCard index={(currentPage - 1) * ITEMS_PER_PAGE + idx} prompt={item} onUpdate={handleUpdatePrompt} onToggleCopy={handleToggleCopy} isCopied={!!item.isCopied} />
+                                    <PromptCard index={(currentPage - 1) * ITEMS_PER_PAGE + idx} prompt={item} onUpdate={handleUpdatePrompt} onToggleCopy={handleToggleCopy} isCopied={!!item.isCopied} totalInPage={datasetPrompts.length} />
                                 </div>
                             ))}
                         </div>
