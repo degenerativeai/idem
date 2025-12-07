@@ -1,7 +1,7 @@
 
 export type TaskType = 'lora' | 'product' | 'ugc';
 export type SafetyMode = 'sfw' | 'nsfw';
-export type ImageAspect = '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
+export type ImageAspect = 'source' | '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
 export type ImageProvider = 'google' | 'wavespeed';
 
 export interface PromptItem {

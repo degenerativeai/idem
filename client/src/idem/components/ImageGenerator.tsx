@@ -20,7 +20,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     const [copiedType, setCopiedType] = useState<'all' | 'no-identity' | null>(null);
     
     const [provider, setProvider] = useState<ImageProvider>('google');
-    const [aspectRatio, setAspectRatio] = useState<ImageAspect>('1:1');
+    const [aspectRatio, setAspectRatio] = useState<ImageAspect>('source');
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     
@@ -228,18 +228,13 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
             desc: 'Full forensic clone (Face, Body, Clothes, Scene)'
         },
         { 
-            value: 'inject' as UGCMode, 
-            label: 'Inject External Character',
-            desc: 'Keep Scene/Pose/Clothes. Strip Identity.'
-        },
-        { 
             value: 'text_prompt' as UGCMode, 
             label: 'Create Social Media Style Prompts',
             desc: 'Text-to-Prompt. Describe Vibe/Outfit.'
         }
     ];
 
-    const needsUpload = mode === 'replicate' || mode === 'inject';
+    const needsUpload = mode === 'replicate';
 
     return (
         <div style={{
@@ -318,6 +313,54 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                             onChange={handleImageUpload}
                         />
                     </div>
+                    
+                    {targetImage && (
+                        <button
+                            data-testid="button-analyze-image"
+                            onClick={handleAnalyzeImage}
+                            disabled={isAnalyzing}
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                borderRadius: '10px',
+                                border: 'none',
+                                background: isAnalyzing ? '#374151' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
+                                color: 'white',
+                                fontSize: '0.8rem',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                marginTop: '0.75rem'
+                            }}
+                        >
+                            {isAnalyzing ? (
+                                <>
+                                    <div style={{
+                                        width: '14px',
+                                        height: '14px',
+                                        border: '2px solid rgba(255,255,255,0.3)',
+                                        borderTopColor: 'white',
+                                        borderRadius: '50%',
+                                        animation: 'spin 1s linear infinite'
+                                    }} />
+                                    Analyzing...
+                                </>
+                            ) : (
+                                <>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <path d="M21 21l-4.35-4.35" />
+                                    </svg>
+                                    Analyze Image
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
 
                 <div style={panelStyle}>
@@ -436,51 +479,6 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                     </div>
                 )}
 
-                <button
-                    data-testid="button-generate-replica"
-                    onClick={needsUpload ? handleAnalyzeImage : handleGenerateImage}
-                    disabled={isAnalyzing || (needsUpload && !targetImage)}
-                    style={{
-                        width: '100%',
-                        padding: '1rem',
-                        borderRadius: '12px',
-                        border: 'none',
-                        background: isAnalyzing ? '#374151' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
-                        color: 'white',
-                        fontSize: '0.85rem',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        cursor: isAnalyzing || (needsUpload && !targetImage) ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        opacity: (needsUpload && !targetImage) ? 0.5 : 1
-                    }}
-                >
-                    {isAnalyzing ? (
-                        <>
-                            <div style={{
-                                width: '16px',
-                                height: '16px',
-                                border: '2px solid rgba(255,255,255,0.3)',
-                                borderTopColor: 'white',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite'
-                            }} />
-                            Analyzing...
-                        </>
-                    ) : (
-                        <>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                            </svg>
-                            {needsUpload ? 'Generate Replica Prompt' : 'Generate Image'}
-                        </>
-                    )}
-                </button>
-
                 {error && (
                     <div style={{
                         padding: '0.75rem 1rem',
@@ -508,7 +506,16 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                         )}
                     </div>
                     
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ 
+                            fontSize: '0.65rem', 
+                            textTransform: 'uppercase', 
+                            fontWeight: 'bold', 
+                            color: '#94a3b8',
+                            letterSpacing: '0.05em'
+                        }}>
+                            Aspect Ratio
+                        </span>
                         <select
                             data-testid="select-aspect-ratio"
                             value={aspectRatio}
@@ -516,13 +523,15 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                             style={{
                                 padding: '0.5rem 1rem',
                                 borderRadius: '8px',
-                                background: 'rgba(0,0,0,0.3)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                color: 'white',
+                                background: aspectRatio === 'source' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(0,0,0,0.3)',
+                                border: aspectRatio === 'source' ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid rgba(255,255,255,0.1)',
+                                color: aspectRatio === 'source' ? '#c4b5fd' : 'white',
                                 fontSize: '0.8rem',
-                                cursor: 'pointer'
+                                cursor: 'pointer',
+                                fontWeight: aspectRatio === 'source' ? '600' : '400'
                             }}
                         >
+                            <option value="source">Keep Source</option>
                             <option value="1:1">1:1</option>
                             <option value="16:9">16:9</option>
                             <option value="9:16">9:16</option>
@@ -602,22 +611,24 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                                     data-testid="button-copy-all"
                                                     onClick={handleCopyAll}
                                                     style={{
-                                                        padding: '0.4rem 0.75rem',
+                                                        padding: copiedType === 'all' ? '0.5rem 1rem' : '0.4rem 0.75rem',
                                                         borderRadius: '6px',
-                                                        border: 'none',
-                                                        background: copiedType === 'all' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.05)',
-                                                        color: copiedType === 'all' ? '#22c55e' : '#9ca3af',
-                                                        fontSize: '0.65rem',
-                                                        fontWeight: '500',
+                                                        border: copiedType === 'all' ? '2px solid #22c55e' : 'none',
+                                                        background: copiedType === 'all' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(255,255,255,0.05)',
+                                                        color: copiedType === 'all' ? '#4ade80' : '#9ca3af',
+                                                        fontSize: copiedType === 'all' ? '0.75rem' : '0.65rem',
+                                                        fontWeight: copiedType === 'all' ? '700' : '500',
                                                         cursor: 'pointer',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '0.4rem',
-                                                        transition: 'all 0.2s'
+                                                        transition: 'all 0.2s',
+                                                        transform: copiedType === 'all' ? 'scale(1.05)' : 'scale(1)',
+                                                        boxShadow: copiedType === 'all' ? '0 0 12px rgba(34, 197, 94, 0.5)' : 'none'
                                                     }}
                                                 >
                                                     {copiedType === 'all' ? (
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                                             <polyline points="20 6 9 17 4 12" />
                                                         </svg>
                                                     ) : (
@@ -626,28 +637,30 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                                         </svg>
                                                     )}
-                                                    {copiedType === 'all' ? 'Copied' : 'Copy All'}
+                                                    {copiedType === 'all' ? 'Copied!' : 'Copy All'}
                                                 </button>
                                                 <button
                                                     data-testid="button-copy-no-identity"
                                                     onClick={handleCopyNoIdentity}
                                                     style={{
-                                                        padding: '0.4rem 0.75rem',
+                                                        padding: copiedType === 'no-identity' ? '0.5rem 1rem' : '0.4rem 0.75rem',
                                                         borderRadius: '6px',
-                                                        border: 'none',
-                                                        background: copiedType === 'no-identity' ? 'rgba(168, 85, 247, 0.3)' : 'rgba(168, 85, 247, 0.1)',
-                                                        color: copiedType === 'no-identity' ? '#c4b5fd' : '#a855f7',
-                                                        fontSize: '0.65rem',
-                                                        fontWeight: '500',
+                                                        border: copiedType === 'no-identity' ? '2px solid #a855f7' : 'none',
+                                                        background: copiedType === 'no-identity' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(168, 85, 247, 0.1)',
+                                                        color: copiedType === 'no-identity' ? '#e9d5ff' : '#a855f7',
+                                                        fontSize: copiedType === 'no-identity' ? '0.75rem' : '0.65rem',
+                                                        fontWeight: copiedType === 'no-identity' ? '700' : '500',
                                                         cursor: 'pointer',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '0.4rem',
-                                                        transition: 'all 0.2s'
+                                                        transition: 'all 0.2s',
+                                                        transform: copiedType === 'no-identity' ? 'scale(1.05)' : 'scale(1)',
+                                                        boxShadow: copiedType === 'no-identity' ? '0 0 12px rgba(168, 85, 247, 0.5)' : 'none'
                                                     }}
                                                 >
                                                     {copiedType === 'no-identity' ? (
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                                             <polyline points="20 6 9 17 4 12" />
                                                         </svg>
                                                     ) : (
@@ -657,7 +670,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                                             <line x1="4" y1="4" x2="20" y2="20" />
                                                         </svg>
                                                     )}
-                                                    {copiedType === 'no-identity' ? 'Copied' : 'No Identity'}
+                                                    {copiedType === 'no-identity' ? 'Copied!' : 'No Identity'}
                                                 </button>
                                             </div>
                                         </div>
