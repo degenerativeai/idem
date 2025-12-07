@@ -538,7 +538,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                     <div style={imageSlotStyle(generatedHeadshots.length > 0)}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                             <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: generatedHeadshots.length > 0 ? '#a855f7' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'white', fontWeight: 'bold' }}>2</div>
-                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8' }}>Headshot Reference</span>
+                            <span style={{ fontSize: '0.6rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', whiteSpace: 'nowrap' }}>Headshot Reference</span>
                         </div>
                         {generatedHeadshots.length > 0 ? (
                             <div style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
@@ -587,7 +587,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                     <div style={imageSlotStyle(generatedBodyshots.length > 0)}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                             <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: generatedBodyshots.length > 0 ? '#a855f7' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'white', fontWeight: 'bold' }}>3</div>
-                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8' }}>Bodyshot Reference</span>
+                            <span style={{ fontSize: '0.6rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', whiteSpace: 'nowrap' }}>Bodyshot Reference</span>
                         </div>
                         {generatedBodyshots.length > 0 ? (
                             <div style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
