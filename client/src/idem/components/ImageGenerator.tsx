@@ -9,7 +9,7 @@ interface ImageGeneratorProps {
 
 const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     const [targetImage, setTargetImage] = useState<string | null>(null);
-    const [mode, setMode] = useState<UGCMode>('replicate');
+    const [mode, setMode] = useState<UGCMode>('text_prompt');
     const [styleMode, setStyleMode] = useState<'candid' | 'studio'>('candid');
     const [textPrompt, setTextPrompt] = useState('');
     
@@ -223,18 +223,11 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
 
     const modeOptions = [
         { 
-            value: 'replicate' as UGCMode, 
-            label: 'Replicate Uploaded Image',
-            desc: 'Full forensic clone (Face, Body, Clothes, Scene)'
-        },
-        { 
             value: 'text_prompt' as UGCMode, 
             label: 'Create Social Media Style Prompts',
             desc: 'Text-to-Prompt. Describe Vibe/Outfit.'
         }
     ];
-
-    const needsUpload = mode === 'replicate';
 
     return (
         <div style={{
@@ -256,11 +249,6 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                 <div style={panelStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <label style={labelStyle}>Target Scene</label>
-                        {needsUpload && !targetImage && (
-                            <span style={{ fontSize: '0.65rem', color: '#ef4444', textTransform: 'uppercase', fontWeight: 'bold' }}>
-                                Upload Required
-                            </span>
-                        )}
                     </div>
                     
                     <div 
@@ -298,10 +286,10 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                     </svg>
                                 </div>
                                 <p style={{ fontSize: '0.9rem', fontWeight: '500', color: '#e5e7eb', marginBottom: '0.25rem' }}>
-                                    Upload Image to Replicate
+                                    Upload Image to Analyze
                                 </p>
                                 <p style={{ fontSize: '0.7rem', color: '#6b7280' }}>
-                                    Upload image to access Replicate and Inject modes
+                                    Upload an image to analyze and generate prompts
                                 </p>
                             </div>
                         )}
