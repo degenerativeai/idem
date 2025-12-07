@@ -405,7 +405,7 @@ export const generateDatasetPrompts = async (params: {
 
 export const analyzeImageINI = async (
   imageDataUrl: string,
-  modelId: string = 'gemini-2.5-flash'
+  modelId: string = 'gemini-2.5-pro'
 ): Promise<INIPrompt> => {
   const ai = getAiClient();
   const { mimeType, data } = parseDataUrl(imageDataUrl);
