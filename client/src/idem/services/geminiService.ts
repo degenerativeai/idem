@@ -599,41 +599,18 @@ export const analyzePhysicalAppearance = async (
 };
 
 const AGE_CLOTHING_GUIDANCE = `
-AGE-APPROPRIATE CLOTHING GUIDELINES:
-Based on the subject's age, choose clothing that fits their demographic:
+CLOTHING SELECTION RULES:
+Choose clothing that is age-appropriate for the subject based on their established age from the physical profile.
 
-EARLY 20s (18-24):
-- Swimwear: Bikinis, string bikinis, high-cut bottoms
-- Dresses: Bodycon, mini dresses, crop tops with mini skirts
-- Casual: Low-rise jeans, crop tops, tube tops, bralettes as tops
-- Going out: Tight mini dresses, bandage dresses, corset tops
-- Athleisure: Sports bras as tops, bike shorts, matching sets
+For younger subjects (early-mid 20s): trendy, bold choices like bikinis, bodycon dresses, crop tops, mini skirts, low-rise jeans, sports bras as tops.
 
-MID-LATE 20s (25-29):
-- Swimwear: Bikinis, one-pieces that are still trendy/stylish
-- Dresses: Midi dresses, wrap dresses, bodycon but slightly more covered
-- Casual: High-waisted jeans, fitted tops, blazers over bralettes
-- Going out: Slip dresses, fitted midi dresses, elegant jumpsuits
-- Athleisure: Matching sets, tasteful sports bras, biker shorts
+For late 20s subjects: still stylish but slightly more refined - midi dresses, high-waisted jeans, slip dresses, matching athleisure sets.
 
-30s:
-- Swimwear: Mix of bikinis and one-pieces, tankinis
-- Dresses: Midi and maxi dresses, elegant cocktail dresses
-- Casual: Classic jeans, blouses, cardigans, elevated basics
-- Going out: Cocktail dresses, elegant pantsuits, silk blouses
-- Athleisure: Full coverage workout sets, tasteful athleisure
+For 30s subjects: elevated and polished - elegant cocktail dresses, classic jeans with blouses, sophisticated swimwear options.
 
-40s+:
-- Swimwear: One-pieces, tankinis, swim dresses
-- Dresses: Knee-length or longer, classic silhouettes
-- Casual: Tailored pants, quality blouses, elegant layers
-- Going out: Classic evening wear, elegant dresses
-- Athleisure: Full coverage, quality athletic wear
+For 40s+ subjects: classic and timeless - tailored pieces, knee-length dresses, quality fabrics, elegant layers.
 
-ALWAYS match the outfit to:
-1. The SCENARIO (beach = swimwear, office = professional, etc.)
-2. The SUBJECT'S AGE from the physical profile
-3. The SETTING (upscale restaurant = dressy, home = casual, etc.)
+IMPORTANT: Match the outfit to the SCENARIO and SETTING. Do not include age labels in the outfit description - just describe the actual clothing items.
 `;
 
 export const generateUGCPrompts = async (params: {
@@ -661,12 +638,19 @@ export const generateUGCPrompts = async (params: {
     if (appearance) {
       ageRange = appearance.age_range;
       identitySummary = appearance.identity_summary;
+      
+      // Create canonical age descriptor
+      const canonicalAge = `${appearance.age_range} woman`;
+      
       physicalProfile = `
-SUBJECT PHYSICAL PROFILE (MUST BE INCLUDED IN EVERY PROMPT):
+=== LOCKED IDENTITY BLOCK - DO NOT MODIFY ===
+CANONICAL AGE: "${canonicalAge}" - Use this EXACT phrase for the subject's age in EVERY prompt. Do not vary it.
+
+SUBJECT PHYSICAL PROFILE:
 ${appearance.identity_summary}
 
-DETAILED PHYSICAL TRAITS:
-- Age: ${appearance.age_range}
+PHYSICAL TRAITS (use these exact descriptors):
+- Age: ${appearance.age_range} (LOCKED - do not change)
 ${appearance.celebrity_match ? `- Resembles: ${appearance.celebrity_match}` : ''}
 - Eyes: ${appearance.face.eye_color}
 - Face Shape: ${appearance.face.face_shape}
@@ -679,10 +663,11 @@ ${appearance.celebrity_match ? `- Resembles: ${appearance.celebrity_match}` : ''
 - Hips: ${appearance.body.hips}
 - Skin Tone: ${appearance.skin.tone}
 
-CRITICAL: The fullPrompt field MUST START with the subject's physical description. Example format:
-"A [age] [body type] woman with [hair color] [hair texture] hair, [eye color] eyes, [skin tone] skin, [other traits], [scenario and outfit details]..."
-
-DO NOT use generic terms like "young woman" or "adult female". Use the SPECIFIC traits above.
+CRITICAL RULES:
+1. Every fullPrompt MUST describe the subject as "${canonicalAge}" - never "young woman", "30s woman", "teenager", etc.
+2. Physical traits must be consistent across ALL prompts
+3. Start each fullPrompt with: "A ${canonicalAge} with ${appearance.hair.color} ${appearance.hair.texture} hair, ${appearance.face.eye_color} eyes, ${appearance.skin.tone} skin, ${appearance.body.type} build..."
+=== END LOCKED IDENTITY BLOCK ===
 `;
     }
   }
