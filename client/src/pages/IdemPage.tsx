@@ -85,7 +85,9 @@ const IdemPage: React.FC = () => {
                                 key={tab}
                                 onClick={() => {
                                     setActiveTab(tab);
-                                    window.scrollTo(0, 0);
+                                    requestAnimationFrame(() => {
+                                        window.scrollTo({ top: 0, behavior: 'instant' });
+                                    });
                                 }}
                                 data-testid={`nav-tab-${tab}`}
                                 style={{
