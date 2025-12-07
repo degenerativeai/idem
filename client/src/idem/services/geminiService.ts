@@ -91,7 +91,7 @@ export const analyzeImageWithDirective = async (
   };
 
   try {
-    const result = await ai.languageModel.generateContent({
+    const result = await ai.models.generateContent({
       model: modelId,
       contents: [
         {
@@ -102,13 +102,13 @@ export const analyzeImageWithDirective = async (
           ]
         }
       ],
-      generationConfig: {
+      config: {
         responseMimeType: "application/json",
         responseSchema: schema
       }
     });
 
-    const responseText = result.response.text();
+    const responseText = result.text;
     if (!responseText) throw new Error("No response from VisionStruct");
     
     return JSON.parse(responseText);
@@ -147,7 +147,7 @@ export const analyzeSubjectImages = async (
   };
 
   try {
-    const result = await ai.languageModel.generateContent({
+    const result = await ai.models.generateContent({
       model: modelId,
       contents: [
         {
@@ -161,14 +161,14 @@ export const analyzeSubjectImages = async (
           ]
         }
       ],
-      generationConfig: {
+      config: {
         responseMimeType: "application/json",
         responseSchema: schema,
-        temperature: 0.2 // Low temperature for factual analysis
+        temperature: 0.2
       }
     });
 
-    const text = result.response.text();
+    const text = result.text;
     if (!text) throw new Error("No response from Gemini");
     return JSON.parse(text) as AnalysisResult;
 
@@ -226,17 +226,17 @@ export const generateDatasetPrompts = async (params: {
   };
 
   try {
-    const result = await ai.languageModel.generateContent({
+    const result = await ai.models.generateContent({
       model: modelId,
       contents: [{ role: "user", parts: [{ text: context }] }],
-      generationConfig: {
+      config: {
         responseMimeType: "application/json",
         responseSchema: schema,
-        temperature: 0.7 // Higher temp for creativity
+        temperature: 0.7
       }
     });
 
-    const text = result.response.text();
+    const text = result.text;
     if (!text) throw new Error("No response");
     
     const rawItems = JSON.parse(text) as any[];
