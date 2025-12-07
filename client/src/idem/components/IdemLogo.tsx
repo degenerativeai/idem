@@ -18,26 +18,57 @@ export const IdemLogo: React.FC<IdemLogoProps> = ({ className, style, width = 32
             className={className}
             style={style}
         >
-            <rect width="100" height="100" rx="24" fill="url(#paint0_linear)" />
-            <path
-                d="M50 25C36.1929 25 25 36.1929 25 50C25 63.8071 36.1929 75 50 75C63.8071 75 75 63.8071 75 50C75 36.1929 63.8071 25 50 25ZM50 65C41.7157 65 35 58.2843 35 50C35 41.7157 41.7157 35 50 35C58.2843 35 65 41.7157 65 50C65 58.2843 58.2843 65 50 65Z"
-                fill="white"
-                fillOpacity="0.9"
-            />
-            <circle cx="50" cy="50" r="8" fill="white" />
+            {/* Background Container */}
+            <rect width="100" height="100" rx="28" fill="#0A0A0A" />
+            
             <defs>
-                <linearGradient
-                    id="paint0_linear"
-                    x1="0"
-                    y1="0"
-                    x2="100"
-                    y2="100"
-                    gradientUnits="userSpaceOnUse"
-                >
-                    <stop stopColor="#3B82F6" />
-                    <stop offset="1" stopColor="#8B5CF6" />
+                <linearGradient id="grad_purple" x1="20" y1="20" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#A78BFA" /> {/* Light Purple */}
+                    <stop offset="100%" stopColor="#6366F1" /> {/* Indigo */}
                 </linearGradient>
+                
+                <linearGradient id="grad_teal" x1="20" y1="80" x2="80" y2="20" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.8" /> {/* Cyan */}
+                    <stop offset="100%" stopColor="#0EA5E9" stopOpacity="0.8" /> {/* Sky Blue */}
+                </linearGradient>
+
+                 <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
             </defs>
+
+            {/* The Teal Chevron (Inverted V) - Bottom Layer */}
+            <path
+                d="M28 72 L50 42 L72 72"
+                stroke="url(#grad_teal)"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ mixBlendMode: 'screen' }} 
+            />
+
+            {/* The Purple M - Top Layer */}
+            <path
+                d="M28 72 L28 28 L50 52 L72 28 L72 72"
+                stroke="url(#grad_purple)"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            
+             {/* Intersection Overlay (Optional for blend effect) */}
+             {/* We can simulate the intersection blend by redrawing the chevron segment with transparency if needed, 
+                 but the simple overlap might be enough. 
+                 Let's try to match the image: The teal line crosses the purple line.
+                 In the image, the teal line seems to be 'behind' the vertical legs but 'intersects' the V.
+                 Actually, looking closely at the user image:
+                 The teal line starts from the bottom corners (same as M).
+                 It goes UP to the center.
+                 It is transparent/blended.
+                 
+                 Let's stick to the current pathing.
+             */}
         </svg>
     );
 };
