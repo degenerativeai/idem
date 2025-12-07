@@ -42,21 +42,37 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
             }}>
 
                 {/* Logo Section */}
-                <div style={{ textAlign: 'center' }}>
-                    <IdemLogo width={128} height={128} style={{ margin: '0 auto 1rem' }} />
-                    <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>IDEM</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Identity & Dataset Manifest</p>
+                <div style={{ textAlign: 'center', position: 'relative' }}>
+                    {/* Glow Effect behind logo */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '140px',
+                        height: '140px',
+                        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(0,0,0,0) 70%)',
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                        marginTop: '-1rem' 
+                    }} />
+                    
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                        <IdemLogo width={128} height={128} style={{ margin: '0 auto 1rem' }} />
+                        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.25rem', color: 'white', fontWeight: 800, fontFamily: 'sans-serif' }}>IDEM</h1>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Identity & Dataset Manifest</p>
+                    </div>
                 </div>
 
                 {/* Auth Section */}
-                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         <label style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
                             textTransform: 'uppercase',
                             letterSpacing: '0.1em',
-                            color: 'var(--text-secondary)'
+                            color: '#94a3b8'
                         }}>
                             Gemini API Key
                         </label>
@@ -71,20 +87,31 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
                             placeholder="sk-..."
                             style={{
                                 width: '100%',
-                                background: 'var(--bg-charcoal)',
-                                border: '1px solid rgba(255,255,255,0.1)',
+                                background: '#1e1e24',
+                                border: '1px solid #333',
                                 borderRadius: '12px',
                                 padding: '1rem',
                                 color: 'white',
                                 outline: 'none',
                                 fontFamily: 'monospace',
-                                fontSize: '0.9rem'
+                                fontSize: '1rem',
+                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
                             }}
                         />
                         {error && <p style={{ color: '#ef4444', fontSize: '0.8rem' }}>{error}</p>}
                     </div>
 
-                    <button onClick={handleEnter} className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                    <button 
+                        onClick={handleEnter} 
+                        className="btn-primary" 
+                        style={{ 
+                            width: '100%', 
+                            justifyContent: 'center',
+                            background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                            fontSize: '1rem',
+                            padding: '1rem',
+                            fontWeight: 600
+                        }}>
                         Authenticate Session
                     </button>
 

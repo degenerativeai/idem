@@ -19,7 +19,7 @@ export const IdemLogo: React.FC<IdemLogoProps> = ({ className, style, width = 32
             style={style}
         >
             {/* Background Container */}
-            <rect width="100" height="100" rx="20" fill="#0A0A0A" />
+            <rect width="100" height="100" rx="22" fill="#0A0A0A" />
             
             <defs>
                 <linearGradient id="grad_purple" x1="20" y1="20" x2="80" y2="80" gradientUnits="userSpaceOnUse">
@@ -38,37 +38,27 @@ export const IdemLogo: React.FC<IdemLogoProps> = ({ className, style, width = 32
                 </filter>
             </defs>
 
-            {/* The Teal Chevron (Inverted V) - Bottom Layer */}
+            {/* The Teal Chevron (Inverted V) */}
             <path
                 d="M28 72 L50 42 L72 72"
                 stroke="url(#grad_teal)"
-                strokeWidth="8"
+                strokeWidth="7"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{ mixBlendMode: 'screen' }} 
             />
 
-            {/* The Purple M - Top Layer */}
+            {/* The Purple M - Modified to match screenshot better */}
+            {/* Screenshot: Left vertical, Right Vertical, and a V in the middle. */}
+            {/* The V in the middle seems to be on top of the teal chevron. */}
+            {/* The Vertical bars seem to be continuous with the V. */}
             <path
                 d="M28 72 L28 28 L50 52 L72 28 L72 72"
                 stroke="url(#grad_purple)"
-                strokeWidth="8"
+                strokeWidth="7"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-            
-             {/* Intersection Overlay (Optional for blend effect) */}
-             {/* We can simulate the intersection blend by redrawing the chevron segment with transparency if needed, 
-                 but the simple overlap might be enough. 
-                 Let's try to match the image: The teal line crosses the purple line.
-                 In the image, the teal line seems to be 'behind' the vertical legs but 'intersects' the V.
-                 Actually, looking closely at the user image:
-                 The teal line starts from the bottom corners (same as M).
-                 It goes UP to the center.
-                 It is transparent/blended.
-                 
-                 Let's stick to the current pathing.
-             */}
         </svg>
     );
 };
