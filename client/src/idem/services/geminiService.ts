@@ -216,12 +216,83 @@ export const generateDatasetPrompts = async (params: {
     items: {
       type: Type.OBJECT,
       properties: {
-        id: { type: Type.STRING },
-        prompt: { type: Type.STRING },
-        category: { type: Type.STRING },
-        tags: { type: Type.ARRAY, items: { type: Type.STRING } }
+        generation_data: {
+          type: Type.OBJECT,
+          properties: {
+            final_prompt_string: { type: Type.STRING },
+            shot_type: { type: Type.STRING },
+            angle: { type: Type.STRING },
+            reference_logic: {
+              type: Type.OBJECT,
+              properties: {
+                primary_ref: { type: Type.STRING },
+                secondary_ref: { type: Type.STRING }
+              }
+            }
+          },
+          required: ["final_prompt_string", "shot_type"]
+        },
+        subject: {
+          type: Type.OBJECT,
+          properties: {
+            description: { type: Type.STRING },
+            age: { type: Type.STRING },
+            expression: { type: Type.STRING },
+            body: { type: Type.STRING },
+            imperfections: {
+              type: Type.OBJECT,
+              properties: {
+                skin: { type: Type.STRING },
+                hair: { type: Type.STRING },
+                general: { type: Type.STRING }
+              }
+            },
+            clothing: {
+              type: Type.OBJECT,
+              properties: {
+                top: {
+                  type: Type.OBJECT,
+                  properties: {
+                    type: { type: Type.STRING },
+                    color: { type: Type.STRING }
+                  }
+                },
+                bottom: {
+                  type: Type.OBJECT,
+                  properties: {
+                    type: { type: Type.STRING },
+                    color: { type: Type.STRING }
+                  }
+                }
+              }
+            }
+          },
+          required: ["description", "age", "expression"]
+        },
+        background: {
+          type: Type.OBJECT,
+          properties: {
+            setting: { type: Type.STRING },
+            elements: { type: Type.ARRAY, items: { type: Type.STRING } }
+          }
+        },
+        photography: {
+          type: Type.OBJECT,
+          properties: {
+            shot_type: { type: Type.STRING },
+            angle: { type: Type.STRING },
+            camera_style: { type: Type.STRING }
+          }
+        },
+        tech_specs: {
+          type: Type.OBJECT,
+          properties: {
+            camera_physics: { type: Type.STRING },
+            lighting_physics: { type: Type.STRING }
+          }
+        }
       },
-      required: ["prompt"]
+      required: ["generation_data", "subject", "background"]
     }
   };
 
@@ -241,15 +312,15 @@ export const generateDatasetPrompts = async (params: {
     
     const rawItems = JSON.parse(text) as any[];
     
-    // Map to internal PromptItem structure
+    // Map to internal PromptItem structure - store the full JSON as the prompt
     return rawItems.map((item, idx) => ({
-      id: item.id || generateId(),
-      prompt: item.prompt,
-      category: item.category || 'general',
-      tags: item.tags || [],
+      id: generateId(),
+      prompt: JSON.stringify(item),
+      category: item.photography?.shot_type || 'general',
+      tags: item.background?.elements || [],
       generationMeta: {
         type: 'lora',
-        index: params.startCount + idx,
+        index: params.startCount + idx + 1,
         total: params.totalTarget,
         label: `LORA-${params.startCount + idx + 1}`
       }
