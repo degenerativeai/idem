@@ -65,6 +65,20 @@ const IDENTITY_PATTERNS = [
   /\bglasses\b/gi,
   /\b(young|middle[- ]?aged|elderly)\s+(woman|man|adult)\b/gi,
   /\b(slender|slim|curvy|athletic|petite)\s+(build|frame|figure)\b/gi,
+  /\b(a\s+)?(beautiful|attractive|handsome|pretty|gorgeous|stunning)\s+(woman|man|lady|gentleman|girl|boy|person|model|female|male)\b/gi,
+  /\b(a\s+)?(woman|man|lady|gentleman|girl|boy|female|male|person|model|subject)\s+(with|wearing|in|has|having)\b/gi,
+  /\b(the\s+)?(woman|man|lady|gentleman|girl|boy|female|male|person|model|subject)\s+(is|stands|sits|looks|gazes|poses|appears)\b/gi,
+  /\b(she|he|her|his)\s+(is|has|wears|wearing|stands|sits|looks|gazes|poses|appears)\b/gi,
+  /\b(in\s+her|in\s+his)\s+(20s|30s|40s|50s|60s|70s|80s|teens|early|mid|late)\b/gi,
+  /\b(\d+)[- ]?year[- ]?old\s*(woman|man|lady|gentleman|girl|boy|female|male|person|model)?\b/gi,
+  /\baged?\s+(\d+)/gi,
+  /\b(tall|short|thin|thick|heavy|overweight|underweight)\s+(woman|man|person|lady|figure|frame)\b/gi,
+  /\b(muscular|toned|fit|lean|stocky)\s+(body|build|frame|physique)\b/gi,
+  /\bthe\s+(woman|man|lady|gentleman|girl|boy|female|male|person|model|subject)('s)?\b/gi,
+  /\ba\s+(woman|man|lady|gentleman|girl|boy|female|male|person|model)\b/gi,
+  /\bfacial\s+(features?|structure|expression)\b/gi,
+  /\b(her|his)\s+(face|body|figure|physique|build|frame|appearance|look|gaze|expression|features?)\b/gi,
+  /\b(beautiful|attractive|handsome|pretty|gorgeous|stunning)\s+(face|appearance|features?)\b/gi,
 ];
 
 export const stripIdentityDescriptions = (text: string): string => {

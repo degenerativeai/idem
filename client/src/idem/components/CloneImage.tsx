@@ -41,8 +41,14 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
     const buildSceneOnlyPrompt = (ini: INIPrompt): string => {
         const lines: string[] = ['[IMAGE_PROMPT]'];
         
-        if (ini.desc) lines.push(`[desc]  = ${stripIdentityDescriptions(ini.desc)}`);
-        if (ini.objs) lines.push(`[objs]  = ${ini.objs}`);
+        if (ini.desc) {
+            const stripped = stripIdentityDescriptions(ini.desc);
+            if (stripped) lines.push(`[desc]  = ${stripped}`);
+        }
+        if (ini.objs) {
+            const stripped = stripIdentityDescriptions(ini.objs);
+            if (stripped) lines.push(`[objs]  = ${stripped}`);
+        }
         if (ini.style) lines.push(`[style] = ${ini.style}`);
         if (ini.comp) lines.push(`[comp]  = ${ini.comp}`);
         if (ini.light) lines.push(`[light] = ${ini.light}`);
@@ -50,13 +56,19 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
         if (ini.geom) lines.push(`[geom]  = ${ini.geom}`);
         if (ini.micro) lines.push(`[micro] = ${ini.micro}`);
         if (ini.sym) lines.push(`[sym]   = ${ini.sym}`);
-        if (ini.scene) lines.push(`[scene] = ${ini.scene}`);
+        if (ini.scene) {
+            const stripped = stripIdentityDescriptions(ini.scene);
+            if (stripped) lines.push(`[scene] = ${stripped}`);
+        }
         if (ini.must) {
             const stripped = stripIdentityDescriptions(ini.must);
             if (stripped) lines.push(`[must]  = ${stripped}`);
         }
         if (ini.avoid) lines.push(`[avoid] = ${ini.avoid}`);
-        if (ini.notes) lines.push(`[notes] = ${ini.notes}`);
+        if (ini.notes) {
+            const stripped = stripIdentityDescriptions(ini.notes);
+            if (stripped) lines.push(`[notes] = ${stripped}`);
+        }
         
         return lines.join('\n');
     };
