@@ -1,12 +1,109 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ImageAspect, ImageProvider } from '../types';
 import { generateImage } from '../services/imageGenerationService';
 import { HEADSHOT_PROMPT, FULL_BODY_PROMPT } from '../prompts/workflowPrompts';
 import { IconSparkles, IconUser } from './Icons';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ASPECTS: ImageAspect[] = ['1:1', '16:9', '9:16', '4:3', '3:4'];
+
+interface CustomSelectProps<T extends string> {
+    value: T;
+    onChange: (value: T) => void;
+    options: { value: T; label: string }[];
+    testId?: string;
+}
+
+function CustomSelect<T extends string>({ value, onChange, options, testId }: CustomSelectProps<T>) {
+    const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (ref.current && !ref.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectedLabel = options.find(o => o.value === value)?.label || value;
+
+    return (
+        <div ref={ref} style={{ position: 'relative' }} data-testid={testId}>
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                style={{
+                    width: '100%',
+                    background: 'rgba(88, 28, 135, 0.3)',
+                    border: '1px solid rgba(168, 85, 247, 0.3)',
+                    borderRadius: '8px',
+                    padding: '0.5rem 0.75rem',
+                    fontSize: '0.85rem',
+                    color: '#e9d5ff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    minHeight: '36px',
+                    textAlign: 'left'
+                }}
+            >
+                <span>{selectedLabel}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="2">
+                    <path d="M6 9l6 6 6-6" />
+                </svg>
+            </button>
+            {isOpen && (
+                <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    marginTop: '4px',
+                    background: 'rgb(30, 10, 50)',
+                    border: '1px solid rgba(168, 85, 247, 0.4)',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    zIndex: 50,
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+                }}>
+                    {options.map((option) => (
+                        <div
+                            key={option.value}
+                            onClick={() => {
+                                onChange(option.value);
+                                setIsOpen(false);
+                            }}
+                            style={{
+                                padding: '0.5rem 0.75rem',
+                                fontSize: '0.85rem',
+                                color: value === option.value ? '#e9d5ff' : '#c4b5fd',
+                                background: value === option.value ? 'rgba(168, 85, 247, 0.3)' : 'transparent',
+                                cursor: 'pointer',
+                                transition: 'background 0.15s'
+                            }}
+                            onMouseEnter={(e) => {
+                                if (value !== option.value) {
+                                    e.currentTarget.style.background = 'rgba(168, 85, 247, 0.2)';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (value !== option.value) {
+                                    e.currentTarget.style.background = 'transparent';
+                                }
+                            }}
+                        >
+                            {option.label}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
 
 interface VisionStructParserProps {
     onImagesComplete: (images: { source: string | null; headshot: string | null; bodyshot: string | null }) => void;
@@ -278,66 +375,50 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                         <div>
                             <label style={labelStyle}>Provider</label>
-                            <Select value={provider} onValueChange={(value) => setProvider(value as ImageProvider)}>
-                                <SelectTrigger 
-                                    data-testid="select-provider"
-                                    className="w-full bg-purple-900/30 border-purple-500/30 text-purple-200 hover:bg-purple-900/40 focus:ring-purple-500/50"
-                                >
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-purple-950 border-purple-500/30">
-                                    <SelectItem value="google" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">Google Gemini</SelectItem>
-                                    <SelectItem value="wavespeed" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">Wavespeed</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <CustomSelect
+                                value={provider}
+                                onChange={(value) => setProvider(value as ImageProvider)}
+                                options={[
+                                    { value: 'google', label: 'Google Gemini' },
+                                    { value: 'wavespeed', label: 'Wavespeed' }
+                                ]}
+                                testId="select-provider"
+                            />
                         </div>
                         <div>
                             <label style={labelStyle}>Aspect Ratio</label>
-                            <Select value={aspectRatio} onValueChange={(value) => setAspectRatio(value as ImageAspect)}>
-                                <SelectTrigger 
-                                    data-testid="select-aspect"
-                                    className="w-full bg-purple-900/30 border-purple-500/30 text-purple-200 hover:bg-purple-900/40 focus:ring-purple-500/50"
-                                >
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-purple-950 border-purple-500/30">
-                                    {ASPECTS.map(a => (
-                                        <SelectItem key={a} value={a} className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">{a}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <CustomSelect
+                                value={aspectRatio}
+                                onChange={(value) => setAspectRatio(value as ImageAspect)}
+                                options={ASPECTS.map(a => ({ value: a, label: a }))}
+                                testId="select-aspect"
+                            />
                         </div>
                         <div>
                             <label style={labelStyle}>Resolution</label>
-                            <Select value={resolution} onValueChange={(value) => setResolution(value as '2k' | '4k')}>
-                                <SelectTrigger 
-                                    data-testid="select-resolution"
-                                    className="w-full bg-purple-900/30 border-purple-500/30 text-purple-200 hover:bg-purple-900/40 focus:ring-purple-500/50"
-                                >
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-purple-950 border-purple-500/30">
-                                    <SelectItem value="2k" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">2K Resolution</SelectItem>
-                                    <SelectItem value="4k" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">4K Resolution</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <CustomSelect
+                                value={resolution}
+                                onChange={(value) => setResolution(value as '2k' | '4k')}
+                                options={[
+                                    { value: '2k', label: '2K Resolution' },
+                                    { value: '4k', label: '4K Resolution' }
+                                ]}
+                                testId="select-resolution"
+                            />
                         </div>
                         <div>
                             <label style={labelStyle}>Batch Size</label>
-                            <Select value={batchSize.toString()} onValueChange={(value) => setBatchSize(parseInt(value))}>
-                                <SelectTrigger 
-                                    data-testid="select-batch"
-                                    className="w-full bg-purple-900/30 border-purple-500/30 text-purple-200 hover:bg-purple-900/40 focus:ring-purple-500/50"
-                                >
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-purple-950 border-purple-500/30">
-                                    <SelectItem value="1" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">1 Image</SelectItem>
-                                    <SelectItem value="2" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">2 Images</SelectItem>
-                                    <SelectItem value="3" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">3 Images</SelectItem>
-                                    <SelectItem value="4" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">4 Images</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <CustomSelect
+                                value={batchSize.toString()}
+                                onChange={(value) => setBatchSize(parseInt(value))}
+                                options={[
+                                    { value: '1', label: '1 Image' },
+                                    { value: '2', label: '2 Images' },
+                                    { value: '3', label: '3 Images' },
+                                    { value: '4', label: '4 Images' }
+                                ]}
+                                testId="select-batch"
+                            />
                         </div>
                     </div>
 
