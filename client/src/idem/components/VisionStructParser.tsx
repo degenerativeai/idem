@@ -364,19 +364,19 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '0.75rem',
-        padding: '1rem 2rem',
-        borderRadius: '0.75rem',
-        background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+        gap: '0.5rem',
+        padding: '0.75rem 1.5rem',
+        borderRadius: '0.6rem',
+        background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
         color: 'white',
-        fontSize: '1rem',
+        fontSize: '0.85rem',
         fontWeight: 'bold',
         textTransform: 'uppercase',
         border: 'none',
         cursor: 'pointer',
         transition: 'all 0.2s',
         letterSpacing: '0.05em',
-        boxShadow: '0 4px 15px rgba(34, 197, 94, 0.3)'
+        boxShadow: '0 4px 15px rgba(168, 85, 247, 0.3)'
     };
 
     return (
@@ -686,8 +686,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                             style={startDatasetButtonStyle}
                             data-testid="button-start-dataset"
                         >
-                            <IconSparkles style={{ width: '20px', height: '20px' }} />
-                            Start Building Your Dataset
+                            <IconSparkles style={{ width: '16px', height: '16px' }} />
+                            Build LoRA Dataset
                         </button>
                         <button
                             onClick={handleDownloadImages}
