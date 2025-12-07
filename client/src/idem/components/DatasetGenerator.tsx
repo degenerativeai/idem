@@ -326,6 +326,15 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         }));
     };
 
+    const extractPromptFromItem = (item: PromptItem): string => {
+        try {
+            const parsed = JSON.parse(item.text);
+            return parsed.generation_data?.final_prompt_string || parsed.prompt || item.text;
+        } catch {
+            return item.text;
+        }
+    };
+
     const handleBatchGeneration = async () => {
         setIsBatchProcessing(true);
         setPromptError(null);
@@ -374,27 +383,33 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         try {
             const failedItems: { item: PromptItem; idx: number }[] = [];
             let successCount = 0;
-            const CONCURRENCY = 5;
-            for (let i = 0; i < limit; i += CONCURRENCY) {
-                const chunk = promptsToProcess.slice(i, Math.min(i + CONCURRENCY, limit));
+            const BATCH_SIZE = 5;
+            for (let i = 0; i < limit; i += BATCH_SIZE) {
+                const chunk = promptsToProcess.slice(i, Math.min(i + BATCH_SIZE, limit));
+                const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+                const totalBatches = Math.ceil(limit / BATCH_SIZE);
+                console.log(`Processing batch ${batchNum}/${totalBatches} (items ${i + 1}-${Math.min(i + BATCH_SIZE, limit)} of ${limit})`);
+                
                 await Promise.all(chunk.map(async (item, chunkIdx) => {
                     const globalIdx = i + chunkIdx;
                     if (globalIdx >= limit) return;
                     try {
+                        const promptText = extractPromptFromItem(item);
                         const result = await generateImage({
                             provider,
                             apiKey,
-                            prompt: item.prompt,
+                            prompt: promptText,
                             aspectRatio,
                             resolution,
                             referenceImages: effectiveHeadshot ? [effectiveHeadshot] : []
                         });
                         if (result.ok && result.b64_json) {
-                            const filename = `${globalIdx + 1}_${item.category || 'generated'}.png`;
+                            const shotType = item.generationMeta?.type || 'generated';
+                            const filename = `${globalIdx + 1}_${shotType}.png`;
                             imgFolder?.file(filename, result.b64_json, { base64: true });
                             successCount++;
                         } else {
-                            console.warn(`Item ${globalIdx + 1} failed initially.`);
+                            console.warn(`Item ${globalIdx + 1} failed initially: ${result.error || 'Unknown error'}`);
                             failedItems.push({ item, idx: globalIdx });
                         }
                     } catch (e) {
@@ -402,32 +417,35 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         failedItems.push({ item, idx: globalIdx });
                     }
                 }));
-                setBatchProgress(prev => ({ ...prev, current: Math.min(prev.current + CONCURRENCY, limit) }));
+                setBatchProgress({ current: Math.min(i + BATCH_SIZE, limit), total: limit });
             }
             if (failedItems.length > 0) {
                 console.log(`Retrying ${failedItems.length} failed items...`);
                 for (const fail of failedItems) {
                     try {
+                        const promptText = extractPromptFromItem(fail.item);
                         const result = await generateImage({
                             provider,
                             apiKey,
-                            prompt: fail.item.prompt,
+                            prompt: promptText,
                             aspectRatio,
                             resolution,
                             referenceImages: effectiveHeadshot ? [effectiveHeadshot] : []
                         });
                         if (result.ok && result.b64_json) {
-                            const filename = `${fail.idx + 1}_${fail.item.category || 'generated'}_retry.png`;
+                            const shotType = fail.item.generationMeta?.type || 'generated';
+                            const filename = `${fail.idx + 1}_${shotType}_retry.png`;
                             imgFolder?.file(filename, result.b64_json, { base64: true });
                             successCount++;
                         } else {
-                            console.error(`Item ${fail.idx + 1} failed again.`);
+                            console.error(`Item ${fail.idx + 1} failed again: ${result.error || 'Unknown error'}`);
                         }
                     } catch (e) {
                         console.error(`Item ${fail.idx + 1} retry error:`, e);
                     }
                 }
             }
+            console.log(`Batch complete: ${successCount}/${limit} images generated successfully`);
             const content = await zip.generateAsync({ type: "blob" });
             setBatchZipBlob(content);
             setIsBatchComplete(true);
