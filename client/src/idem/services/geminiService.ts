@@ -39,7 +39,7 @@ const parseDataUrl = (dataUrl: string) => {
 
 export const analyzeImageWithDirective = async (
   imageDataUrl: string,
-  modelId: string = 'gemini-1.5-flash'
+  modelId: string = 'gemini-2.0-flash'
 ): Promise<any> => {
   const ai = getAiClient();
   const { mimeType, data } = parseDataUrl(imageDataUrl);
@@ -122,7 +122,7 @@ export const analyzeImageWithDirective = async (
 export const analyzeSubjectImages = async (
   headshotBase64: string,
   bodyshotBase64: string,
-  modelId: string = 'gemini-1.5-pro'
+  modelId: string = 'gemini-2.0-flash'
 ): Promise<AnalysisResult> => {
   const ai = getAiClient();
   const headshot = parseDataUrl(headshotBase64);
@@ -190,7 +190,7 @@ export const generateDatasetPrompts = async (params: {
   modelId?: string;
 }): Promise<PromptItem[]> => {
   const ai = getAiClient();
-  const modelId = params.modelId || 'gemini-1.5-pro';
+  const modelId = params.modelId || 'gemini-2.0-flash';
 
   // Construct the prompt context based on Vacuum Compiler
   const context = `
