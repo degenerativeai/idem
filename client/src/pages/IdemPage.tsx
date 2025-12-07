@@ -60,9 +60,12 @@ const IdemPage: React.FC = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '1rem 2rem',
-                marginBottom: '2rem',
+                marginBottom: '1rem',
                 marginTop: '1rem',
-                marginInline: '1rem'
+                marginInline: '1rem',
+                position: 'sticky',
+                top: '0.5rem',
+                zIndex: 100
             }}>
                 <div className="flex-center gap-md" style={{ gap: '1rem' }}>
                     <IdemLogo width={32} height={32} />
