@@ -73,6 +73,13 @@ const IdemPage: React.FC = () => {
                             clone: 'Clone Image',
                             generator: 'Social Media'
                         };
+                        const tabColors = {
+                            vision: { bg: 'rgba(168, 85, 247, 0.3)', border: 'rgba(168, 85, 247, 0.5)', text: '#e9d5ff', hover: 'rgba(168, 85, 247, 0.15)', hoverText: '#c4b5fd' },
+                            dataset: { bg: 'rgba(168, 85, 247, 0.3)', border: 'rgba(168, 85, 247, 0.5)', text: '#e9d5ff', hover: 'rgba(168, 85, 247, 0.15)', hoverText: '#c4b5fd' },
+                            clone: { bg: 'rgba(34, 197, 94, 0.3)', border: 'rgba(34, 197, 94, 0.5)', text: '#86efac', hover: 'rgba(34, 197, 94, 0.15)', hoverText: '#4ade80' },
+                            generator: { bg: 'rgba(234, 179, 8, 0.3)', border: 'rgba(234, 179, 8, 0.5)', text: '#fde047', hover: 'rgba(234, 179, 8, 0.15)', hoverText: '#facc15' }
+                        };
+                        const colors = tabColors[tab];
                         return (
                             <button
                                 key={tab}
@@ -90,18 +97,14 @@ const IdemPage: React.FC = () => {
                                     fontWeight: isActive ? '600' : '500',
                                     cursor: 'pointer',
                                     transition: 'all 0.2s ease',
-                                    background: isActive 
-                                        ? 'rgba(168, 85, 247, 0.3)' 
-                                        : 'transparent',
-                                    color: isActive ? '#e9d5ff' : '#94a3b8',
-                                    border: isActive 
-                                        ? '1px solid rgba(168, 85, 247, 0.5)' 
-                                        : '1px solid transparent'
+                                    background: isActive ? colors.bg : 'transparent',
+                                    color: isActive ? colors.text : '#94a3b8',
+                                    border: isActive ? `1px solid ${colors.border}` : '1px solid transparent'
                                 }}
                                 onMouseEnter={(e) => {
                                     if (!isActive) {
-                                        e.currentTarget.style.background = 'rgba(168, 85, 247, 0.15)';
-                                        e.currentTarget.style.color = '#c4b5fd';
+                                        e.currentTarget.style.background = colors.hover;
+                                        e.currentTarget.style.color = colors.hoverText;
                                     }
                                 }}
                                 onMouseLeave={(e) => {
