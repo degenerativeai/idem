@@ -5,6 +5,8 @@ import { saveAs } from 'file-saver';
 import { PromptItem, ImageProvider, ImageAspect } from '../types';
 import { analyzeSubjectImages, generateDatasetPrompts } from '../services/geminiService';
 import { generateImage } from '../services/imageGenerationService';
+import { apiService } from '../services/apiService';
+import type { IdentityProfile, Dataset } from '@shared/schema';
 import {
     IconSparkles, IconUser, IconEdit, IconDownload
 } from './Icons';
@@ -34,6 +36,15 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
     // Data State
     const [identity, setIdentity] = useState<any>(inputIdentity);
     const [datasetPrompts, setDatasetPrompts] = useState<PromptItem[]>([]);
+    
+    // Persistence State
+    const [savedIdentityId, setSavedIdentityId] = useState<string | null>(null);
+    const [savedDatasetId, setSavedDatasetId] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [savedIdentities, setSavedIdentities] = useState<IdentityProfile[]>([]);
+    const [savedDatasets, setSavedDatasets] = useState<Dataset[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(false);
 
     // Local Overrides for Images using file uploads
     const [localHeadshot, setLocalHeadshot] = useState<string | null>(null);
@@ -63,6 +74,26 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
             setIdentity(inputIdentity);
         }
     }, [inputIdentity]);
+    
+    useEffect(() => {
+        loadSavedData();
+    }, []);
+    
+    const loadSavedData = async () => {
+        setIsLoadingData(true);
+        try {
+            const [identities, datasets] = await Promise.all([
+                apiService.listIdentityProfiles(),
+                apiService.listDatasets()
+            ]);
+            setSavedIdentities(identities);
+            setSavedDatasets(datasets);
+        } catch (e: any) {
+            console.error('Failed to load saved data:', e);
+        } finally {
+            setIsLoadingData(false);
+        }
+    };
 
     // --- Helpers ---
     const fileToBase64 = (file: File): Promise<string> => {
@@ -104,6 +135,56 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
             setAnalysisError(e.message);
         } finally {
             setIsAnalyzing(false);
+        }
+    };
+    
+    const handleSaveIdentity = async () => {
+        if (!identity || !identity.identity_profile) {
+            setSaveError("No identity profile to save");
+            return;
+        }
+        
+        setIsSaving(true);
+        setSaveError(null);
+        
+        try {
+            const savedProfile = await apiService.createIdentityProfile({
+                uid: identity.identity_profile.uid,
+                identityProfile: identity.identity_profile,
+                headshotImage: effectiveHeadshot || null,
+                bodyshotImage: effectiveBodyshot || null,
+                sourceImage: inputImages.source || null,
+            });
+            
+            setSavedIdentityId(savedProfile.id);
+            await loadSavedData();
+        } catch (e: any) {
+            console.error('Save identity error:', e);
+            setSaveError(e.message || 'Failed to save identity');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    const handleLoadIdentity = async (profileId: string) => {
+        setIsLoadingData(true);
+        setSaveError(null);
+        
+        try {
+            const profile = await apiService.getIdentityProfile(profileId);
+            
+            setIdentity({ identity_profile: profile.identityProfile });
+            setSavedIdentityId(profile.id);
+            
+            if (profile.headshotImage) setLocalHeadshot(profile.headshotImage);
+            if (profile.bodyshotImage) setLocalBodyshot(profile.bodyshotImage);
+            
+            onAnalysisComplete({ identity_profile: profile.identityProfile });
+        } catch (e: any) {
+            console.error('Load identity error:', e);
+            setSaveError(e.message || 'Failed to load identity');
+        } finally {
+            setIsLoadingData(false);
         }
     };
 
@@ -212,6 +293,70 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
             }
             return p;
         }));
+    };
+    
+    const handleSaveDataset = async () => {
+        if (!savedIdentityId) {
+            setSaveError("Please save the identity profile first");
+            return;
+        }
+        
+        if (datasetPrompts.length === 0) {
+            setSaveError("No prompts to save");
+            return;
+        }
+        
+        setIsSaving(true);
+        setSaveError(null);
+        
+        try {
+            const datasetName = `Dataset ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+            
+            const savedDataset = await apiService.createDataset({
+                identityId: savedIdentityId,
+                name: datasetName,
+                prompts: datasetPrompts,
+                safetyMode: safetyMode,
+                targetTotal: targetTotal,
+                generatedCount: 0,
+            });
+            
+            setSavedDatasetId(savedDataset.id);
+            await loadSavedData();
+        } catch (e: any) {
+            console.error('Save dataset error:', e);
+            setSaveError(e.message || 'Failed to save dataset');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    const handleLoadDataset = async (datasetId: string) => {
+        setIsLoadingData(true);
+        setSaveError(null);
+        
+        try {
+            const dataset = await apiService.getDataset(datasetId);
+            
+            setDatasetPrompts(dataset.prompts as PromptItem[]);
+            setSafetyMode(dataset.safetyMode as 'sfw' | 'nsfw');
+            setTargetTotal(dataset.targetTotal);
+            setSavedDatasetId(dataset.id);
+            setSavedIdentityId(dataset.identityId);
+            
+            const profile = await apiService.getIdentityProfile(dataset.identityId);
+            setIdentity({ identity_profile: profile.identityProfile });
+            
+            if (profile.headshotImage) setLocalHeadshot(profile.headshotImage);
+            if (profile.bodyshotImage) setLocalBodyshot(profile.bodyshotImage);
+            
+            onAnalysisComplete({ identity_profile: profile.identityProfile });
+        } catch (e: any) {
+            console.error('Load dataset error:', e);
+            setSaveError(e.message || 'Failed to load dataset');
+        } finally {
+            setIsLoadingData(false);
+        }
     };
 
     const handleBatchGeneration = async () => {
@@ -347,6 +492,69 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
                 Analyze your identity profile and generate consistent training data.
             </p>
+            
+            {/* Saved Data Section */}
+            {(savedIdentities.length > 0 || savedDatasets.length > 0) && (
+                <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>
+                    <h3 style={{ marginBottom: '1rem', color: 'var(--accent-blue)' }}>Saved Data</h3>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                        {/* Saved Identities */}
+                        <div>
+                            <h4 style={{ fontSize: '0.9rem', color: '#999', marginBottom: '0.5rem' }}>Identities ({savedIdentities.length})</h4>
+                            <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {savedIdentities.map(profile => (
+                                    <div 
+                                        key={profile.id} 
+                                        style={{ 
+                                            padding: '0.75rem', 
+                                            background: savedIdentityId === profile.id ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0.3)', 
+                                            borderRadius: '8px',
+                                            border: savedIdentityId === profile.id ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid transparent',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onClick={() => handleLoadIdentity(profile.id)}
+                                        data-testid={`card-identity-${profile.id}`}
+                                    >
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'white' }}>{(profile.identityProfile as any)?.uid || 'Unknown'}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#999' }}>
+                                            {new Date(profile.createdAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        {/* Saved Datasets */}
+                        <div>
+                            <h4 style={{ fontSize: '0.9rem', color: '#999', marginBottom: '0.5rem' }}>Datasets ({savedDatasets.length})</h4>
+                            <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {savedDatasets.map(dataset => (
+                                    <div 
+                                        key={dataset.id} 
+                                        style={{ 
+                                            padding: '0.75rem', 
+                                            background: savedDatasetId === dataset.id ? 'rgba(168, 85, 247, 0.2)' : 'rgba(0,0,0,0.3)', 
+                                            borderRadius: '8px',
+                                            border: savedDatasetId === dataset.id ? '1px solid rgba(168, 85, 247, 0.5)' : '1px solid transparent',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onClick={() => handleLoadDataset(dataset.id)}
+                                        data-testid={`card-dataset-${dataset.id}`}
+                                    >
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'white' }}>{dataset.name}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#999' }}>
+                                            {(dataset.prompts as any[])?.length || 0} prompts • {new Date(dataset.createdAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Step 1: Identity Analysis */}
             <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>
@@ -374,22 +582,32 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
 
                     <div style={{ flex: 1 }}>
                         {!identity ? (
-                            <button className="btn-primary" onClick={handleAnalyzeProfile} disabled={isAnalyzing}>
+                            <button className="btn-primary" onClick={handleAnalyzeProfile} disabled={isAnalyzing} data-testid="button-analyze-identity">
                                 {isAnalyzing ? 'Analyzing Identity...' : 'Analyze Identity Profile'}
                             </button>
                         ) : (
                             <div style={{ fontSize: '0.9rem' }}>
-                                <div style={{ fontWeight: 'bold', color: 'var(--accent-green)', marginBottom: '0.5rem' }}>✓ Identity Locked</div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem' }}>
-                                    <span style={{ color: '#666' }}>UID:</span> <span>{identity.identity_profile?.uid}</span>
-                                    <span style={{ color: '#666' }}>Archetype:</span> <span>{identity.identity_profile?.archetype_anchor}</span>
+                                <div style={{ fontWeight: 'bold', color: savedIdentityId ? 'var(--accent-green)' : '#999', marginBottom: '0.5rem' }}>
+                                    {savedIdentityId ? '✓ Identity Saved' : '✓ Identity Locked'}
                                 </div>
-                                <button className="btn-secondary" style={{ marginTop: '1rem', fontSize: '0.8rem' }} onClick={handleAnalyzeProfile}>
-                                    Re-Analyze
-                                </button>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem' }}>
+                                    <span style={{ color: '#666' }}>UID:</span> <span data-testid="text-identity-uid">{identity.identity_profile?.uid}</span>
+                                    <span style={{ color: '#666' }}>Archetype:</span> <span data-testid="text-identity-archetype">{identity.identity_profile?.archetype_anchor}</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                                    <button className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={handleAnalyzeProfile}>
+                                        Re-Analyze
+                                    </button>
+                                    {!savedIdentityId && (
+                                        <button className="btn-primary" style={{ fontSize: '0.8rem' }} onClick={handleSaveIdentity} disabled={isSaving} data-testid="button-save-identity">
+                                            {isSaving ? 'Saving...' : 'Save Identity'}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
                         {analysisError && <div style={{ color: 'red', marginTop: '0.5rem' }}>{analysisError}</div>}
+                        {saveError && <div style={{ color: 'red', marginTop: '0.5rem' }}>{saveError}</div>}
                     </div>
                 </div>
             </div>
@@ -402,18 +620,27 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         2. Dataset Prompts
                     </h3>
                     
-                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                          <input 
                             type="number" 
                             value={targetTotal} 
                             onChange={(e) => setTargetTotal(Number(e.target.value))} 
                             style={{ background: '#333', border: 'none', color: 'white', padding: '0.5rem', borderRadius: '4px', width: '80px' }}
                             min={1} max={500}
+                            data-testid="input-target-total"
                          />
                          <span style={{ fontSize: '0.9rem', color: '#999' }}>Target Prompts</span>
-                         <button className="btn-primary" onClick={handleGeneratePrompts} disabled={isGeneratingPrompts}>
+                         <button className="btn-primary" onClick={handleGeneratePrompts} disabled={isGeneratingPrompts} data-testid="button-generate-prompts">
                             {isGeneratingPrompts ? 'Generating...' : (datasetPrompts.length > 0 ? 'Regenerate Prompts' : 'Generate Prompts')}
                          </button>
+                         {datasetPrompts.length > 0 && savedIdentityId && !savedDatasetId && (
+                             <button className="btn-primary" onClick={handleSaveDataset} disabled={isSaving} data-testid="button-save-dataset">
+                                {isSaving ? 'Saving...' : 'Save Dataset'}
+                             </button>
+                         )}
+                         {savedDatasetId && (
+                             <span style={{ color: 'var(--accent-green)', fontSize: '0.9rem', fontWeight: 'bold' }}>✓ Dataset Saved</span>
+                         )}
                     </div>
 
                     {datasetPrompts.length > 0 && (
