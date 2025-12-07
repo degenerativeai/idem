@@ -4,6 +4,7 @@ import { ImageAspect, ImageProvider } from '../types';
 import { generateImage } from '../services/imageGenerationService';
 import { HEADSHOT_PROMPT, FULL_BODY_PROMPT } from '../prompts/workflowPrompts';
 import { IconSparkles, IconUser } from './Icons';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ASPECTS: ImageAspect[] = ['1:1', '16:9', '9:16', '4:3', '3:4'];
 
@@ -180,17 +181,6 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         minHeight: '36px'
     };
 
-    const selectStyle: React.CSSProperties = {
-        ...inputStyle,
-        cursor: 'pointer',
-        appearance: 'none',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23c4b5fd'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'right 0.5rem center',
-        backgroundSize: '1.25rem',
-        paddingRight: '2rem',
-        backgroundColor: 'rgba(88, 28, 135, 0.3)'
-    };
 
     const buttonPrimaryStyle: React.CSSProperties = {
         display: 'flex',
@@ -288,52 +278,66 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                         <div>
                             <label style={labelStyle}>Provider</label>
-                            <select
-                                value={provider}
-                                onChange={e => setProvider(e.target.value as ImageProvider)}
-                                style={selectStyle}
-                                data-testid="select-provider"
-                            >
-                                <option value="google">Google Gemini</option>
-                                <option value="wavespeed">Wavespeed</option>
-                            </select>
+                            <Select value={provider} onValueChange={(value) => setProvider(value as ImageProvider)}>
+                                <SelectTrigger 
+                                    data-testid="select-provider"
+                                    className="w-full bg-purple-900/30 border-purple-500/30 text-purple-200 hover:bg-purple-900/40 focus:ring-purple-500/50"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-purple-950 border-purple-500/30">
+                                    <SelectItem value="google" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">Google Gemini</SelectItem>
+                                    <SelectItem value="wavespeed" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">Wavespeed</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <label style={labelStyle}>Aspect Ratio</label>
-                            <select
-                                value={aspectRatio}
-                                onChange={e => setAspectRatio(e.target.value as ImageAspect)}
-                                style={selectStyle}
-                                data-testid="select-aspect"
-                            >
-                                {ASPECTS.map(a => <option key={a} value={a}>{a}</option>)}
-                            </select>
+                            <Select value={aspectRatio} onValueChange={(value) => setAspectRatio(value as ImageAspect)}>
+                                <SelectTrigger 
+                                    data-testid="select-aspect"
+                                    className="w-full bg-purple-900/30 border-purple-500/30 text-purple-200 hover:bg-purple-900/40 focus:ring-purple-500/50"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-purple-950 border-purple-500/30">
+                                    {ASPECTS.map(a => (
+                                        <SelectItem key={a} value={a} className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">{a}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <label style={labelStyle}>Resolution</label>
-                            <select
-                                value={resolution}
-                                onChange={e => setResolution(e.target.value as any)}
-                                style={selectStyle}
-                                data-testid="select-resolution"
-                            >
-                                <option value="2k">2K Resolution</option>
-                                <option value="4k">4K Resolution</option>
-                            </select>
+                            <Select value={resolution} onValueChange={(value) => setResolution(value as '2k' | '4k')}>
+                                <SelectTrigger 
+                                    data-testid="select-resolution"
+                                    className="w-full bg-purple-900/30 border-purple-500/30 text-purple-200 hover:bg-purple-900/40 focus:ring-purple-500/50"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-purple-950 border-purple-500/30">
+                                    <SelectItem value="2k" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">2K Resolution</SelectItem>
+                                    <SelectItem value="4k" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">4K Resolution</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <label style={labelStyle}>Batch Size</label>
-                            <select
-                                value={batchSize}
-                                onChange={e => setBatchSize(parseInt(e.target.value))}
-                                style={selectStyle}
-                                data-testid="select-batch"
-                            >
-                                <option value={1}>1 Image</option>
-                                <option value={2}>2 Images</option>
-                                <option value={3}>3 Images</option>
-                                <option value={4}>4 Images</option>
-                            </select>
+                            <Select value={batchSize.toString()} onValueChange={(value) => setBatchSize(parseInt(value))}>
+                                <SelectTrigger 
+                                    data-testid="select-batch"
+                                    className="w-full bg-purple-900/30 border-purple-500/30 text-purple-200 hover:bg-purple-900/40 focus:ring-purple-500/50"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-purple-950 border-purple-500/30">
+                                    <SelectItem value="1" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">1 Image</SelectItem>
+                                    <SelectItem value="2" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">2 Images</SelectItem>
+                                    <SelectItem value="3" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">3 Images</SelectItem>
+                                    <SelectItem value="4" className="text-purple-200 focus:bg-purple-800/50 focus:text-purple-100">4 Images</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
