@@ -15,33 +15,33 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     
     const [iniResult, setIniResult] = useState<INIPrompt | null>(null);
     const [finalPrompt, setFinalPrompt] = useState<string>('');
+    const [sceneOnlyPrompt, setSceneOnlyPrompt] = useState<string>('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [copiedType, setCopiedType] = useState<'all' | 'no-identity' | null>(null);
+    const [copiedType, setCopiedType] = useState<'full' | 'scene' | null>(null);
     
     const [provider, setProvider] = useState<ImageProvider>('google');
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('source');
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     
-    const handleCopyAll = async () => {
-        if (iniResult?.raw) {
-            await navigator.clipboard.writeText(iniResult.raw);
-            setCopiedType('all');
+    const handleCopyFull = async () => {
+        if (finalPrompt) {
+            await navigator.clipboard.writeText(finalPrompt);
+            setCopiedType('full');
             setTimeout(() => setCopiedType(null), 2000);
         }
     };
     
-    const handleCopyNoIdentity = async () => {
-        if (iniResult) {
-            const strippedIni = stripINIIdentity(iniResult);
-            await navigator.clipboard.writeText(strippedIni);
-            setCopiedType('no-identity');
+    const handleCopySceneOnly = async () => {
+        if (sceneOnlyPrompt) {
+            await navigator.clipboard.writeText(sceneOnlyPrompt);
+            setCopiedType('scene');
             setTimeout(() => setCopiedType(null), 2000);
         }
     };
     
-    const stripINIIdentity = (ini: INIPrompt): string => {
+    const buildSceneOnlyPrompt = (ini: INIPrompt): string => {
         const lines: string[] = ['[IMAGE_PROMPT]'];
         
         if (ini.desc) lines.push(`[desc]  = ${stripIdentityDescriptions(ini.desc)}`);
@@ -85,6 +85,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
             setTargetImage(base64);
             setIniResult(null);
             setFinalPrompt('');
+            setSceneOnlyPrompt('');
             setGeneratedImage(null);
             setError(null);
         } catch (err) {
@@ -106,9 +107,11 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
             const ini = await analyzeImageINI(targetImage);
             setIniResult(ini);
             
-            const stripIdentity = mode === 'inject';
-            const prompt = convertINIToPrompt(ini, stripIdentity);
-            setFinalPrompt(prompt);
+            const fullPrompt = convertINIToPrompt(ini, false);
+            setFinalPrompt(fullPrompt);
+            
+            const scenePrompt = buildSceneOnlyPrompt(ini);
+            setSceneOnlyPrompt(scenePrompt);
         } catch (e: any) {
             console.error(e);
             setError(e.message || "Failed to analyze image");
@@ -595,26 +598,26 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <button
-                                                    data-testid="button-copy-all"
-                                                    onClick={handleCopyAll}
+                                                    data-testid="button-copy-full"
+                                                    onClick={handleCopyFull}
                                                     style={{
-                                                        padding: copiedType === 'all' ? '0.5rem 1rem' : '0.4rem 0.75rem',
+                                                        padding: copiedType === 'full' ? '0.5rem 1rem' : '0.4rem 0.75rem',
                                                         borderRadius: '6px',
-                                                        border: copiedType === 'all' ? '2px solid #22c55e' : 'none',
-                                                        background: copiedType === 'all' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(255,255,255,0.05)',
-                                                        color: copiedType === 'all' ? '#4ade80' : '#9ca3af',
-                                                        fontSize: copiedType === 'all' ? '0.75rem' : '0.65rem',
-                                                        fontWeight: copiedType === 'all' ? '700' : '500',
+                                                        border: copiedType === 'full' ? '2px solid #22c55e' : 'none',
+                                                        background: copiedType === 'full' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(255,255,255,0.05)',
+                                                        color: copiedType === 'full' ? '#4ade80' : '#9ca3af',
+                                                        fontSize: copiedType === 'full' ? '0.75rem' : '0.65rem',
+                                                        fontWeight: copiedType === 'full' ? '700' : '500',
                                                         cursor: 'pointer',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '0.4rem',
                                                         transition: 'all 0.2s',
-                                                        transform: copiedType === 'all' ? 'scale(1.05)' : 'scale(1)',
-                                                        boxShadow: copiedType === 'all' ? '0 0 12px rgba(34, 197, 94, 0.5)' : 'none'
+                                                        transform: copiedType === 'full' ? 'scale(1.05)' : 'scale(1)',
+                                                        boxShadow: copiedType === 'full' ? '0 0 12px rgba(34, 197, 94, 0.5)' : 'none'
                                                     }}
                                                 >
-                                                    {copiedType === 'all' ? (
+                                                    {copiedType === 'full' ? (
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                                             <polyline points="20 6 9 17 4 12" />
                                                         </svg>
@@ -624,40 +627,40 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                                         </svg>
                                                     )}
-                                                    {copiedType === 'all' ? 'Copied!' : 'Copy All'}
+                                                    {copiedType === 'full' ? 'Copied!' : 'Full Prompt'}
                                                 </button>
                                                 <button
-                                                    data-testid="button-copy-no-identity"
-                                                    onClick={handleCopyNoIdentity}
+                                                    data-testid="button-copy-scene"
+                                                    onClick={handleCopySceneOnly}
                                                     style={{
-                                                        padding: copiedType === 'no-identity' ? '0.5rem 1rem' : '0.4rem 0.75rem',
+                                                        padding: copiedType === 'scene' ? '0.5rem 1rem' : '0.4rem 0.75rem',
                                                         borderRadius: '6px',
-                                                        border: copiedType === 'no-identity' ? '2px solid #a855f7' : 'none',
-                                                        background: copiedType === 'no-identity' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(168, 85, 247, 0.1)',
-                                                        color: copiedType === 'no-identity' ? '#e9d5ff' : '#a855f7',
-                                                        fontSize: copiedType === 'no-identity' ? '0.75rem' : '0.65rem',
-                                                        fontWeight: copiedType === 'no-identity' ? '700' : '500',
+                                                        border: copiedType === 'scene' ? '2px solid #a855f7' : 'none',
+                                                        background: copiedType === 'scene' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(168, 85, 247, 0.1)',
+                                                        color: copiedType === 'scene' ? '#e9d5ff' : '#a855f7',
+                                                        fontSize: copiedType === 'scene' ? '0.75rem' : '0.65rem',
+                                                        fontWeight: copiedType === 'scene' ? '700' : '500',
                                                         cursor: 'pointer',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '0.4rem',
                                                         transition: 'all 0.2s',
-                                                        transform: copiedType === 'no-identity' ? 'scale(1.05)' : 'scale(1)',
-                                                        boxShadow: copiedType === 'no-identity' ? '0 0 12px rgba(168, 85, 247, 0.5)' : 'none'
+                                                        transform: copiedType === 'scene' ? 'scale(1.05)' : 'scale(1)',
+                                                        boxShadow: copiedType === 'scene' ? '0 0 12px rgba(168, 85, 247, 0.5)' : 'none'
                                                     }}
                                                 >
-                                                    {copiedType === 'no-identity' ? (
+                                                    {copiedType === 'scene' ? (
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                                             <polyline points="20 6 9 17 4 12" />
                                                         </svg>
                                                     ) : (
                                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                            <circle cx="12" cy="8" r="4" />
-                                                            <path d="M5 20a7 7 0 0 1 14 0" />
-                                                            <line x1="4" y1="4" x2="20" y2="20" />
+                                                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                                                            <circle cx="8" cy="8" r="2" />
+                                                            <path d="M21 15l-5-5L5 21" />
                                                         </svg>
                                                     )}
-                                                    {copiedType === 'no-identity' ? 'Copied!' : 'No Identity'}
+                                                    {copiedType === 'scene' ? 'Copied!' : 'Scene Only'}
                                                 </button>
                                             </div>
                                         </div>
