@@ -124,3 +124,34 @@ export interface VisionStruct {
         camera_characteristics: string;
     };
 }
+
+export interface PhysicalAppearance {
+    age_range: string;
+    celebrity_match: string | null;
+    face: {
+        eye_color: string;
+        face_shape: string;
+        nose: string;
+        lips: string;
+        teeth: string;
+        jawline: string;
+        distinctive: string;
+    };
+    hair: {
+        color: string;
+        texture: string;
+    };
+    body: {
+        type: string;
+        bust: string;
+        waist: string;
+        hips: string;
+        glutes: string;
+        height_impression: string;
+    };
+    skin: {
+        tone: string;
+        marks: string;
+    };
+    identity_summary: string;
+}

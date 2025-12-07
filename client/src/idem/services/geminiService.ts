@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Schema, Type } from "@google/genai";
-import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, INIPrompt, UGCPromptCard } from "../types";
+import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, INIPrompt, UGCPromptCard, PhysicalAppearance } from "../types";
 import { 
   LORA_FORGE_DIRECTIVE, 
   VACUUM_COMPILER_DIRECTIVE, 
@@ -8,7 +8,8 @@ import {
   RICH_MEDIA_DIRECTIVE_STUDIO, 
   VISION_STRUCT_DIRECTIVE,
   IMAGE_INI_COMPILER_DIRECTIVE,
-  CANDID_VIEW_DIRECTIVE
+  CANDID_VIEW_DIRECTIVE,
+  PHYSICAL_APPEARANCE_DIRECTIVE
 } from "../prompts/systemPrompts";
 
 // Security: Retrieve key from session storage dynamically. Never store in variables.
@@ -508,17 +509,185 @@ export const convertINIToPrompt = (ini: INIPrompt, stripIdentity: boolean = fals
   return prompt;
 };
 
+export const analyzePhysicalAppearance = async (
+  headshotBase64?: string | null,
+  bodyshotBase64?: string | null,
+  modelId: string = 'gemini-2.0-flash'
+): Promise<PhysicalAppearance | null> => {
+  if (!headshotBase64 && !bodyshotBase64) return null;
+  
+  const ai = getAiClient();
+  const parts: any[] = [{ text: PHYSICAL_APPEARANCE_DIRECTIVE }];
+  
+  if (headshotBase64) {
+    const headshot = parseDataUrl(headshotBase64);
+    parts.push({ inlineData: { mimeType: headshot.mimeType, data: headshot.data } });
+    parts.push({ text: "Reference 1: Headshot - Focus on face details" });
+  }
+  
+  if (bodyshotBase64) {
+    const bodyshot = parseDataUrl(bodyshotBase64);
+    parts.push({ inlineData: { mimeType: bodyshot.mimeType, data: bodyshot.data } });
+    parts.push({ text: "Reference 2: Bodyshot - Focus on body proportions" });
+  }
+
+  const schema: Schema = {
+    type: Type.OBJECT,
+    properties: {
+      age_range: { type: Type.STRING },
+      celebrity_match: { type: Type.STRING, nullable: true },
+      face: {
+        type: Type.OBJECT,
+        properties: {
+          eye_color: { type: Type.STRING },
+          face_shape: { type: Type.STRING },
+          nose: { type: Type.STRING },
+          lips: { type: Type.STRING },
+          teeth: { type: Type.STRING },
+          jawline: { type: Type.STRING },
+          distinctive: { type: Type.STRING }
+        }
+      },
+      hair: {
+        type: Type.OBJECT,
+        properties: {
+          color: { type: Type.STRING },
+          texture: { type: Type.STRING }
+        }
+      },
+      body: {
+        type: Type.OBJECT,
+        properties: {
+          type: { type: Type.STRING },
+          bust: { type: Type.STRING },
+          waist: { type: Type.STRING },
+          hips: { type: Type.STRING },
+          glutes: { type: Type.STRING },
+          height_impression: { type: Type.STRING }
+        }
+      },
+      skin: {
+        type: Type.OBJECT,
+        properties: {
+          tone: { type: Type.STRING },
+          marks: { type: Type.STRING }
+        }
+      },
+      identity_summary: { type: Type.STRING }
+    }
+  };
+
+  try {
+    const result = await ai.models.generateContent({
+      model: modelId,
+      contents: [{ role: 'user', parts }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: schema,
+        temperature: 0.2
+      }
+    });
+
+    const text = result.text;
+    if (!text) return null;
+    
+    return JSON.parse(text) as PhysicalAppearance;
+  } catch (e: any) {
+    console.error("Physical Appearance Analysis Error:", e);
+    return null;
+  }
+};
+
+const AGE_CLOTHING_GUIDANCE = `
+AGE-APPROPRIATE CLOTHING GUIDELINES:
+Based on the subject's age, choose clothing that fits their demographic:
+
+EARLY 20s (18-24):
+- Swimwear: Bikinis, string bikinis, high-cut bottoms
+- Dresses: Bodycon, mini dresses, crop tops with mini skirts
+- Casual: Low-rise jeans, crop tops, tube tops, bralettes as tops
+- Going out: Tight mini dresses, bandage dresses, corset tops
+- Athleisure: Sports bras as tops, bike shorts, matching sets
+
+MID-LATE 20s (25-29):
+- Swimwear: Bikinis, one-pieces that are still trendy/stylish
+- Dresses: Midi dresses, wrap dresses, bodycon but slightly more covered
+- Casual: High-waisted jeans, fitted tops, blazers over bralettes
+- Going out: Slip dresses, fitted midi dresses, elegant jumpsuits
+- Athleisure: Matching sets, tasteful sports bras, biker shorts
+
+30s:
+- Swimwear: Mix of bikinis and one-pieces, tankinis
+- Dresses: Midi and maxi dresses, elegant cocktail dresses
+- Casual: Classic jeans, blouses, cardigans, elevated basics
+- Going out: Cocktail dresses, elegant pantsuits, silk blouses
+- Athleisure: Full coverage workout sets, tasteful athleisure
+
+40s+:
+- Swimwear: One-pieces, tankinis, swim dresses
+- Dresses: Knee-length or longer, classic silhouettes
+- Casual: Tailored pants, quality blouses, elegant layers
+- Going out: Classic evening wear, elegant dresses
+- Athleisure: Full coverage, quality athletic wear
+
+ALWAYS match the outfit to:
+1. The SCENARIO (beach = swimwear, office = professional, etc.)
+2. The SUBJECT'S AGE from the physical profile
+3. The SETTING (upscale restaurant = dressy, home = casual, etc.)
+`;
+
 export const generateUGCPrompts = async (params: {
   contentDescription: string;
   count: number;
   aspectRatio: string;
+  headshotBase64?: string | null;
+  bodyshotBase64?: string | null;
   modelId?: string;
 }): Promise<UGCPromptCard[]> => {
   const ai = getAiClient();
   const modelId = params.modelId || 'gemini-2.0-flash';
 
+  let physicalProfile = "";
+  let ageRange = "";
+  
+  if (params.headshotBase64 || params.bodyshotBase64) {
+    const appearance = await analyzePhysicalAppearance(
+      params.headshotBase64,
+      params.bodyshotBase64,
+      modelId
+    );
+    
+    if (appearance) {
+      ageRange = appearance.age_range;
+      physicalProfile = `
+SUBJECT PHYSICAL PROFILE (MUST BE INCLUDED IN EVERY PROMPT):
+${appearance.identity_summary}
+
+DETAILED PHYSICAL TRAITS:
+- Age: ${appearance.age_range}
+${appearance.celebrity_match ? `- Resembles: ${appearance.celebrity_match}` : ''}
+- Eyes: ${appearance.face.eye_color}
+- Face Shape: ${appearance.face.face_shape}
+- Lips: ${appearance.face.lips}
+- Hair Color: ${appearance.hair.color}
+- Hair Texture: ${appearance.hair.texture}
+- Body Type: ${appearance.body.type}
+- Bust: ${appearance.body.bust}
+- Waist: ${appearance.body.waist}
+- Hips: ${appearance.body.hips}
+- Skin Tone: ${appearance.skin.tone}
+
+CRITICAL: You MUST inject these physical traits into EVERY fullPrompt. The subject's appearance must be consistent across all prompts.
+`;
+    }
+  }
+
   const userPrompt = `
 ${CANDID_VIEW_DIRECTIVE}
+
+${physicalProfile}
+
+${AGE_CLOTHING_GUIDANCE}
 
 TASK: Generate ${params.count} unique UGC (User Generated Content) image prompts for social media.
 
@@ -526,6 +695,7 @@ CONTENT REQUEST FROM USER:
 "${params.contentDescription}"
 
 ASPECT RATIO: ${params.aspectRatio}
+${ageRange ? `SUBJECT AGE: ${ageRange} - Choose age-appropriate clothing!` : ''}
 
 REQUIREMENTS:
 1. Each prompt should be a UNIQUE scenario based on the user's content request
@@ -534,6 +704,9 @@ REQUIREMENTS:
 4. Vary the settings, outfits, poses, and lighting across prompts
 5. Use the Candid-View-I aesthetic (amateur smartphone look, NOT professional studio)
 6. Make prompts detailed enough for high-quality image generation
+7. ONLY the subject appears in frame - NO other people visible
+${physicalProfile ? '8. INJECT the physical profile into every fullPrompt - describe the subject\'s appearance' : ''}
+9. Choose outfits appropriate for the subject's age and the scenario
 
 Generate ${params.count} prompts as a JSON array.
 `;

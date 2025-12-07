@@ -69,7 +69,9 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
             const prompts = await generateUGCPrompts({
                 contentDescription: textPrompt,
                 count: promptCount,
-                aspectRatio: aspectRatio
+                aspectRatio: aspectRatio,
+                headshotBase64: effectiveHeadshot,
+                bodyshotBase64: effectiveBodyshot
             });
             
             setGeneratedPrompts(prompts);
