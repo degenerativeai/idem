@@ -661,15 +661,15 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                             <div>
                                 <label style={labelStyle}>Provider</label>
                                 <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle} data-testid="select-provider">
-                                    <option value="google">Google (Imagen)</option>
-                                    <option value="wavespeed">Wavespeed (Flux)</option>
+                                    <option value="google" style={{ background: '#1e1030', color: '#e9d5ff' }}>Google (Imagen)</option>
+                                    <option value="wavespeed" style={{ background: '#1e1030', color: '#e9d5ff' }}>Wavespeed (Flux)</option>
                                 </select>
                             </div>
                             <div>
                                 <label style={labelStyle}>Quality</label>
                                 <select value={resolution} onChange={(e) => setResolution(e.target.value as any)} style={selectStyle} data-testid="select-resolution">
-                                    <option value="2k">2K (Standard)</option>
-                                    <option value="4k">4K (High Res)</option>
+                                    <option value="2k" style={{ background: '#1e1030', color: '#e9d5ff' }}>2K (Standard)</option>
+                                    <option value="4k" style={{ background: '#1e1030', color: '#e9d5ff' }}>4K (High Res)</option>
                                 </select>
                             </div>
                         </div>
@@ -683,11 +683,11 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                             <div>
                                 <label style={labelStyle}>Aspect Ratio</label>
                                 <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as ImageAspect)} style={selectStyle} data-testid="select-aspect-ratio">
-                                    <option value="1:1">1:1 (Square)</option>
-                                    <option value="4:3">4:3</option>
-                                    <option value="3:4">3:4</option>
-                                    <option value="16:9">16:9</option>
-                                    <option value="9:16">9:16</option>
+                                    <option value="1:1" style={{ background: '#1e1030', color: '#e9d5ff' }}>1:1 (Square)</option>
+                                    <option value="4:3" style={{ background: '#1e1030', color: '#e9d5ff' }}>4:3</option>
+                                    <option value="3:4" style={{ background: '#1e1030', color: '#e9d5ff' }}>3:4</option>
+                                    <option value="16:9" style={{ background: '#1e1030', color: '#e9d5ff' }}>16:9</option>
+                                    <option value="9:16" style={{ background: '#1e1030', color: '#e9d5ff' }}>9:16</option>
                                 </select>
                             </div>
                             <div>
