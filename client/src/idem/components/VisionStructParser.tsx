@@ -40,15 +40,16 @@ function CustomSelect<T extends string>({ value, onChange, options, testId }: Cu
                     background: 'rgba(88, 28, 135, 0.3)',
                     border: '1px solid rgba(168, 85, 247, 0.3)',
                     borderRadius: '8px',
-                    padding: '0.5rem 0.75rem',
-                    fontSize: '0.85rem',
+                    padding: '0.5rem 0.6rem',
+                    fontSize: '0.75rem',
                     color: '#e9d5ff',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     minHeight: '36px',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    whiteSpace: 'nowrap'
                 }}
             >
                 <span>{selectedLabel}</span>
@@ -78,12 +79,13 @@ function CustomSelect<T extends string>({ value, onChange, options, testId }: Cu
                                 setIsOpen(false);
                             }}
                             style={{
-                                padding: '0.5rem 0.75rem',
-                                fontSize: '0.85rem',
+                                padding: '0.5rem 0.6rem',
+                                fontSize: '0.75rem',
                                 color: value === option.value ? '#e9d5ff' : '#c4b5fd',
                                 background: value === option.value ? 'rgba(168, 85, 247, 0.3)' : 'transparent',
                                 cursor: 'pointer',
-                                transition: 'background 0.15s'
+                                transition: 'background 0.15s',
+                                whiteSpace: 'nowrap'
                             }}
                             onMouseEnter={(e) => {
                                 if (value !== option.value) {
