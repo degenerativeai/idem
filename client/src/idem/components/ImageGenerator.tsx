@@ -1,24 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ImageAspect, UGCPromptCard } from '../types';
 import { generateUGCPrompts } from '../services/geminiService';
 
 interface ImageGeneratorProps {
     identityImages?: { headshot: string | null; bodyshot: string | null };
+    onNavigateToTab?: (tab: number) => void;
 }
 
-const CARD_COLORS = [
-    { bg: 'rgba(99, 102, 241, 0.1)', border: 'rgba(99, 102, 241, 0.3)', subtleBorder: 'rgba(99, 102, 241, 0.15)', accent: '#818cf8', label: '#a5b4fc', glow: 'rgba(99, 102, 241, 0.15)' },
-    { bg: 'rgba(244, 63, 94, 0.1)', border: 'rgba(244, 63, 94, 0.3)', subtleBorder: 'rgba(244, 63, 94, 0.15)', accent: '#fb7185', label: '#fda4af', glow: 'rgba(244, 63, 94, 0.15)' },
-    { bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)', subtleBorder: 'rgba(16, 185, 129, 0.15)', accent: '#34d399', label: '#6ee7b7', glow: 'rgba(16, 185, 129, 0.15)' },
-    { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', subtleBorder: 'rgba(245, 158, 11, 0.15)', accent: '#fbbf24', label: '#fcd34d', glow: 'rgba(245, 158, 11, 0.15)' },
-    { bg: 'rgba(6, 182, 212, 0.1)', border: 'rgba(6, 182, 212, 0.3)', subtleBorder: 'rgba(6, 182, 212, 0.15)', accent: '#22d3ee', label: '#67e8f9', glow: 'rgba(6, 182, 212, 0.15)' },
-    { bg: 'rgba(168, 85, 247, 0.1)', border: 'rgba(168, 85, 247, 0.3)', subtleBorder: 'rgba(168, 85, 247, 0.15)', accent: '#a78bfa', label: '#c4b5fd', glow: 'rgba(168, 85, 247, 0.15)' },
-    { bg: 'rgba(236, 72, 153, 0.1)', border: 'rgba(236, 72, 153, 0.3)', subtleBorder: 'rgba(236, 72, 153, 0.15)', accent: '#f472b6', label: '#f9a8d4', glow: 'rgba(236, 72, 153, 0.15)' },
-    { bg: 'rgba(20, 184, 166, 0.1)', border: 'rgba(20, 184, 166, 0.3)', subtleBorder: 'rgba(20, 184, 166, 0.15)', accent: '#2dd4bf', label: '#5eead4', glow: 'rgba(20, 184, 166, 0.15)' },
-];
-
-const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
+const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavigateToTab }) => {
     const [textPrompt, setTextPrompt] = useState('');
     const [promptCount, setPromptCount] = useState(5);
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('9:16');
@@ -26,6 +16,37 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
+    
+    const [localHeadshot, setLocalHeadshot] = useState<string | null>(null);
+    const [localBodyshot, setLocalBodyshot] = useState<string | null>(null);
+    
+    const headInputRef = useRef<HTMLInputElement>(null);
+    const bodyInputRef = useRef<HTMLInputElement>(null);
+
+    const effectiveHeadshot = localHeadshot || identityImages?.headshot;
+    const effectiveBodyshot = localBodyshot || identityImages?.bodyshot;
+    const hasIdentity = effectiveHeadshot || effectiveBodyshot;
+
+    const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+        });
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'head' | 'body') => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const base64 = await fileToBase64(file);
+            if (type === 'head') setLocalHeadshot(base64);
+            else setLocalBodyshot(base64);
+        } catch (err) {
+            console.error("Upload failed", err);
+        }
+    };
 
     const handleGeneratePrompts = async () => {
         if (!textPrompt.trim()) {
@@ -66,10 +87,6 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
         setCopiedIds(prev => new Set(prev).add(prompt.id));
     };
 
-    const getCardColor = (index: number) => CARD_COLORS[index % CARD_COLORS.length];
-
-    const hasIdentity = identityImages?.headshot || identityImages?.bodyshot;
-
     return (
         <div style={{
             display: 'flex',
@@ -86,256 +103,353 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                 <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#eab308' }}>Social Media / UGC</h2>
             </div>
 
-            {/* Top Control Bar */}
+            {/* Top Control Bar - New Layout */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: hasIdentity ? 'auto 1fr auto auto' : '1fr auto auto',
-                gap: '1rem',
+                gridTemplateColumns: '1fr auto',
+                gap: '1.5rem',
                 background: 'rgba(24, 26, 31, 0.6)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
                 borderRadius: '16px',
-                padding: '1rem',
+                padding: '1.25rem',
                 border: '1px solid rgba(255,255,255,0.08)',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                alignItems: 'stretch'
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}>
-                {/* Identity Images Panel */}
-                {hasIdentity && (
-                    <div style={{
-                        display: 'flex',
-                        gap: '0.75rem',
-                        padding: '0.5rem',
-                        background: 'rgba(34, 197, 94, 0.08)',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(34, 197, 94, 0.2)',
-                        alignItems: 'center'
-                    }}>
-                        {identityImages?.headshot && (
-                            <div style={{ position: 'relative' }}>
-                                <img 
-                                    src={identityImages.headshot}
-                                    alt="Headshot"
-                                    data-testid="img-identity-headshot"
-                                    style={{
-                                        width: '60px',
-                                        height: '60px',
-                                        objectFit: 'cover',
-                                        borderRadius: '8px',
-                                        border: '2px solid rgba(34, 197, 94, 0.4)'
-                                    }}
-                                />
-                                <span style={{
-                                    position: 'absolute',
-                                    bottom: '-4px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    fontSize: '0.5rem',
-                                    background: 'rgba(34, 197, 94, 0.9)',
-                                    color: 'white',
-                                    padding: '1px 6px',
-                                    borderRadius: '4px',
-                                    fontWeight: 'bold',
-                                    textTransform: 'uppercase'
-                                }}>Head</span>
-                            </div>
-                        )}
-                        {identityImages?.bodyshot && (
-                            <div style={{ position: 'relative' }}>
-                                <img 
-                                    src={identityImages.bodyshot}
-                                    alt="Bodyshot"
-                                    data-testid="img-identity-bodyshot"
-                                    style={{
-                                        width: '60px',
-                                        height: '60px',
-                                        objectFit: 'cover',
-                                        borderRadius: '8px',
-                                        border: '2px solid rgba(34, 197, 94, 0.4)'
-                                    }}
-                                />
-                                <span style={{
-                                    position: 'absolute',
-                                    bottom: '-4px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    fontSize: '0.5rem',
-                                    background: 'rgba(34, 197, 94, 0.9)',
-                                    color: 'white',
-                                    padding: '1px 6px',
-                                    borderRadius: '4px',
-                                    fontWeight: 'bold',
-                                    textTransform: 'uppercase'
-                                }}>Body</span>
-                            </div>
-                        )}
+                {/* Left Side - Describe + Controls */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* Describe Box */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label style={{
+                            fontSize: '0.6rem',
+                            textTransform: 'uppercase',
+                            fontWeight: 'bold',
+                            color: '#94a3b8',
+                            letterSpacing: '0.05em'
+                        }}>Describe Your Content</label>
+                        <textarea
+                            data-testid="input-social-prompt"
+                            value={textPrompt}
+                            onChange={(e) => setTextPrompt(e.target.value)}
+                            placeholder="Day in the life content, outfit posts, coffee shop aesthetic, gym selfies..."
+                            style={{
+                                width: '100%',
+                                minHeight: '80px',
+                                background: 'rgba(0,0,0,0.3)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '8px',
+                                padding: '0.75rem',
+                                fontSize: '0.85rem',
+                                color: 'white',
+                                resize: 'none',
+                                outline: 'none',
+                                lineHeight: '1.4'
+                            }}
+                        />
                     </div>
-                )}
 
-                {/* Prompt Input */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: 0 }}>
-                    <label style={{
-                        fontSize: '0.6rem',
-                        textTransform: 'uppercase',
-                        fontWeight: 'bold',
-                        color: '#94a3b8',
-                        letterSpacing: '0.05em'
-                    }}>Describe Your Content</label>
-                    <textarea
-                        data-testid="input-social-prompt"
-                        value={textPrompt}
-                        onChange={(e) => setTextPrompt(e.target.value)}
-                        placeholder="Day in the life content, outfit posts, coffee shop aesthetic, gym selfies..."
-                        style={{
-                            width: '100%',
-                            minHeight: '60px',
-                            background: 'rgba(0,0,0,0.3)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '8px',
-                            padding: '0.75rem',
-                            fontSize: '0.85rem',
-                            color: 'white',
-                            resize: 'none',
-                            outline: 'none',
-                            lineHeight: '1.4'
-                        }}
-                    />
+                    {/* Controls Row - Count, Ratio, Generate */}
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '1fr 1fr auto', 
+                        gap: '1rem',
+                        alignItems: 'end'
+                    }}>
+                        {/* Prompt Count */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            <label style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase' }}>Count</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <input
+                                    type="range"
+                                    data-testid="slider-prompt-count"
+                                    min={1}
+                                    max={25}
+                                    value={promptCount}
+                                    onChange={(e) => setPromptCount(parseInt(e.target.value))}
+                                    style={{
+                                        flex: 1,
+                                        height: '6px',
+                                        borderRadius: '3px',
+                                        background: `linear-gradient(to right, #eab308 0%, #eab308 ${((promptCount - 1) / 24) * 100}%, rgba(255,255,255,0.1) ${((promptCount - 1) / 24) * 100}%, rgba(255,255,255,0.1) 100%)`,
+                                        appearance: 'none',
+                                        WebkitAppearance: 'none',
+                                        cursor: 'pointer',
+                                        outline: 'none'
+                                    }}
+                                />
+                                <span style={{ 
+                                    fontSize: '1rem', 
+                                    fontWeight: 'bold', 
+                                    color: '#fde047',
+                                    minWidth: '2rem',
+                                    textAlign: 'right'
+                                }}>
+                                    {promptCount}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Aspect Ratio */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            <label style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase' }}>Ratio</label>
+                            <select
+                                data-testid="select-social-aspect-ratio"
+                                value={aspectRatio}
+                                onChange={(e) => setAspectRatio(e.target.value as ImageAspect)}
+                                style={{
+                                    padding: '0.5rem 0.75rem',
+                                    borderRadius: '6px',
+                                    background: '#1a1d23',
+                                    border: '1px solid rgba(234, 179, 8, 0.3)',
+                                    color: '#e5e7eb',
+                                    fontSize: '0.75rem',
+                                    cursor: 'pointer',
+                                    fontWeight: '500',
+                                    outline: 'none'
+                                }}
+                            >
+                                <option value="9:16">9:16 Stories</option>
+                                <option value="1:1">1:1 Square</option>
+                                <option value="4:5">4:5 Portrait</option>
+                                <option value="16:9">16:9 Landscape</option>
+                                <option value="4:3">4:3</option>
+                                <option value="3:4">3:4</option>
+                            </select>
+                        </div>
+
+                        {/* Generate Button */}
+                        <button
+                            data-testid="button-generate-social"
+                            onClick={handleGeneratePrompts}
+                            disabled={isGenerating || !textPrompt.trim()}
+                            style={{
+                                padding: '0.75rem 1.5rem',
+                                borderRadius: '10px',
+                                border: 'none',
+                                background: (isGenerating || !textPrompt.trim()) ? '#374151' : 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
+                                color: (isGenerating || !textPrompt.trim()) ? '#9ca3af' : 'black',
+                                fontSize: '0.8rem',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                cursor: (isGenerating || !textPrompt.trim()) ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                opacity: !textPrompt.trim() ? 0.5 : 1,
+                                whiteSpace: 'nowrap',
+                                height: '100%',
+                                minHeight: '40px'
+                            }}
+                        >
+                            {isGenerating ? (
+                                <>
+                                    <div style={{
+                                        width: '14px',
+                                        height: '14px',
+                                        border: '2px solid rgba(0,0,0,0.3)',
+                                        borderTopColor: 'black',
+                                        borderRadius: '50%',
+                                        animation: 'spin 1s linear infinite'
+                                    }} />
+                                    Generating...
+                                </>
+                            ) : (
+                                <>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    Generate
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
-                {/* Settings Group */}
+                {/* Right Side - Identity Images */}
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.5rem',
-                    minWidth: '200px'
+                    gap: '0.75rem',
+                    padding: '0.75rem',
+                    background: hasIdentity ? 'rgba(34, 197, 94, 0.08)' : 'rgba(107, 114, 128, 0.08)',
+                    borderRadius: '12px',
+                    border: `1px solid ${hasIdentity ? 'rgba(34, 197, 94, 0.2)' : 'rgba(107, 114, 128, 0.2)'}`,
+                    minWidth: '180px'
                 }}>
-                    {/* Prompt Count */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <label style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase', minWidth: '50px' }}>Count</label>
-                        <input
-                            type="range"
-                            data-testid="slider-prompt-count"
-                            min={1}
-                            max={25}
-                            value={promptCount}
-                            onChange={(e) => setPromptCount(parseInt(e.target.value))}
-                            style={{
-                                flex: 1,
-                                height: '6px',
-                                borderRadius: '3px',
-                                background: `linear-gradient(to right, #eab308 0%, #eab308 ${((promptCount - 1) / 24) * 100}%, rgba(255,255,255,0.1) ${((promptCount - 1) / 24) * 100}%, rgba(255,255,255,0.1) 100%)`,
-                                appearance: 'none',
-                                WebkitAppearance: 'none',
-                                cursor: 'pointer',
-                                outline: 'none'
-                            }}
-                        />
-                        <span style={{ 
-                            fontSize: '1rem', 
-                            fontWeight: 'bold', 
-                            color: '#fde047',
-                            minWidth: '2rem',
-                            textAlign: 'right'
-                        }}>
-                            {promptCount}
-                        </span>
+                    <span style={{ 
+                        fontSize: '0.6rem', 
+                        fontWeight: 'bold', 
+                        textTransform: 'uppercase', 
+                        color: hasIdentity ? '#4ade80' : '#9ca3af',
+                        letterSpacing: '0.05em'
+                    }}>
+                        Reference Images
+                    </span>
+                    
+                    <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                        {/* Headshot */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                            {effectiveHeadshot ? (
+                                <div style={{ position: 'relative' }}>
+                                    <img 
+                                        src={effectiveHeadshot}
+                                        alt="Headshot"
+                                        data-testid="img-identity-headshot"
+                                        style={{
+                                            width: '70px',
+                                            height: '70px',
+                                            objectFit: 'cover',
+                                            borderRadius: '10px',
+                                            border: '2px solid rgba(34, 197, 94, 0.4)'
+                                        }}
+                                    />
+                                    <span style={{
+                                        position: 'absolute',
+                                        bottom: '-6px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        fontSize: '0.5rem',
+                                        background: 'rgba(34, 197, 94, 0.9)',
+                                        color: 'white',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        fontWeight: 'bold',
+                                        textTransform: 'uppercase'
+                                    }}>Head</span>
+                                </div>
+                            ) : (
+                                <div 
+                                    onClick={() => headInputRef.current?.click()}
+                                    style={{
+                                        width: '70px',
+                                        height: '70px',
+                                        borderRadius: '10px',
+                                        border: '2px dashed rgba(107, 114, 128, 0.4)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        background: 'rgba(0,0,0,0.2)',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    data-testid="upload-headshot"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="17 8 12 3 7 8" />
+                                        <line x1="12" y1="3" x2="12" y2="15" />
+                                    </svg>
+                                    <span style={{ fontSize: '0.5rem', color: '#6b7280', marginTop: '4px', fontWeight: 'bold' }}>HEAD</span>
+                                </div>
+                            )}
+                            <input
+                                ref={headInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleImageUpload(e, 'head')}
+                                style={{ display: 'none' }}
+                            />
+                        </div>
+
+                        {/* Bodyshot */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                            {effectiveBodyshot ? (
+                                <div style={{ position: 'relative' }}>
+                                    <img 
+                                        src={effectiveBodyshot}
+                                        alt="Bodyshot"
+                                        data-testid="img-identity-bodyshot"
+                                        style={{
+                                            width: '70px',
+                                            height: '70px',
+                                            objectFit: 'cover',
+                                            borderRadius: '10px',
+                                            border: '2px solid rgba(34, 197, 94, 0.4)'
+                                        }}
+                                    />
+                                    <span style={{
+                                        position: 'absolute',
+                                        bottom: '-6px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        fontSize: '0.5rem',
+                                        background: 'rgba(34, 197, 94, 0.9)',
+                                        color: 'white',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        fontWeight: 'bold',
+                                        textTransform: 'uppercase'
+                                    }}>Body</span>
+                                </div>
+                            ) : (
+                                <div 
+                                    onClick={() => bodyInputRef.current?.click()}
+                                    style={{
+                                        width: '70px',
+                                        height: '70px',
+                                        borderRadius: '10px',
+                                        border: '2px dashed rgba(107, 114, 128, 0.4)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        background: 'rgba(0,0,0,0.2)',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    data-testid="upload-bodyshot"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="17 8 12 3 7 8" />
+                                        <line x1="12" y1="3" x2="12" y2="15" />
+                                    </svg>
+                                    <span style={{ fontSize: '0.5rem', color: '#6b7280', marginTop: '4px', fontWeight: 'bold' }}>BODY</span>
+                                </div>
+                            )}
+                            <input
+                                ref={bodyInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleImageUpload(e, 'body')}
+                                style={{ display: 'none' }}
+                            />
+                        </div>
                     </div>
 
-                    {/* Aspect Ratio */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <label style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase', minWidth: '50px' }}>Ratio</label>
-                        <select
-                            data-testid="select-social-aspect-ratio"
-                            value={aspectRatio}
-                            onChange={(e) => setAspectRatio(e.target.value as ImageAspect)}
+                    {/* Create Identity Button */}
+                    {!hasIdentity && onNavigateToTab && (
+                        <button
+                            onClick={() => onNavigateToTab(0)}
+                            data-testid="button-create-identity"
                             style={{
-                                flex: 1,
-                                padding: '0.4rem 0.75rem',
+                                padding: '0.5rem 0.75rem',
                                 borderRadius: '6px',
-                                background: '#1a1d23',
-                                border: '1px solid rgba(234, 179, 8, 0.3)',
-                                color: '#e5e7eb',
-                                fontSize: '0.75rem',
+                                border: '1px solid rgba(99, 102, 241, 0.3)',
+                                background: 'rgba(99, 102, 241, 0.1)',
+                                color: '#a5b4fc',
+                                fontSize: '0.65rem',
+                                fontWeight: '600',
                                 cursor: 'pointer',
-                                fontWeight: '500',
-                                outline: 'none'
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em'
                             }}
                         >
-                            <option value="9:16">9:16 Stories</option>
-                            <option value="1:1">1:1 Square</option>
-                            <option value="4:5">4:5 Portrait</option>
-                            <option value="16:9">16:9 Landscape</option>
-                            <option value="4:3">4:3</option>
-                            <option value="3:4">3:4</option>
-                        </select>
-                    </div>
-
-                    {/* Identity Status (if no images) */}
-                    {!hasIdentity && (
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '0.5rem',
-                            padding: '0.4rem 0.75rem',
-                            background: 'rgba(107, 114, 128, 0.1)',
-                            borderRadius: '6px',
-                            border: '1px solid rgba(107, 114, 128, 0.2)'
-                        }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="12" cy="8" r="5" />
                                 <path d="M20 21a8 8 0 1 0-16 0" />
                             </svg>
-                            <span style={{ fontSize: '0.65rem', color: '#9ca3af' }}>No identity - create in Tab 1</span>
-                        </div>
+                            Create Identity in Tab 1
+                        </button>
                     )}
                 </div>
-
-                {/* Generate Button */}
-                <button
-                    data-testid="button-generate-social"
-                    onClick={handleGeneratePrompts}
-                    disabled={isGenerating || !textPrompt.trim()}
-                    style={{
-                        padding: '1rem 1.5rem',
-                        borderRadius: '12px',
-                        border: 'none',
-                        background: (isGenerating || !textPrompt.trim()) ? '#374151' : 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
-                        color: (isGenerating || !textPrompt.trim()) ? '#9ca3af' : 'black',
-                        fontSize: '0.8rem',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        cursor: (isGenerating || !textPrompt.trim()) ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        opacity: !textPrompt.trim() ? 0.5 : 1,
-                        whiteSpace: 'nowrap',
-                        alignSelf: 'stretch'
-                    }}
-                >
-                    {isGenerating ? (
-                        <>
-                            <div style={{
-                                width: '14px',
-                                height: '14px',
-                                border: '2px solid rgba(0,0,0,0.3)',
-                                borderTopColor: 'black',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite'
-                            }} />
-                            Generating...
-                        </>
-                    ) : (
-                        <>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                            </svg>
-                            Generate
-                        </>
-                    )}
-                </button>
             </div>
 
             {/* Error Message */}
@@ -435,14 +549,13 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                 ) : (
                     <div style={{ 
                         display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', 
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', 
                         gap: '1rem',
                         maxHeight: '60vh',
                         overflow: 'auto',
                         paddingRight: '0.5rem'
                     }}>
                         {generatedPrompts.map((prompt, index) => {
-                            const color = getCardColor(index);
                             const isCopied = copiedIds.has(prompt.id);
                             
                             return (
@@ -450,58 +563,49 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                     key={prompt.id}
                                     data-testid={`prompt-card-${index}`}
                                     style={{
-                                        background: color.bg,
+                                        background: '#181a1f',
                                         borderRadius: '12px',
-                                        border: `1px solid ${color.border}`,
+                                        border: isCopied ? '1px solid rgba(34, 197, 94, 0.5)' : '1px solid rgba(255,255,255,0.08)',
                                         overflow: 'hidden',
                                         transition: 'all 0.3s',
-                                        boxShadow: isCopied ? `0 0 20px ${color.glow}` : 'none'
+                                        boxShadow: isCopied ? '0 0 20px rgba(34, 197, 94, 0.15)' : 'none'
                                     }}
                                 >
-                                    {/* Card Header */}
+                                    {isCopied && <div style={{ position: 'absolute', inset: 0, background: 'rgba(34, 197, 94, 0.05)', pointerEvents: 'none' }} />}
+                                    
+                                    {/* Card Header - Neutral */}
                                     <div style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
                                         padding: '0.75rem 1rem',
-                                        background: `linear-gradient(135deg, ${color.bg}, rgba(0,0,0,0.3))`,
-                                        borderBottom: `1px solid ${color.border}`
+                                        background: 'rgba(0,0,0,0.4)',
+                                        borderBottom: '1px solid rgba(255,255,255,0.05)'
                                     }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                             <div style={{
-                                                width: '28px',
-                                                height: '28px',
-                                                borderRadius: '8px',
-                                                background: color.bg,
-                                                border: `1px solid ${color.border}`,
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: color.accent,
-                                                fontSize: '0.75rem',
-                                                fontWeight: 'bold'
+                                                gap: '0.5rem',
+                                                background: 'rgba(99, 102, 241, 0.1)',
+                                                border: '1px solid rgba(99, 102, 241, 0.2)',
+                                                borderRadius: '6px',
+                                                padding: '0.25rem 0.5rem'
                                             }}>
-                                                {index + 1}
+                                                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#818cf8', fontFamily: 'monospace' }}>UGC</span>
+                                                <span style={{ width: '1px', height: '12px', background: 'rgba(99, 102, 241, 0.3)' }} />
+                                                <span style={{ fontSize: '0.7rem', color: '#a5b4fc', fontFamily: 'monospace' }}>{index + 1} / {generatedPrompts.length}</span>
                                             </div>
-                                            <span style={{ 
-                                                fontSize: '0.7rem', 
-                                                fontWeight: 'bold', 
-                                                color: isCopied ? color.label : color.accent, 
-                                                textTransform: 'uppercase', 
-                                                letterSpacing: '0.05em' 
-                                            }}>
-                                                {isCopied ? 'Copied' : 'Prompt'}
-                                            </span>
                                         </div>
                                         <button
                                             data-testid={`button-copy-prompt-${index}`}
                                             onClick={() => handleCopyPrompt(prompt)}
                                             style={{
-                                                padding: '0.5rem 0.75rem',
+                                                padding: '0.4rem 0.75rem',
                                                 borderRadius: '6px',
-                                                border: `1px solid ${color.border}`,
-                                                background: isCopied ? color.bg : 'rgba(255,255,255,0.05)',
-                                                color: color.accent,
+                                                border: 'none',
+                                                background: isCopied ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.08)',
+                                                color: isCopied ? '#4ade80' : '#9ca3af',
                                                 fontSize: '0.7rem',
                                                 fontWeight: '600',
                                                 cursor: 'pointer',
@@ -530,74 +634,106 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                         </button>
                                     </div>
                                     
-                                    {/* Card Content */}
+                                    {/* Card Content - Colored Sections */}
                                     <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                        {/* Scenario - Main highlight */}
+                                        {/* Scenario - Indigo highlight */}
                                         <div style={{
-                                            background: `linear-gradient(135deg, ${color.bg}, rgba(0,0,0,0.2))`,
+                                            background: 'rgba(99, 102, 241, 0.1)',
                                             borderRadius: '8px',
                                             padding: '0.75rem',
-                                            border: `1px solid ${color.border}`
+                                            border: '1px solid rgba(99, 102, 241, 0.2)'
                                         }}>
-                                            <span style={{ fontSize: '0.65rem', color: color.accent, fontWeight: '600', textTransform: 'uppercase' }}>Scenario</span>
-                                            <p style={{ fontSize: '0.85rem', color: '#e5e7eb', margin: '0.25rem 0 0 0', lineHeight: '1.4' }}>{prompt.scenario}</p>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                                                <div style={{ width: '3px', height: '12px', background: '#818cf8', borderRadius: '2px' }} />
+                                                <span style={{ fontSize: '0.6rem', color: '#a5b4fc', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Scenario</span>
+                                            </div>
+                                            <p style={{ fontSize: '0.85rem', color: '#e5e7eb', margin: 0, lineHeight: '1.4' }}>{prompt.scenario}</p>
                                         </div>
                                         
-                                        {/* Details Grid */}
+                                        {/* Details Grid - Different colors per section */}
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                            {/* Setting - Emerald */}
                                             <div style={{ 
-                                                background: 'rgba(0,0,0,0.2)', 
+                                                background: 'rgba(16, 185, 129, 0.1)', 
                                                 borderRadius: '6px', 
-                                                padding: '0.5rem 0.75rem',
-                                                border: `1px solid ${color.subtleBorder}`
+                                                padding: '0.6rem 0.75rem',
+                                                border: '1px solid rgba(16, 185, 129, 0.2)'
                                             }}>
-                                                <span style={{ fontSize: '0.6rem', color: color.label, fontWeight: '600', textTransform: 'uppercase' }}>Setting</span>
-                                                <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.setting}</p>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                                                    <div style={{ width: '2px', height: '10px', background: '#34d399', borderRadius: '1px' }} />
+                                                    <span style={{ fontSize: '0.55rem', color: '#6ee7b7', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Setting</span>
+                                                </div>
+                                                <p style={{ fontSize: '0.75rem', color: '#d1d5db', margin: 0, lineHeight: '1.3' }}>{prompt.setting}</p>
                                             </div>
+                                            
+                                            {/* Outfit - Rose */}
                                             <div style={{ 
-                                                background: 'rgba(0,0,0,0.2)', 
+                                                background: 'rgba(244, 63, 94, 0.1)', 
                                                 borderRadius: '6px', 
-                                                padding: '0.5rem 0.75rem',
-                                                border: `1px solid ${color.subtleBorder}`
+                                                padding: '0.6rem 0.75rem',
+                                                border: '1px solid rgba(244, 63, 94, 0.2)'
                                             }}>
-                                                <span style={{ fontSize: '0.6rem', color: color.label, fontWeight: '600', textTransform: 'uppercase' }}>Outfit</span>
-                                                <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.outfit}</p>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                                                    <div style={{ width: '2px', height: '10px', background: '#fb7185', borderRadius: '1px' }} />
+                                                    <span style={{ fontSize: '0.55rem', color: '#fda4af', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Outfit</span>
+                                                </div>
+                                                <p style={{ fontSize: '0.75rem', color: '#d1d5db', margin: 0, lineHeight: '1.3' }}>{prompt.outfit}</p>
                                             </div>
+                                            
+                                            {/* Pose - Purple */}
                                             <div style={{ 
-                                                background: 'rgba(0,0,0,0.2)', 
+                                                background: 'rgba(168, 85, 247, 0.1)', 
                                                 borderRadius: '6px', 
-                                                padding: '0.5rem 0.75rem',
-                                                border: `1px solid ${color.subtleBorder}`
+                                                padding: '0.6rem 0.75rem',
+                                                border: '1px solid rgba(168, 85, 247, 0.2)'
                                             }}>
-                                                <span style={{ fontSize: '0.6rem', color: color.label, fontWeight: '600', textTransform: 'uppercase' }}>Pose</span>
-                                                <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.pose}</p>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                                                    <div style={{ width: '2px', height: '10px', background: '#a78bfa', borderRadius: '1px' }} />
+                                                    <span style={{ fontSize: '0.55rem', color: '#c4b5fd', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Pose</span>
+                                                </div>
+                                                <p style={{ fontSize: '0.75rem', color: '#d1d5db', margin: 0, lineHeight: '1.3' }}>{prompt.pose}</p>
                                             </div>
+                                            
+                                            {/* Lighting - Amber */}
                                             <div style={{ 
-                                                background: 'rgba(0,0,0,0.2)', 
+                                                background: 'rgba(245, 158, 11, 0.1)', 
                                                 borderRadius: '6px', 
-                                                padding: '0.5rem 0.75rem',
-                                                border: `1px solid ${color.subtleBorder}`
+                                                padding: '0.6rem 0.75rem',
+                                                border: '1px solid rgba(245, 158, 11, 0.2)'
                                             }}>
-                                                <span style={{ fontSize: '0.6rem', color: color.label, fontWeight: '600', textTransform: 'uppercase' }}>Lighting</span>
-                                                <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.lighting}</p>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                                                    <div style={{ width: '2px', height: '10px', background: '#fbbf24', borderRadius: '1px' }} />
+                                                    <span style={{ fontSize: '0.55rem', color: '#fcd34d', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Lighting</span>
+                                                </div>
+                                                <p style={{ fontSize: '0.75rem', color: '#d1d5db', margin: 0, lineHeight: '1.3' }}>{prompt.lighting}</p>
                                             </div>
+                                            
+                                            {/* Camera - Cyan */}
                                             <div style={{ 
-                                                background: 'rgba(0,0,0,0.2)', 
+                                                background: 'rgba(6, 182, 212, 0.1)', 
                                                 borderRadius: '6px', 
-                                                padding: '0.5rem 0.75rem',
-                                                border: `1px solid ${color.subtleBorder}`
+                                                padding: '0.6rem 0.75rem',
+                                                border: '1px solid rgba(6, 182, 212, 0.2)'
                                             }}>
-                                                <span style={{ fontSize: '0.6rem', color: color.label, fontWeight: '600', textTransform: 'uppercase' }}>Camera</span>
-                                                <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.camera}</p>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                                                    <div style={{ width: '2px', height: '10px', background: '#22d3ee', borderRadius: '1px' }} />
+                                                    <span style={{ fontSize: '0.55rem', color: '#67e8f9', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Camera</span>
+                                                </div>
+                                                <p style={{ fontSize: '0.75rem', color: '#d1d5db', margin: 0, lineHeight: '1.3' }}>{prompt.camera}</p>
                                             </div>
+                                            
+                                            {/* Imperfections - Teal */}
                                             <div style={{ 
-                                                background: 'rgba(0,0,0,0.2)', 
+                                                background: 'rgba(20, 184, 166, 0.1)', 
                                                 borderRadius: '6px', 
-                                                padding: '0.5rem 0.75rem',
-                                                border: `1px solid ${color.subtleBorder}`
+                                                padding: '0.6rem 0.75rem',
+                                                border: '1px solid rgba(20, 184, 166, 0.2)'
                                             }}>
-                                                <span style={{ fontSize: '0.6rem', color: color.label, fontWeight: '600', textTransform: 'uppercase' }}>Imperfections</span>
-                                                <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.imperfections}</p>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                                                    <div style={{ width: '2px', height: '10px', background: '#2dd4bf', borderRadius: '1px' }} />
+                                                    <span style={{ fontSize: '0.55rem', color: '#5eead4', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Imperfections</span>
+                                                </div>
+                                                <p style={{ fontSize: '0.75rem', color: '#d1d5db', margin: 0, lineHeight: '1.3' }}>{prompt.imperfections}</p>
                                             </div>
                                         </div>
                                     </div>
