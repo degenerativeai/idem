@@ -511,25 +511,34 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 <img src={sourceImage} alt="Source" style={{ maxWidth: '100%', maxHeight: '250px', borderRadius: '8px', objectFit: 'contain' }} />
                             </div>
                         ) : (
-                            <label style={uploadTriggerStyle}>
+                            <label style={{
+                                ...uploadTriggerStyle,
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                padding: '1rem'
+                            }}>
                                 <input type="file" onChange={handleFileUpload} accept="image/*" style={{ display: 'none' }} data-testid="input-source-upload" />
                                 <div style={{ 
-                                    width: '48px', 
-                                    height: '48px', 
+                                    width: '44px', 
+                                    height: '44px', 
                                     borderRadius: '50%', 
                                     background: 'rgba(168, 85, 247, 0.2)', 
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center',
-                                    border: '2px solid rgba(168, 85, 247, 0.4)'
+                                    border: '2px solid rgba(168, 85, 247, 0.4)',
+                                    flexShrink: 0
                                 }}>
-                                    <span style={{ fontSize: '1.5rem', color: '#a855f7' }}>+</span>
+                                    <span style={{ fontSize: '1.25rem', color: '#a855f7' }}>+</span>
                                 </div>
-                                <span style={{ textAlign: 'center', lineHeight: '1.5', color: '#c4b5fd', fontSize: '0.85rem', fontWeight: '500' }}>
+                                <span style={{ textAlign: 'center', lineHeight: '1.4', color: '#c4b5fd', fontSize: '0.8rem', fontWeight: '500' }}>
                                     Drop your image here
                                 </span>
                                 <span style={{ textAlign: 'center', color: '#64748b', fontSize: '0.7rem' }}>
                                     or click to browse
+                                </span>
+                                <span style={{ textAlign: 'center', color: '#a855f7', fontSize: '0.7rem', marginTop: '0.25rem' }}>
+                                    Click Create References to begin
                                 </span>
                             </label>
                         )}
