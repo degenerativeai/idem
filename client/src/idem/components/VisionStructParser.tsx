@@ -218,7 +218,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                 bodyshot: selectedBodyshot || generatedBodyshots[0] || null
             });
         }
-    }, [selectedHeadshot, selectedBodyshot, step, sourceImage, generatedHeadshots, generatedBodyshots, onImagesComplete]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedHeadshot, selectedBodyshot, step]);
 
     const handleRetryHeadshots = async () => {
         setIsProcessing(true);
