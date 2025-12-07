@@ -382,24 +382,99 @@ export const generateDatasetPrompts = async (params: {
     }
   };
 
-  try {
-    const result = await ai.models.generateContent({
-      model: modelId,
-      contents: [{ role: "user", parts: [{ text: context }] }],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: schema,
-        temperature: 0.7
+  // Helper to parse JSON with recovery for truncated responses
+  const parseJSONWithRecovery = (text: string): any[] => {
+    try {
+      return JSON.parse(text);
+    } catch (parseError: any) {
+      console.warn("JSON parse failed, attempting recovery:", parseError.message);
+      
+      // Try to recover partial array by finding last complete object
+      const lastBracket = text.lastIndexOf('}');
+      if (lastBracket > 0) {
+        // Find matching array structure
+        let recovered = text.substring(0, lastBracket + 1);
+        // Count open brackets to close properly
+        const openBrackets = (recovered.match(/\[/g) || []).length;
+        const closeBrackets = (recovered.match(/\]/g) || []).length;
+        recovered += ']'.repeat(openBrackets - closeBrackets);
+        
+        try {
+          const parsed = JSON.parse(recovered);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            console.log(`Recovered ${parsed.length} items from truncated response`);
+            return parsed;
+          }
+        } catch {
+          // Recovery failed
+        }
       }
-    });
+      throw parseError;
+    }
+  };
 
-    const text = result.text;
-    if (!text) throw new Error("No response");
+  // Generate with automatic batch size reduction on failure
+  const generateWithRetry = async (batchSize: number, maxRetries: number = 2): Promise<any[]> => {
+    const batchContext = context.replace(
+      `TASK: Generate ${params.count} distinct image prompts.`,
+      `TASK: Generate ${batchSize} distinct image prompts.`
+    );
     
-    const rawItems = JSON.parse(text) as any[];
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await ai.models.generateContent({
+          model: modelId,
+          contents: [{ role: "user", parts: [{ text: batchContext }] }],
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: schema,
+            temperature: 0.7
+          }
+        });
+
+        const text = result.text;
+        if (!text) throw new Error("No response");
+        
+        return parseJSONWithRecovery(text);
+      } catch (e: any) {
+        const isJsonError = e.message?.includes('JSON') || e.message?.includes('Unterminated');
+        
+        if (isJsonError && attempt < maxRetries) {
+          // Reduce batch size and retry
+          const reducedSize = Math.max(3, Math.floor(batchSize / 2));
+          console.log(`JSON error on attempt ${attempt + 1}, reducing batch to ${reducedSize}`);
+          batchSize = reducedSize;
+          continue;
+        }
+        throw e;
+      }
+    }
+    throw new Error("Max retries exceeded");
+  };
+
+  try {
+    // For large batches, split into smaller chunks to avoid truncation
+    const MAX_BATCH_SIZE = 10;
+    let allItems: any[] = [];
+    
+    if (params.count <= MAX_BATCH_SIZE) {
+      allItems = await generateWithRetry(params.count);
+    } else {
+      // Split into smaller batches
+      let remaining = params.count;
+      while (remaining > 0) {
+        const batchSize = Math.min(remaining, MAX_BATCH_SIZE);
+        const batchItems = await generateWithRetry(batchSize);
+        allItems = allItems.concat(batchItems);
+        remaining -= batchItems.length;
+        
+        // If we got fewer than requested, stop to avoid infinite loop
+        if (batchItems.length < batchSize) break;
+      }
+    }
     
     // Apply identity filter to strip facial/hair/skin descriptions
-    const filteredItems = rawItems.map(filterPromptItem);
+    const filteredItems = allItems.map(filterPromptItem);
     
     // Map to internal PromptItem structure - store the full JSON as text
     return filteredItems.map((item, idx) => {
