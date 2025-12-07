@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { INIPrompt, UGCMode, ImageAspect, ImageProvider } from '../types';
-import { analyzeImageINI, convertINIToPrompt } from '../services/geminiService';
+import { analyzeImageINI, convertINIToPrompt, stripIdentityDescriptions } from '../services/geminiService';
 
 interface ImageGeneratorProps {
     identityImages?: { headshot: string | null; bodyshot: string | null };
@@ -17,19 +17,55 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     const [finalPrompt, setFinalPrompt] = useState<string>('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isCopied, setIsCopied] = useState(false);
+    const [copiedType, setCopiedType] = useState<'all' | 'no-identity' | null>(null);
     
     const [provider, setProvider] = useState<ImageProvider>('google');
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('1:1');
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     
-    const handleCopyPrompt = async () => {
+    const handleCopyAll = async () => {
         if (iniResult?.raw) {
             await navigator.clipboard.writeText(iniResult.raw);
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
+            setCopiedType('all');
+            setTimeout(() => setCopiedType(null), 2000);
         }
+    };
+    
+    const handleCopyNoIdentity = async () => {
+        if (iniResult) {
+            const strippedIni = stripINIIdentity(iniResult);
+            await navigator.clipboard.writeText(strippedIni);
+            setCopiedType('no-identity');
+            setTimeout(() => setCopiedType(null), 2000);
+        }
+    };
+    
+    const stripINIIdentity = (ini: INIPrompt): string => {
+        const lines: string[] = ['[IMAGE_PROMPT]'];
+        
+        if (ini.desc) lines.push(`[desc]  = ${stripIdentityDescriptions(ini.desc)}`);
+        if (ini.objs) lines.push(`[objs]  = ${ini.objs}`);
+        if (ini.chars) {
+            const stripped = stripIdentityDescriptions(ini.chars);
+            if (stripped) lines.push(`[chars] = ${stripped}`);
+        }
+        if (ini.style) lines.push(`[style] = ${ini.style}`);
+        if (ini.comp) lines.push(`[comp]  = ${ini.comp}`);
+        if (ini.light) lines.push(`[light] = ${ini.light}`);
+        if (ini.pal) lines.push(`[pal]   = ${ini.pal}`);
+        if (ini.geom) lines.push(`[geom]  = ${ini.geom}`);
+        if (ini.micro) lines.push(`[micro] = ${ini.micro}`);
+        if (ini.sym) lines.push(`[sym]   = ${ini.sym}`);
+        if (ini.scene) lines.push(`[scene] = ${ini.scene}`);
+        if (ini.must) {
+            const stripped = stripIdentityDescriptions(ini.must);
+            if (stripped) lines.push(`[must]  = ${stripped}`);
+        }
+        if (ini.avoid) lines.push(`[avoid] = ${ini.avoid}`);
+        if (ini.notes) lines.push(`[notes] = ${ini.notes}`);
+        
+        return lines.join('\n');
     };
 
     const fileToBase64 = (file: File): Promise<string> => {
@@ -539,9 +575,9 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                             {iniResult && (
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <div style={{
-                                        background: isCopied ? 'rgba(34, 197, 94, 0.05)' : 'rgba(0,0,0,0.4)',
+                                        background: copiedType ? 'rgba(34, 197, 94, 0.05)' : 'rgba(0,0,0,0.4)',
                                         borderRadius: '12px',
-                                        border: isCopied ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255,255,255,0.08)',
+                                        border: copiedType ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255,255,255,0.08)',
                                         overflow: 'hidden',
                                         transition: 'all 0.3s'
                                     }}>
@@ -561,41 +597,69 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                                     gemini-2.5-pro
                                                 </span>
                                             </div>
-                                            <button
-                                                data-testid="button-copy-ini"
-                                                onClick={handleCopyPrompt}
-                                                style={{
-                                                    padding: '0.4rem 0.75rem',
-                                                    borderRadius: '6px',
-                                                    border: 'none',
-                                                    background: isCopied ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.05)',
-                                                    color: isCopied ? '#22c55e' : '#9ca3af',
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: '500',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.4rem',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                {isCopied ? (
-                                                    <>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <button
+                                                    data-testid="button-copy-all"
+                                                    onClick={handleCopyAll}
+                                                    style={{
+                                                        padding: '0.4rem 0.75rem',
+                                                        borderRadius: '6px',
+                                                        border: 'none',
+                                                        background: copiedType === 'all' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.05)',
+                                                        color: copiedType === 'all' ? '#22c55e' : '#9ca3af',
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: '500',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.4rem',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {copiedType === 'all' ? (
                                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                                             <polyline points="20 6 9 17 4 12" />
                                                         </svg>
-                                                        Copied
-                                                    </>
-                                                ) : (
-                                                    <>
+                                                    ) : (
                                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                             <rect x="9" y="9" width="13" height="13" rx="2" />
                                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                                         </svg>
-                                                        Copy
-                                                    </>
-                                                )}
-                                            </button>
+                                                    )}
+                                                    {copiedType === 'all' ? 'Copied' : 'Copy All'}
+                                                </button>
+                                                <button
+                                                    data-testid="button-copy-no-identity"
+                                                    onClick={handleCopyNoIdentity}
+                                                    style={{
+                                                        padding: '0.4rem 0.75rem',
+                                                        borderRadius: '6px',
+                                                        border: 'none',
+                                                        background: copiedType === 'no-identity' ? 'rgba(168, 85, 247, 0.3)' : 'rgba(168, 85, 247, 0.1)',
+                                                        color: copiedType === 'no-identity' ? '#c4b5fd' : '#a855f7',
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: '500',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.4rem',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {copiedType === 'no-identity' ? (
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                            <polyline points="20 6 9 17 4 12" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                            <circle cx="12" cy="8" r="4" />
+                                                            <path d="M5 20a7 7 0 0 1 14 0" />
+                                                            <line x1="4" y1="4" x2="20" y2="20" />
+                                                        </svg>
+                                                    )}
+                                                    {copiedType === 'no-identity' ? 'Copied' : 'No Identity'}
+                                                </button>
+                                            </div>
                                         </div>
                                         
                                         <div style={{ padding: '1rem', display: 'grid', gap: '0.75rem' }}>
