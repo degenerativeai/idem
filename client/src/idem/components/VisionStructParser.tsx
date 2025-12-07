@@ -576,8 +576,10 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 </button>
                             </div>
                         ) : (
-                            <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
-                                Waiting for generation...
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                                <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
+                                    Waiting for generation...
+                                </div>
                             </div>
                         )}
                     </div>
@@ -623,8 +625,10 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 </button>
                             </div>
                         ) : (
-                            <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
-                                Waiting for generation...
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                                <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
+                                    Waiting for generation...
+                                </div>
                             </div>
                         )}
                     </div>
