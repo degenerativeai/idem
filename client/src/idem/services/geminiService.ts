@@ -649,6 +649,7 @@ export const generateUGCPrompts = async (params: {
 
   let physicalProfile = "";
   let ageRange = "";
+  let identitySummary = "";
   
   if (params.headshotBase64 || params.bodyshotBase64) {
     const appearance = await analyzePhysicalAppearance(
@@ -659,6 +660,7 @@ export const generateUGCPrompts = async (params: {
     
     if (appearance) {
       ageRange = appearance.age_range;
+      identitySummary = appearance.identity_summary;
       physicalProfile = `
 SUBJECT PHYSICAL PROFILE (MUST BE INCLUDED IN EVERY PROMPT):
 ${appearance.identity_summary}
@@ -677,7 +679,10 @@ ${appearance.celebrity_match ? `- Resembles: ${appearance.celebrity_match}` : ''
 - Hips: ${appearance.body.hips}
 - Skin Tone: ${appearance.skin.tone}
 
-CRITICAL: You MUST inject these physical traits into EVERY fullPrompt. The subject's appearance must be consistent across all prompts.
+CRITICAL: The fullPrompt field MUST START with the subject's physical description. Example format:
+"A [age] [body type] woman with [hair color] [hair texture] hair, [eye color] eyes, [skin tone] skin, [other traits], [scenario and outfit details]..."
+
+DO NOT use generic terms like "young woman" or "adult female". Use the SPECIFIC traits above.
 `;
     }
   }
@@ -746,7 +751,7 @@ Generate ${params.count} prompts as a JSON array.
         },
         fullPrompt: { 
           type: Type.STRING, 
-          description: "Complete, detailed image generation prompt combining all elements for authentic UGC photo" 
+          description: "Complete prompt that MUST START with the subject's physical description (hair color, eye color, body type, skin tone) followed by scenario details. Never use generic 'young woman' - use specific traits." 
         }
       },
       required: ["scenario", "setting", "outfit", "pose", "lighting", "camera", "imperfections", "fullPrompt"]
@@ -769,17 +774,30 @@ Generate ${params.count} prompts as a JSON array.
     
     const rawItems = JSON.parse(text) as any[];
     
-    return rawItems.map((item, idx) => ({
-      id: `ugc-${generateId()}`,
-      scenario: item.scenario || '',
-      setting: item.setting || '',
-      outfit: item.outfit || '',
-      pose: item.pose || '',
-      lighting: item.lighting || '',
-      camera: item.camera || '',
-      imperfections: item.imperfections || '',
-      fullPrompt: item.fullPrompt || ''
-    }));
+    return rawItems.map((item, idx) => {
+      let finalPrompt = item.fullPrompt || '';
+      
+      // If we have an identity summary and the prompt doesn't seem to include physical traits,
+      // prepend the identity summary to ensure consistency
+      if (identitySummary && finalPrompt) {
+        const hasPhysicalTraits = /\b(hair|eyes?|skin|bust|waist|hips|curvy|slim|athletic)\b/i.test(finalPrompt);
+        if (!hasPhysicalTraits) {
+          finalPrompt = `${identitySummary} ${finalPrompt}`;
+        }
+      }
+      
+      return {
+        id: `ugc-${generateId()}`,
+        scenario: item.scenario || '',
+        setting: item.setting || '',
+        outfit: item.outfit || '',
+        pose: item.pose || '',
+        lighting: item.lighting || '',
+        camera: item.camera || '',
+        imperfections: item.imperfections || '',
+        fullPrompt: finalPrompt
+      };
+    });
 
   } catch (e: any) {
     console.error("UGC Prompt Generation Error:", e);
