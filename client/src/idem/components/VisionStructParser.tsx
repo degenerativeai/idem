@@ -169,12 +169,12 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
 
     const inputStyle: React.CSSProperties = {
         width: '100%',
-        background: 'rgba(0,0,0,0.5)',
-        border: '1px solid rgba(255,255,255,0.15)',
+        background: 'rgba(88, 28, 135, 0.3)',
+        border: '1px solid rgba(168, 85, 247, 0.3)',
         borderRadius: '8px',
         padding: '0.5rem 0.75rem',
         fontSize: '0.85rem',
-        color: '#e2e8f0',
+        color: '#e9d5ff',
         outline: 'none',
         transition: 'border-color 0.2s',
         minHeight: '36px'
@@ -184,12 +184,12 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         ...inputStyle,
         cursor: 'pointer',
         appearance: 'none',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23c4b5fd'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'right 0.5rem center',
         backgroundSize: '1.25rem',
         paddingRight: '2rem',
-        backgroundColor: 'rgba(0,0,0,0.5)'
+        backgroundColor: 'rgba(88, 28, 135, 0.3)'
     };
 
     const buttonPrimaryStyle: React.CSSProperties = {
@@ -260,16 +260,18 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
 
     return (
         <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(12, 1fr)',
-            gap: '2rem',
-            maxWidth: '95%',
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: '1.5rem',
+            maxWidth: '100%',
             margin: '0 auto',
             width: '100%',
-            alignItems: 'start',
-            paddingTop: '1rem'
+            alignItems: 'flex-start',
+            paddingTop: '1rem',
+            paddingInline: '1rem'
         }}>
-            <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ flex: '1 1 280px', minWidth: '280px', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <div style={{ width: '6px', height: '6px', background: '#a855f7', borderRadius: '50%' }} />
                     <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a855f7' }}>
@@ -384,10 +386,10 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
 
                 <div style={{
                     ...panelStyle,
-                    background: 'rgba(59, 130, 246, 0.05)',
-                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                    background: 'rgba(168, 85, 247, 0.05)',
+                    border: '1px solid rgba(168, 85, 247, 0.2)'
                 }}>
-                    <p style={{ fontSize: '0.75rem', color: '#93c5fd', lineHeight: '1.6', margin: 0 }}>
+                    <p style={{ fontSize: '0.75rem', color: '#c4b5fd', lineHeight: '1.6', margin: 0 }}>
                         Already have your reference images? Go directly to the Dataset Generator tab to upload them and start creating your training dataset.
                     </p>
                     {onNavigateToDataset && (
@@ -396,9 +398,9 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                             style={{
                                 padding: '0.5rem 1rem',
                                 borderRadius: '6px',
-                                background: 'rgba(59, 130, 246, 0.2)',
-                                border: '1px solid rgba(59, 130, 246, 0.3)',
-                                color: '#93c5fd',
+                                background: 'rgba(168, 85, 247, 0.2)',
+                                border: '1px solid rgba(168, 85, 247, 0.3)',
+                                color: '#c4b5fd',
                                 fontSize: '0.75rem',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s'
@@ -411,7 +413,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                 </div>
             </div>
 
-            <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ flex: '2 1 600px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
                     <div style={imageSlotStyle(!!sourceImage)}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
