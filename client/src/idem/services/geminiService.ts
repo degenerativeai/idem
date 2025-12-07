@@ -243,11 +243,11 @@ export const generateDatasetPrompts = async (params: {
             imperfections: {
               type: Type.OBJECT,
               properties: {
-                skin: { type: Type.STRING },
-                hair: { type: Type.STRING },
+                body_texture: { type: Type.STRING },
+                clothing_wear: { type: Type.STRING },
                 general: { type: Type.STRING }
               },
-              required: ["skin", "hair", "general"]
+              required: ["body_texture", "clothing_wear", "general"]
             },
             clothing: {
               type: Type.OBJECT,

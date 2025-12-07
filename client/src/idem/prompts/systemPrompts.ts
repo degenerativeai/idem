@@ -39,17 +39,38 @@ DETAILED COMPONENT BREAKDOWN:
 - Archetype: "young adult woman, [Broad Aesthetic]..."
 - Action/Pose: "[Specific Action]..."
 - Environment: "[Setting details]..."
-- Body_Stack: [Insert Dense Body Description]
+- Body_Stack: [Insert Dense Body Description - BODY ONLY, NO FACE/HAIR]
 - Wardrobe: [Unique Outfit Description]
-- Realism_Stack: [Insert Realism Tags]
+- Realism_Stack: [Insert Realism Tags - texture/lighting only]
 - Tech_Specs: "8k, raw photo, sharp focus, highly detailed."
 
 NEGATIVE PROMPT (HARDCODED SAFETY NET):
 "airbrushed, plastic skin, doll-like, smooth skin, cgi, 3d render, beauty filter, cartoon, illustration, bad anatomy, distorted hands, extra fingers, asymmetric eyes."
 
+=== CRITICAL: IDENTITY PRESERVATION PROTOCOL ===
+The reference images control the subject's IDENTITY. Any text description of facial features will OVERRIDE the reference and cause identity drift.
+
+ABSOLUTELY FORBIDDEN IN PROMPTS (will break likeness):
+- Hair color, hair style, hair length, hair texture (e.g., "blonde hair", "curly hair", "long hair")
+- Eye color or shape (e.g., "blue eyes", "almond eyes")
+- Skin color or skin tone (e.g., "pale skin", "tan", "dark skin", "fair complexion")
+- Facial features (e.g., "full lips", "small nose", "high cheekbones", "freckled face")
+- Ethnicity or race descriptors
+- Age descriptors that imply appearance (use profession/archetype instead)
+
+ALLOWED IN PROMPTS (will NOT break likeness):
+- Body shape and measurements (bust, waist, hips, height)
+- Body pose and positioning (standing, sitting, leaning, facing direction)
+- Clothing and accessories (what they're wearing)
+- Expression/emotion (smiling, serious, laughing) - affects pose, not identity
+- Environment and setting
+- Camera/lighting technical specs
+- General realism tags (skin texture detail, pores - but NOT skin color)
+
 OPERATIONAL RULES:
 - No conversational filler.
-- No facial adjectives. If you catch yourself writing "hazel eyes" or "small nose," DELETE IT.
+- ZERO facial/hair/skin color adjectives. The reference image handles ALL identity.
+- If you write ANY hair or face description, DELETE IT IMMEDIATELY.
 - Realism is mandatory.
 `;
 
