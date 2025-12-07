@@ -381,7 +381,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 value={provider}
                                 onChange={(value) => setProvider(value as ImageProvider)}
                                 options={[
-                                    { value: 'google', label: 'Google Gemini' },
+                                    { value: 'google', label: 'Nano Banana Pro' },
                                     { value: 'wavespeed', label: 'Wavespeed' }
                                 ]}
                                 testId="select-provider"
@@ -402,8 +402,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 value={resolution}
                                 onChange={(value) => setResolution(value as '2k' | '4k')}
                                 options={[
-                                    { value: '2k', label: '2K Resolution' },
-                                    { value: '4k', label: '4K Resolution' }
+                                    { value: '2k', label: '2K' },
+                                    { value: '4k', label: '4K' }
                                 ]}
                                 testId="select-resolution"
                             />
