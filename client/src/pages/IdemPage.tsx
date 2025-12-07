@@ -69,33 +69,80 @@ const IdemPage: React.FC = () => {
                     <h1 style={{ fontSize: '1.25rem', margin: 0 }}>IDEM</h1>
                 </div>
 
-                <nav className="flex-center gap-md" style={{ display: 'flex', gap: '1rem' }}>
-                    <button
-                        className={`nav-btn ${activeTab === 'vision' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('vision')}
-                        style={{ opacity: activeTab === 'vision' ? 1 : 0.6 }}
-                    >
-                        Create Identity
-                    </button>
-                    <button
-                        className={`nav-btn ${activeTab === 'dataset' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('dataset')}
-                        style={{ opacity: activeTab === 'dataset' ? 1 : 0.6 }}
-                    >
-                        Dataset Generator
-                    </button>
-                    <button
-                        className={`nav-btn ${activeTab === 'generator' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('generator')}
-                        style={{ opacity: activeTab === 'generator' ? 1 : 0.6 }}
-                    >
-                        Social Media/UGC
-                    </button>
+                <nav style={{ display: 'flex', gap: '0.5rem' }}>
+                    {(['vision', 'dataset', 'generator'] as const).map((tab) => {
+                        const isActive = activeTab === tab;
+                        const labels = {
+                            vision: 'Create Identity',
+                            dataset: 'Dataset Generator',
+                            generator: 'Social Media/UGC'
+                        };
+                        return (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                data-testid={`nav-tab-${tab}`}
+                                style={{
+                                    padding: '0.6rem 1.25rem',
+                                    borderRadius: '8px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: isActive ? '600' : '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    background: isActive 
+                                        ? 'rgba(168, 85, 247, 0.3)' 
+                                        : 'transparent',
+                                    color: isActive ? '#e9d5ff' : '#94a3b8',
+                                    border: isActive 
+                                        ? '1px solid rgba(168, 85, 247, 0.5)' 
+                                        : '1px solid transparent'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!isActive) {
+                                        e.currentTarget.style.background = 'rgba(168, 85, 247, 0.15)';
+                                        e.currentTarget.style.color = '#c4b5fd';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!isActive) {
+                                        e.currentTarget.style.background = 'transparent';
+                                        e.currentTarget.style.color = '#94a3b8';
+                                    }
+                                }}
+                            >
+                                {labels[tab]}
+                            </button>
+                        );
+                    })}
                 </nav>
 
-                <div className="flex-center">
-                    <button className="btn-secondary" onClick={handleSetKey}>
-                        {apiKey ? 'API Key Set' : 'Set API Key'}
+                <div>
+                    <button 
+                        onClick={handleSetKey}
+                        data-testid="button-set-api-key"
+                        style={{
+                            padding: '0.6rem 1.25rem',
+                            borderRadius: '8px',
+                            fontSize: '0.85rem',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            background: 'rgba(88, 28, 135, 0.4)',
+                            color: '#c4b5fd',
+                            border: '1px solid rgba(168, 85, 247, 0.4)'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(168, 85, 247, 0.4)';
+                            e.currentTarget.style.color = '#e9d5ff';
+                            e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.6)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(88, 28, 135, 0.4)';
+                            e.currentTarget.style.color = '#c4b5fd';
+                            e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.4)';
+                        }}
+                    >
+                        Set API Key
                     </button>
                 </div>
             </header>
