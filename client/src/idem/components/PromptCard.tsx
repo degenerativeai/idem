@@ -143,7 +143,7 @@ const styles = {
 // --- Helper Components ---
 const SectionHeader: React.FC<{ title: string; color: string; icon: React.ReactNode }> = ({ title, color, icon }) => (
     <div style={{ ...styles.sectionTitle, color, borderColor: 'rgba(255,255,255,0.05)' }}>
-        <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: `\${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: `${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {icon}
         </div>
         {title}
@@ -231,7 +231,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
         } else if (isLoRAMode) {
             return {
                 core: {
-                    identity: \`\${parsedContent.subject.age || ''} \${parsedContent.subject.description || ''}\`,
+                    identity: `${parsedContent.subject.age || ''} ${parsedContent.subject.description || ''}`,
                     styling: parsedContent.subject.expression || "Standard",
                     imperfections: parsedContent.subject.imperfections
                 },

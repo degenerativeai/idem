@@ -181,7 +181,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
             }
         } catch (e: any) {
             console.error("Prompt Gen Error", e);
-            setPromptError(\`Error: \${e.message || "Failed to generate more prompts"}\`);
+            setPromptError(`Error: ${e.message || "Failed to generate more prompts"}`);
         } finally {
             setIsGeneratingPrompts(false);
         }
@@ -291,15 +291,15 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         });
 
                         if (result.ok && result.b64_json) {
-                            const filename = \`\${globalIdx + 1}_\${item.category || 'generated'}.png\`;
+                            const filename = `${globalIdx + 1}_${item.category || 'generated'}.png`;
                             imgFolder?.file(filename, result.b64_json, { base64: true });
                             successCount++;
                         } else {
-                            console.warn(\`Item \${globalIdx + 1} failed initially.\`);
+                            console.warn(`Item ${globalIdx + 1} failed initially.`);
                             failedItems.push({ item, idx: globalIdx });
                         }
                     } catch (e) {
-                        console.warn(\`Item \${globalIdx + 1} error:\`, e);
+                        console.warn(`Item ${globalIdx + 1} error:`, e);
                         failedItems.push({ item, idx: globalIdx });
                     }
                 }));
@@ -309,7 +309,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
 
             // --- RETRY PHASE ---
             if (failedItems.length > 0) {
-                console.log(\`Retrying \${failedItems.length} failed items...\`);
+                console.log(`Retrying ${failedItems.length} failed items...`);
                 await Promise.all(failedItems.map(async ({ item, idx }) => {
                    try {
                         const result = await generateImage({
@@ -321,7 +321,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                             referenceImages: effectiveHeadshot ? [effectiveHeadshot] : []
                         });
                         if (result.ok && result.b64_json) {
-                            const filename = \`\${idx + 1}_\${item.category || 'generated'}.png\`;
+                            const filename = `${idx + 1}_${item.category || 'generated'}.png`;
                             imgFolder?.file(filename, result.b64_json, { base64: true });
                             successCount++;
                         }
@@ -486,7 +486,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         )}
                         
                         <button className="btn-primary" onClick={handleBatchGeneration} disabled={isBatchProcessing}>
-                            {isBatchProcessing ? \`Processing \${batchProgress.current} / \${batchProgress.total}...\` : 'Start Batch Process'}
+                            {isBatchProcessing ? `Processing ${batchProgress.current} / ${batchProgress.total}...` : 'Start Batch Process'}
                         </button>
                     </div>
 

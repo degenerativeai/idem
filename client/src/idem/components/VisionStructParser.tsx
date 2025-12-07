@@ -76,7 +76,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         const firstError = results.find(r => !r.ok);
         if (firstError) throw new Error(formatError(firstError));
 
-        const successImages = results.filter(r => r.ok && r.b64_json).map(r => \`data:image/png;base64,\${r.b64_json}\`);
+        const successImages = results.filter(r => r.ok && r.b64_json).map(r => `data:image/png;base64,${r.b64_json}`);
         if (successImages.length === 0) throw new Error("Generation failed: No images returned.");
 
         return successImages;
@@ -241,7 +241,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
             <div className="workflow-layout" style={{ marginTop: '0' }}>
 
                 {/* SLOT 1: SOURCE */}
-                <div className={\`image-slot \${sourceImage ? 'active' : 'empty'}\`}>
+                <div className={`image-slot ${sourceImage ? 'active' : 'empty'}`}>
                     <div className="slot-header">1. Source Image</div>
                     <div className="slot-content">
                         {sourceImage ? (
@@ -259,7 +259,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                 </div>
 
                 {/* SLOT 2: HEADSHOT */}
-                <div className={\`image-slot \${generatedHeadshots.length > 0 ? 'active' : 'empty'}\`}>
+                <div className={`image-slot ${generatedHeadshots.length > 0 ? 'active' : 'empty'}`}>
                     <div className="slot-header">2. Headshot Reference</div>
                     <div className="slot-content" style={{ flexDirection: 'column', gap: '0.5rem' }}>
                         {generatedHeadshots.length > 0 ? (
@@ -295,7 +295,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                 </div>
 
                 {/* SLOT 3: BODYSHOT */}
-                <div className={\`image-slot \${generatedBodyshots.length > 0 ? 'active' : 'empty'}\`}>
+                <div className={`image-slot ${generatedBodyshots.length > 0 ? 'active' : 'empty'}`}>
                     <div className="slot-header">3. Bodyshot Reference</div>
                     <div className="slot-content" style={{ flexDirection: 'column', gap: '0.5rem' }}>
                         {generatedBodyshots.length > 0 ? (
