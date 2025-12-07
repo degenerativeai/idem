@@ -306,6 +306,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'flex-start',
+        position: 'relative',
         border: hasImage ? '1px solid rgba(168, 85, 247, 0.3)' : '1px solid rgba(255,255,255,0.08)',
         background: hasImage ? 'rgba(168, 85, 247, 0.05)' : 'rgba(24, 26, 31, 0.6)'
     });
@@ -576,7 +577,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 </button>
                             </div>
                         ) : (
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
                                     Waiting for generation...
                                 </div>
@@ -625,7 +626,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 </button>
                             </div>
                         ) : (
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
                                     Waiting for generation...
                                 </div>
