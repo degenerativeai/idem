@@ -4,6 +4,8 @@ import { ImageAspect, ImageProvider } from '../types';
 import { generateImage } from '../services/imageGenerationService';
 import { HEADSHOT_PROMPT, FULL_BODY_PROMPT } from '../prompts/workflowPrompts';
 import { IconSparkles, IconUser } from './Icons';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 const ASPECTS: ImageAspect[] = ['1:1', '16:9', '9:16', '4:3', '3:4'];
 
@@ -243,6 +245,34 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
             if (bodyshots.length === 1) setSelectedBodyshot(bodyshots[0]);
             else setSelectedBodyshot(bodyshots[0]);
         } catch (e: any) { setError(e.message); } finally { setIsProcessing(false); }
+    };
+
+    const handleDownloadImages = async () => {
+        const zip = new JSZip();
+        const folder = zip.folder('identity_images');
+        if (!folder) return;
+
+        const addImageToZip = (dataUrl: string, name: string) => {
+            const base64Data = dataUrl.split('base64,')[1];
+            if (base64Data) {
+                folder.file(name, base64Data, { base64: true });
+            }
+        };
+
+        if (sourceImage) {
+            addImageToZip(sourceImage, 'source.png');
+        }
+
+        generatedHeadshots.forEach((img, i) => {
+            addImageToZip(img, `headshot_${i + 1}.png`);
+        });
+
+        generatedBodyshots.forEach((img, i) => {
+            addImageToZip(img, `bodyshot_${i + 1}.png`);
+        });
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        saveAs(blob, 'identity_images.zip');
     };
 
     const panelStyle: React.CSSProperties = {
@@ -646,7 +676,9 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                 {hasReferences && onNavigateToDataset && (
                     <div style={{ 
                         display: 'flex', 
-                        justifyContent: 'center', 
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.75rem',
                         marginTop: '1rem'
                     }}>
                         <button
@@ -656,6 +688,32 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                         >
                             <IconSparkles style={{ width: '20px', height: '20px' }} />
                             Start Building Your Dataset
+                        </button>
+                        <button
+                            onClick={handleDownloadImages}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                padding: '0.6rem 1.25rem',
+                                borderRadius: '0.5rem',
+                                background: 'rgba(99, 102, 241, 0.15)',
+                                border: '1px solid rgba(99, 102, 241, 0.3)',
+                                color: '#a5b4fc',
+                                fontSize: '0.8rem',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                            data-testid="button-download-images"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Download Images
                         </button>
                     </div>
                 )}
