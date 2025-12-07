@@ -79,6 +79,18 @@ export interface ImageGenerationResult {
     error?: string;
 }
 
+export interface UGCPromptCard {
+    id: string;
+    scenario: string;
+    setting: string;
+    outfit: string;
+    pose: string;
+    lighting: string;
+    camera: string;
+    imperfections: string;
+    fullPrompt: string;
+}
+
 export interface VisionStruct {
     meta: {
         medium: string;

@@ -1,18 +1,7 @@
 
 import React, { useState } from 'react';
-import { ImageAspect } from '../types';
-
-interface PromptCard {
-    id: string;
-    scenario: string;
-    setting: string;
-    outfit: string;
-    pose: string;
-    lighting: string;
-    camera: string;
-    imperfections: string;
-    fullPrompt: string;
-}
+import { ImageAspect, UGCPromptCard } from '../types';
+import { generateUGCPrompts } from '../services/geminiService';
 
 interface ImageGeneratorProps {
     identityImages?: { headshot: string | null; bodyshot: string | null };
@@ -22,7 +11,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     const [textPrompt, setTextPrompt] = useState('');
     const [promptCount, setPromptCount] = useState(5);
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('9:16');
-    const [generatedPrompts, setGeneratedPrompts] = useState<PromptCard[]>([]);
+    const [generatedPrompts, setGeneratedPrompts] = useState<UGCPromptCard[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -33,31 +22,24 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
             return;
         }
         
+        const apiKey = sessionStorage.getItem("gemini_api_key");
+        if (!apiKey) {
+            setError("Please enter your Gemini API key in Tab 1 first.");
+            return;
+        }
+        
         setIsGenerating(true);
         setError(null);
         setGeneratedPrompts([]);
         
         try {
-            // TODO: Replace with actual prompt generation using user's directive
-            // For now, show placeholder to demonstrate the UI
-            const placeholders: PromptCard[] = [];
-            for (let i = 0; i < promptCount; i++) {
-                placeholders.push({
-                    id: `prompt-${i}`,
-                    scenario: `Scenario ${i + 1} based on: ${textPrompt}`,
-                    setting: 'Awaiting directive implementation',
-                    outfit: 'Awaiting directive implementation',
-                    pose: 'Awaiting directive implementation',
-                    lighting: 'Awaiting directive implementation',
-                    camera: 'Awaiting directive implementation',
-                    imperfections: 'Awaiting directive implementation',
-                    fullPrompt: `[Placeholder] Generate ${promptCount} UGC prompts for: ${textPrompt}`
-                });
-            }
+            const prompts = await generateUGCPrompts({
+                contentDescription: textPrompt,
+                count: promptCount,
+                aspectRatio: aspectRatio
+            });
             
-            // Simulate generation delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setGeneratedPrompts(placeholders);
+            setGeneratedPrompts(prompts);
             
         } catch (e: any) {
             console.error(e);
@@ -67,7 +49,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
         }
     };
 
-    const handleCopyPrompt = async (prompt: PromptCard) => {
+    const handleCopyPrompt = async (prompt: UGCPromptCard) => {
         await navigator.clipboard.writeText(prompt.fullPrompt);
         setCopiedId(prompt.id);
         setTimeout(() => setCopiedId(null), 2000);

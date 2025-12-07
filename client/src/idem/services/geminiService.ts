@@ -1,13 +1,14 @@
 
 import { GoogleGenAI, Schema, Type } from "@google/genai";
-import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, INIPrompt } from "../types";
+import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, INIPrompt, UGCPromptCard } from "../types";
 import { 
   LORA_FORGE_DIRECTIVE, 
   VACUUM_COMPILER_DIRECTIVE, 
   RICH_MEDIA_DIRECTIVE_CANDID, 
   RICH_MEDIA_DIRECTIVE_STUDIO, 
   VISION_STRUCT_DIRECTIVE,
-  IMAGE_INI_COMPILER_DIRECTIVE
+  IMAGE_INI_COMPILER_DIRECTIVE,
+  CANDID_VIEW_DIRECTIVE
 } from "../prompts/systemPrompts";
 
 // Security: Retrieve key from session storage dynamically. Never store in variables.
@@ -505,4 +506,110 @@ export const convertINIToPrompt = (ini: INIPrompt, stripIdentity: boolean = fals
   }
   
   return prompt;
+};
+
+export const generateUGCPrompts = async (params: {
+  contentDescription: string;
+  count: number;
+  aspectRatio: string;
+  modelId?: string;
+}): Promise<UGCPromptCard[]> => {
+  const ai = getAiClient();
+  const modelId = params.modelId || 'gemini-2.0-flash';
+
+  const userPrompt = `
+${CANDID_VIEW_DIRECTIVE}
+
+TASK: Generate ${params.count} unique UGC (User Generated Content) image prompts for social media.
+
+CONTENT REQUEST FROM USER:
+"${params.contentDescription}"
+
+ASPECT RATIO: ${params.aspectRatio}
+
+REQUIREMENTS:
+1. Each prompt should be a UNIQUE scenario based on the user's content request
+2. Prompts must feel authentic, like a real person took them with their phone
+3. Include specific imperfections (motion blur, uneven lighting, candid expressions)
+4. Vary the settings, outfits, poses, and lighting across prompts
+5. Use the Candid-View-I aesthetic (amateur smartphone look, NOT professional studio)
+6. Make prompts detailed enough for high-quality image generation
+
+Generate ${params.count} prompts as a JSON array.
+`;
+
+  const schema: Schema = {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: {
+        scenario: { 
+          type: Type.STRING, 
+          description: "Brief 1-2 sentence description of the candid moment being captured" 
+        },
+        setting: { 
+          type: Type.STRING, 
+          description: "Specific location/environment with realistic details" 
+        },
+        outfit: { 
+          type: Type.STRING, 
+          description: "Casual, realistic clothing appropriate for the scenario" 
+        },
+        pose: { 
+          type: Type.STRING, 
+          description: "Natural, unposed body position and action" 
+        },
+        lighting: { 
+          type: Type.STRING, 
+          description: "Natural lighting conditions (golden hour, window light, mixed, etc.)" 
+        },
+        camera: { 
+          type: Type.STRING, 
+          description: "Camera style (iPhone 15 Pro portrait mode, Pixel 8, etc.) with focal length and aperture" 
+        },
+        imperfections: { 
+          type: Type.STRING, 
+          description: "Specific curated imperfections (slight motion blur on hands, flyaway hair, etc.)" 
+        },
+        fullPrompt: { 
+          type: Type.STRING, 
+          description: "Complete, detailed image generation prompt combining all elements for authentic UGC photo" 
+        }
+      },
+      required: ["scenario", "setting", "outfit", "pose", "lighting", "camera", "imperfections", "fullPrompt"]
+    }
+  };
+
+  try {
+    const result = await ai.models.generateContent({
+      model: modelId,
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: schema,
+        temperature: 0.85
+      }
+    });
+
+    const text = result.text;
+    if (!text) throw new Error("No response from Candid-View-I");
+    
+    const rawItems = JSON.parse(text) as any[];
+    
+    return rawItems.map((item, idx) => ({
+      id: `ugc-${generateId()}`,
+      scenario: item.scenario || '',
+      setting: item.setting || '',
+      outfit: item.outfit || '',
+      pose: item.pose || '',
+      lighting: item.lighting || '',
+      camera: item.camera || '',
+      imperfections: item.imperfections || '',
+      fullPrompt: item.fullPrompt || ''
+    }));
+
+  } catch (e: any) {
+    console.error("UGC Prompt Generation Error:", e);
+    throw new Error("Failed to generate UGC prompts: " + e.message);
+  }
 };
