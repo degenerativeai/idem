@@ -1,38 +1,101 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pkg from "pg";
+const { Pool } = pkg;
+import { eq } from "drizzle-orm";
+import {
+  identityProfiles,
+  datasets,
+  type IdentityProfile,
+  type Dataset,
+  type InsertIdentityProfile,
+  type InsertDataset,
+} from "@shared/schema";
 
-// modify the interface with any CRUD methods
-// you might need
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+const db = drizzle(pool);
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Identity Profile operations
+  createIdentityProfile(data: InsertIdentityProfile): Promise<IdentityProfile>;
+  getIdentityProfile(id: string): Promise<IdentityProfile | undefined>;
+  listIdentityProfiles(): Promise<IdentityProfile[]>;
+  
+  // Dataset operations
+  createDataset(data: InsertDataset): Promise<Dataset>;
+  getDataset(id: string): Promise<Dataset | undefined>;
+  listDatasets(identityId?: string): Promise<Dataset[]>;
+  updateDatasetProgress(id: string, generatedCount: number): Promise<Dataset | undefined>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  // Identity Profile operations
+  async createIdentityProfile(data: InsertIdentityProfile): Promise<IdentityProfile> {
+    const [profile] = await db
+      .insert(identityProfiles)
+      .values(data)
+      .returning();
+    return profile;
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getIdentityProfile(id: string): Promise<IdentityProfile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(identityProfiles)
+      .where(eq(identityProfiles.id, id))
+      .limit(1);
+    return profile;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async listIdentityProfiles(): Promise<IdentityProfile[]> {
+    return db
+      .select()
+      .from(identityProfiles)
+      .orderBy(identityProfiles.createdAt);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  // Dataset operations
+  async createDataset(data: InsertDataset): Promise<Dataset> {
+    const [dataset] = await db
+      .insert(datasets)
+      .values(data)
+      .returning();
+    return dataset;
+  }
+
+  async getDataset(id: string): Promise<Dataset | undefined> {
+    const [dataset] = await db
+      .select()
+      .from(datasets)
+      .where(eq(datasets.id, id))
+      .limit(1);
+    return dataset;
+  }
+
+  async listDatasets(identityId?: string): Promise<Dataset[]> {
+    if (identityId) {
+      return db
+        .select()
+        .from(datasets)
+        .where(eq(datasets.identityId, identityId))
+        .orderBy(datasets.createdAt);
+    }
+    return db
+      .select()
+      .from(datasets)
+      .orderBy(datasets.createdAt);
+  }
+
+  async updateDatasetProgress(id: string, generatedCount: number): Promise<Dataset | undefined> {
+    const [dataset] = await db
+      .update(datasets)
+      .set({ generatedCount })
+      .where(eq(datasets.id, id))
+      .returning();
+    return dataset;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
