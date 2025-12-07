@@ -227,10 +227,11 @@ export const generateDatasetPrompts = async (params: {
               properties: {
                 primary_ref: { type: Type.STRING },
                 secondary_ref: { type: Type.STRING }
-              }
+              },
+              required: ["primary_ref", "secondary_ref"]
             }
           },
-          required: ["final_prompt_string", "shot_type"]
+          required: ["final_prompt_string", "shot_type", "angle", "reference_logic"]
         },
         subject: {
           type: Type.OBJECT,
@@ -245,7 +246,8 @@ export const generateDatasetPrompts = async (params: {
                 skin: { type: Type.STRING },
                 hair: { type: Type.STRING },
                 general: { type: Type.STRING }
-              }
+              },
+              required: ["skin", "hair", "general"]
             },
             clothing: {
               type: Type.OBJECT,
@@ -255,19 +257,22 @@ export const generateDatasetPrompts = async (params: {
                   properties: {
                     type: { type: Type.STRING },
                     color: { type: Type.STRING }
-                  }
+                  },
+                  required: ["type", "color"]
                 },
                 bottom: {
                   type: Type.OBJECT,
                   properties: {
                     type: { type: Type.STRING },
                     color: { type: Type.STRING }
-                  }
+                  },
+                  required: ["type", "color"]
                 }
-              }
+              },
+              required: ["top", "bottom"]
             }
           },
-          required: ["description", "age", "expression"]
+          required: ["description", "age", "expression", "imperfections", "clothing"]
         },
         background: {
           type: Type.OBJECT,
@@ -282,17 +287,20 @@ export const generateDatasetPrompts = async (params: {
             shot_type: { type: Type.STRING },
             angle: { type: Type.STRING },
             camera_style: { type: Type.STRING }
-          }
+          },
+          required: ["shot_type", "angle", "camera_style"]
         },
         tech_specs: {
           type: Type.OBJECT,
           properties: {
             camera_physics: { type: Type.STRING },
+            sensor_fidelity: { type: Type.STRING },
             lighting_physics: { type: Type.STRING }
-          }
+          },
+          required: ["camera_physics", "sensor_fidelity", "lighting_physics"]
         }
       },
-      required: ["generation_data", "subject", "background"]
+      required: ["generation_data", "subject", "background", "photography", "tech_specs"]
     }
   };
 
