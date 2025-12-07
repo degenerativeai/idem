@@ -31,7 +31,10 @@ export const listAvailableModels = async (): Promise<string[]> => {
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 const IDENTITY_PATTERNS = [
-  /\b(blonde|brunette|redhead|auburn|raven|ginger|platinum|strawberry)[- ]?(hair(ed)?)?/gi,
+  /\b(dark|light|jet|deep|bright)\s+(black|brown|blonde|curly|wavy|straight|long|short|medium)\s+hair(ed)?/gi,
+  /\b(long|short|medium)\s+(curly|wavy|straight|frizzy|kinky|coiled)\s+hair(ed)?/gi,
+  /\b(blonde|brunette|redhead|auburn|raven|ginger|platinum|strawberry)\s+hair(ed)?/gi,
+  /\b(blonde|brunette|redhead|auburn|raven|ginger|platinum|strawberry)\b(?=\s*,|\s*$|\s+(?:woman|man|person|model|subject|with|and|in))/gi,
   /\b(black|brown|golden|silver|grey|gray|white|dark|light)[- ]?hair(ed)?/gi,
   /\b(long|short|medium)[- ]?(length)?[- ]?hair(ed)?/gi,
   /\b(shoulder|waist|mid[- ]?back)[- ]?length[- ]?hair/gi,
@@ -50,7 +53,7 @@ const IDENTITY_PATTERNS = [
   /\b(full|thin|pouty|plump)[- ]?lips/gi,
   /\b(small|large|button|pointed)[- ]?nose/gi,
   /\b(high|prominent|defined)[- ]?cheekbones?/gi,
-  /\b(strong|soft|angular|rounded|square|chiseled)[- ]?jaw(line)?/gi,
+  /\b(strong|soft|angular|rounded|square|chiseled)[- ]?(jaw(line)?|features?)/gi,
   /\b(asian|caucasian|african|hispanic|latina?o?|european|middle[- ]?eastern)\b/gi,
   /\b(ethnicity|ethnic|race|racial)\b/gi,
   /\bwith\s+(blonde|brunette|brown|black|red|auburn|dark|light|golden)\s+hair/gi,
