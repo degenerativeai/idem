@@ -255,7 +255,7 @@ const ImageGenerator: React.FC = () => {
                         color: '#a5b4fc',
                         lineHeight: '1.4'
                     }}>
-                        Prompts describe scenes, poses, and vibes. Use your reference images in the image generator to fill in the character's appearance.
+                        Prompts describe scenes, poses, and vibes. Use your reference images in the image generator of your choice to fill in the character's appearance.
                     </div>
                 </div>
 
@@ -344,9 +344,7 @@ const ImageGenerator: React.FC = () => {
                         <div style={{ 
                             display: 'grid', 
                             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
-                            gap: '1rem',
-                            overflowY: 'auto',
-                            maxHeight: 'calc(100vh - 280px)'
+                            gap: '1rem'
                         }}>
                             {generatedPrompts.map((prompt, index) => {
                                 const isCopied = copiedIds.has(prompt.id);
