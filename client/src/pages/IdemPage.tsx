@@ -80,7 +80,10 @@ const IdemPage: React.FC = () => {
                         return (
                             <button
                                 key={tab}
-                                onClick={() => setActiveTab(tab)}
+                                onClick={() => {
+                                    setActiveTab(tab);
+                                    window.scrollTo(0, 0);
+                                }}
                                 data-testid={`nav-tab-${tab}`}
                                 style={{
                                     padding: '0.6rem 1.25rem',
