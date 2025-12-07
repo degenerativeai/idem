@@ -302,53 +302,52 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                         />
                     </div>
                     
-                    {targetImage && (
-                        <button
-                            data-testid="button-analyze-image"
-                            onClick={handleAnalyzeImage}
-                            disabled={isAnalyzing}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                borderRadius: '10px',
-                                border: 'none',
-                                background: isAnalyzing ? '#374151' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
-                                color: 'white',
-                                fontSize: '0.8rem',
-                                fontWeight: 'bold',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em',
-                                cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '0.5rem',
-                                marginTop: '0.75rem'
-                            }}
-                        >
-                            {isAnalyzing ? (
-                                <>
-                                    <div style={{
-                                        width: '14px',
-                                        height: '14px',
-                                        border: '2px solid rgba(255,255,255,0.3)',
-                                        borderTopColor: 'white',
-                                        borderRadius: '50%',
-                                        animation: 'spin 1s linear infinite'
-                                    }} />
-                                    Analyzing...
-                                </>
-                            ) : (
-                                <>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <circle cx="11" cy="11" r="8" />
-                                        <path d="M21 21l-4.35-4.35" />
-                                    </svg>
-                                    Analyze Image
-                                </>
-                            )}
-                        </button>
-                    )}
+                    <button
+                        data-testid="button-analyze-image"
+                        onClick={handleAnalyzeImage}
+                        disabled={isAnalyzing || !targetImage}
+                        style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: (isAnalyzing || !targetImage) ? '#374151' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
+                            color: 'white',
+                            fontSize: '0.8rem',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            cursor: (isAnalyzing || !targetImage) ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            marginTop: '0.75rem',
+                            opacity: !targetImage ? 0.5 : 1
+                        }}
+                    >
+                        {isAnalyzing ? (
+                            <>
+                                <div style={{
+                                    width: '14px',
+                                    height: '14px',
+                                    border: '2px solid rgba(255,255,255,0.3)',
+                                    borderTopColor: 'white',
+                                    borderRadius: '50%',
+                                    animation: 'spin 1s linear infinite'
+                                }} />
+                                Analyzing...
+                            </>
+                        ) : (
+                            <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="M21 21l-4.35-4.35" />
+                                </svg>
+                                Analyze Image
+                            </>
+                        )}
+                    </button>
                 </div>
 
                 <div style={panelStyle}>
