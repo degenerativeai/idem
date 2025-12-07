@@ -46,10 +46,6 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
         
         if (ini.desc) lines.push(`[desc]  = ${stripIdentityDescriptions(ini.desc)}`);
         if (ini.objs) lines.push(`[objs]  = ${ini.objs}`);
-        if (ini.chars) {
-            const stripped = stripIdentityDescriptions(ini.chars);
-            if (stripped) lines.push(`[chars] = ${stripped}`);
-        }
         if (ini.style) lines.push(`[style] = ${ini.style}`);
         if (ini.comp) lines.push(`[comp]  = ${ini.comp}`);
         if (ini.light) lines.push(`[light] = ${ini.light}`);

@@ -41,6 +41,9 @@ const IDENTITY_PATTERNS = [
   /\b(shoulder|waist|mid[- ]?back)[- ]?length[- ]?hair/gi,
   /\b(curly|wavy|straight|frizzy|kinky|coiled)[- ]?hair(ed)?/gi,
   /\bhair[- ]?(color|colour|style|length|texture)/gi,
+  /\bcurly\s+blonde\b/gi,
+  /\bblonde\s+curly\b/gi,
+  /\b(voluminous|tousled|messy|sleek|shiny)\s+hair/gi,
   /\b(blue|green|brown|hazel|gray|grey|amber|violet)[- ]?eye[ds]?/gi,
   /\beye[- ]?(color|colour)/gi,
   /\balmond[- ]?shaped[- ]?eyes?/gi,
@@ -59,6 +62,14 @@ const IDENTITY_PATTERNS = [
   /\b(ethnicity|ethnic|race|racial)\b/gi,
   /\bwith\s+(blonde|brunette|brown|black|red|auburn|dark|light|golden)\s+hair/gi,
   /\bwith\s+(blue|green|brown|hazel)\s+eyes/gi,
+  /\b(wearing|with)\s+(glasses|spectacles|eyeglasses)\b/gi,
+  /\b(round|square|rectangular|cat[- ]?eye|aviator|oversized)\s+(glasses|frames)\b/gi,
+  /\bclear[- ]?(framed)?\s*glasses\b/gi,
+  /\bglasses\b/gi,
+  /\b(young|old|middle[- ]?aged|teenage|elderly|youthful)\s+(woman|man|person|adult|female|male)\b/gi,
+  /\b(woman|man|female|male|person|model|subject)\s+with\b/gi,
+  /\b(slender|slim|curvy|athletic|petite|tall|short)\s+(build|frame|figure|body)\b/gi,
+  /\b(woman|man|lady|girl|guy|person|model|subject|female|male)\b/gi,
 ];
 
 export const stripIdentityDescriptions = (text: string): string => {
