@@ -179,7 +179,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     const modeOptions = [
         { 
             value: 'replicate' as UGCMode, 
-            label: 'Replicate Source Subject',
+            label: 'Replicate Uploaded Image',
             desc: 'Full forensic clone (Face, Body, Clothes, Scene)'
         },
         { 
