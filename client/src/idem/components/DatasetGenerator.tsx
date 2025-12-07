@@ -661,8 +661,8 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                             <div>
                                 <label style={labelStyle}>Provider</label>
                                 <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle} data-testid="select-provider">
-                                    <option value="google" style={{ background: '#1e1030', color: '#e9d5ff' }}>Google (Imagen)</option>
-                                    <option value="wavespeed" style={{ background: '#1e1030', color: '#e9d5ff' }}>Wavespeed (Flux)</option>
+                                    <option value="google" style={{ background: '#1e1030', color: '#e9d5ff' }}>Nano Banana Pro</option>
+                                    <option value="wavespeed" style={{ background: '#1e1030', color: '#e9d5ff' }}>Wavespeed</option>
                                 </select>
                             </div>
                             <div>
