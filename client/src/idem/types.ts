@@ -85,6 +85,7 @@ export interface UGCPromptCard {
     setting: string;
     outfit: string;
     pose: string;
+    expression: string;
     lighting: string;
     camera: string;
     imperfections: string;

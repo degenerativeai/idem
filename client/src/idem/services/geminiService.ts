@@ -598,86 +598,35 @@ export const analyzePhysicalAppearance = async (
   }
 };
 
-const AGE_CLOTHING_GUIDANCE = `
-CLOTHING SELECTION RULES:
-Choose clothing that is age-appropriate for the subject based on their established age from the physical profile.
-
-For younger subjects (early-mid 20s): trendy, bold choices like bikinis, bodycon dresses, crop tops, mini skirts, low-rise jeans, sports bras as tops.
-
-For late 20s subjects: still stylish but slightly more refined - midi dresses, high-waisted jeans, slip dresses, matching athleisure sets.
-
-For 30s subjects: elevated and polished - elegant cocktail dresses, classic jeans with blouses, sophisticated swimwear options.
-
-For 40s+ subjects: classic and timeless - tailored pieces, knee-length dresses, quality fabrics, elegant layers.
-
-IMPORTANT: Match the outfit to the SCENARIO and SETTING. Do not include age labels in the outfit description - just describe the actual clothing items.
+const UGC_PHOTO_AUTHENTICITY_TERMS = `
+PHOTOGRAPHY AUTHENTICITY TERMS - Use 1-2 of these per prompt to add realism:
+- Crushed shadows (dark areas lose detail, common in phone cameras)
+- Blown highlights (overexposed bright areas)
+- Slight motion blur (on hands, hair, or subject movement)
+- Compression artifacts (JPEG quality loss)
+- Lens distortion (slight barrel distortion from wide phone lens)
+- Shallow depth of field (blurred background from portrait mode)
+- Harsh direct flash (flat lighting, red-eye potential)
+- Mixed color temperature (warm indoor lights + cool daylight)
+- High ISO noise/grain (grainy texture in low light)
+- Chromatic aberration (color fringing on edges)
+- Vignetting (darker corners)
+- Lens flare (light streaks from bright sources)
 `;
 
 export const generateUGCPrompts = async (params: {
   contentDescription: string;
   count: number;
   aspectRatio: string;
-  headshotBase64?: string | null;
-  bodyshotBase64?: string | null;
   modelId?: string;
 }): Promise<UGCPromptCard[]> => {
   const ai = getAiClient();
   const modelId = params.modelId || 'gemini-2.0-flash';
 
-  let physicalProfile = "";
-  let ageRange = "";
-  let identitySummary = "";
-  
-  if (params.headshotBase64 || params.bodyshotBase64) {
-    const appearance = await analyzePhysicalAppearance(
-      params.headshotBase64,
-      params.bodyshotBase64,
-      modelId
-    );
-    
-    if (appearance) {
-      ageRange = appearance.age_range;
-      identitySummary = appearance.identity_summary;
-      
-      // Create canonical age descriptor
-      const canonicalAge = `${appearance.age_range} woman`;
-      
-      physicalProfile = `
-=== LOCKED IDENTITY BLOCK - DO NOT MODIFY ===
-CANONICAL AGE: "${canonicalAge}" - Use this EXACT phrase for the subject's age in EVERY prompt. Do not vary it.
-
-SUBJECT PHYSICAL PROFILE:
-${appearance.identity_summary}
-
-PHYSICAL TRAITS (use these exact descriptors):
-- Age: ${appearance.age_range} (LOCKED - do not change)
-${appearance.celebrity_match ? `- Resembles: ${appearance.celebrity_match}` : ''}
-- Eyes: ${appearance.face.eye_color}
-- Face Shape: ${appearance.face.face_shape}
-- Lips: ${appearance.face.lips}
-- Hair Color: ${appearance.hair.color}
-- Hair Texture: ${appearance.hair.texture}
-- Body Type: ${appearance.body.type}
-- Bust: ${appearance.body.bust}
-- Waist: ${appearance.body.waist}
-- Hips: ${appearance.body.hips}
-- Skin Tone: ${appearance.skin.tone}
-
-CRITICAL RULES:
-1. Every fullPrompt MUST describe the subject as "${canonicalAge}" - never "young woman", "30s woman", "teenager", etc.
-2. Physical traits must be consistent across ALL prompts
-3. Start each fullPrompt with: "A ${canonicalAge} with ${appearance.hair.color} ${appearance.hair.texture} hair, ${appearance.face.eye_color} eyes, ${appearance.skin.tone} skin, ${appearance.body.type} build..."
-=== END LOCKED IDENTITY BLOCK ===
-`;
-    }
-  }
-
   const userPrompt = `
 ${CANDID_VIEW_DIRECTIVE}
 
-${physicalProfile}
-
-${AGE_CLOTHING_GUIDANCE}
+${UGC_PHOTO_AUTHENTICITY_TERMS}
 
 TASK: Generate ${params.count} unique UGC (User Generated Content) image prompts for social media.
 
@@ -685,7 +634,27 @@ CONTENT REQUEST FROM USER:
 "${params.contentDescription}"
 
 ASPECT RATIO: ${params.aspectRatio}
-${ageRange ? `SUBJECT AGE: ${ageRange} - Choose age-appropriate clothing!` : ''}
+
+CRITICAL - PROMPT FORMAT:
+The fullPrompt should describe the SCENE, ACTION, and VIBE - NOT the person's physical appearance.
+The image generator will use reference images to fill in the subject's physical identity.
+
+Each fullPrompt should read like: "A young woman is taking a mirror selfie in a messy bedroom, wearing an oversized band t-shirt and cotton shorts, relaxed half-smile expression. Visible skin pores and texture, flyaway hair strands. Slight phone tilt, bathroom vanity lighting with crushed shadows. Shot on iPhone, amateur framing."
+
+DO NOT INCLUDE in fullPrompt:
+- Hair color, eye color, skin tone, body type, facial features
+- Any physical description of the person's appearance
+- Age-specific descriptors beyond "young woman"
+
+MUST INCLUDE in fullPrompt:
+- Action/pose (taking selfie, lounging, walking, etc.)
+- Clothing/outfit description
+- Facial expression (smiling, focused, candid laugh, etc.)
+- Scene/setting with specific details
+- Physical imperfections for realism (visible pores, skin texture, flyaways)
+- Camera angle that looks unposed and candid
+- Lighting that's NOT perfect (mixed lighting, harsh flash, natural but uneven)
+- 1-2 photography authenticity terms from the list above
 
 REQUIREMENTS:
 1. Each prompt should be a UNIQUE scenario based on the user's content request
@@ -693,10 +662,8 @@ REQUIREMENTS:
 3. Include specific imperfections (motion blur, uneven lighting, candid expressions)
 4. Vary the settings, outfits, poses, and lighting across prompts
 5. Use the Candid-View-I aesthetic (amateur smartphone look, NOT professional studio)
-6. Make prompts detailed enough for high-quality image generation
-7. ONLY the subject appears in frame - NO other people visible
-${physicalProfile ? '8. INJECT the physical profile into every fullPrompt - describe the subject\'s appearance' : ''}
-9. Choose outfits appropriate for the subject's age and the scenario
+6. ONLY the subject appears in frame - NO other people visible
+7. Subject is always referred to as "a young woman" - no age variation
 
 Generate ${params.count} prompts as a JSON array.
 `;
@@ -722,24 +689,28 @@ Generate ${params.count} prompts as a JSON array.
           type: Type.STRING, 
           description: "Natural, unposed body position and action" 
         },
+        expression: {
+          type: Type.STRING,
+          description: "Facial expression (candid smile, focused, mid-laugh, relaxed, etc.)"
+        },
         lighting: { 
           type: Type.STRING, 
-          description: "Natural lighting conditions (golden hour, window light, mixed, etc.)" 
+          description: "Imperfect lighting (mixed color temp, harsh flash, window light with shadows, etc.)" 
         },
         camera: { 
           type: Type.STRING, 
-          description: "Camera style (iPhone 15 Pro portrait mode, Pixel 8, etc.) with focal length and aperture" 
+          description: "Camera style (iPhone 15 Pro, Pixel 8, etc.) with angle and framing notes" 
         },
         imperfections: { 
           type: Type.STRING, 
-          description: "Specific curated imperfections (slight motion blur on hands, flyaway hair, etc.)" 
+          description: "Specific UGC imperfections (visible pores, flyaway hair, motion blur, crushed shadows, etc.)" 
         },
         fullPrompt: { 
           type: Type.STRING, 
-          description: "Complete prompt that MUST include: 1) Subject's physical traits (hair color, eye color, body type, skin tone), 2) Outfit details, 3) Setting/location, 4) Camera specs (iPhone/smartphone, amateur angle), 5) Lighting (natural/phone flash), 6) Imperfections (motion blur, flyaways, wrinkled clothes). Must look like authentic amateur UGC, NOT professional photography." 
+          description: "Complete prompt describing: action/pose, clothing, expression, scene/setting, skin imperfections (pores, texture), camera angle, imperfect lighting, 1-2 photo authenticity terms. NO physical appearance (hair color, eye color, body type). Subject is 'a young woman'. Must look like authentic amateur UGC." 
         }
       },
-      required: ["scenario", "setting", "outfit", "pose", "lighting", "camera", "imperfections", "fullPrompt"]
+      required: ["scenario", "setting", "outfit", "pose", "expression", "lighting", "camera", "imperfections", "fullPrompt"]
     }
   };
 
@@ -759,22 +730,13 @@ Generate ${params.count} prompts as a JSON array.
     
     const rawItems = JSON.parse(text) as any[];
     
-    return rawItems.map((item, idx) => {
+    return rawItems.map((item) => {
       let finalPrompt = item.fullPrompt || '';
       
-      // If we have an identity summary and the prompt doesn't seem to include physical traits,
-      // prepend the identity summary to ensure consistency
-      if (identitySummary && finalPrompt) {
-        const hasPhysicalTraits = /\b(hair|eyes?|skin|bust|waist|hips|curvy|slim|athletic)\b/i.test(finalPrompt);
-        if (!hasPhysicalTraits) {
-          finalPrompt = `${identitySummary} ${finalPrompt}`;
-        }
-      }
-      
       // Ensure UGC elements are appended if missing
-      const hasUGCElements = /\b(iphone|smartphone|phone camera|amateur|candid|motion blur|flyaway|imperfect)\b/i.test(finalPrompt);
+      const hasUGCElements = /\b(iphone|smartphone|phone camera|amateur|candid|motion blur|flyaway|pores|texture)\b/i.test(finalPrompt);
       if (!hasUGCElements && finalPrompt) {
-        const ugcSuffix = `. Shot on iPhone 15 Pro, amateur framing slightly off-center, natural smartphone lighting, subtle motion blur on hair, flyaway strands visible, authentic candid UGC aesthetic. Solo subject, single person in frame.`;
+        const ugcSuffix = `. Shot on iPhone, amateur framing, natural smartphone lighting, visible skin pores, flyaway strands, authentic candid UGC aesthetic. Solo subject in frame.`;
         finalPrompt = finalPrompt.replace(/\.?\s*$/, '') + ugcSuffix;
       }
       
@@ -784,6 +746,7 @@ Generate ${params.count} prompts as a JSON array.
         setting: item.setting || '',
         outfit: item.outfit || '',
         pose: item.pose || '',
+        expression: item.expression || '',
         lighting: item.lighting || '',
         camera: item.camera || '',
         imperfections: item.imperfections || '',

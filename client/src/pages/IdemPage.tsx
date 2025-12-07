@@ -168,7 +168,7 @@ const IdemPage: React.FC = () => {
                     />
                 )}
                 {activeTab === 'clone' && <CloneImage identityImages={generatedImages} />}
-                {activeTab === 'generator' && <ImageGenerator identityImages={generatedImages} onNavigateToTab={(tab) => setActiveTab(tab === 0 ? 'vision' : 'dataset')} />}
+                {activeTab === 'generator' && <ImageGenerator />}
             </main>
         </div>
     );
