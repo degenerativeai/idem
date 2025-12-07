@@ -5,11 +5,9 @@ export type ImageAspect = '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
 export type ImageProvider = 'google' | 'wavespeed';
 
 export interface PromptItem {
-    id?: string;
-    prompt?: string;
-    text?: string;
-    category?: string;
-    tags?: string[];
+    id: string;
+    text: string;
+    tags: string[];
     isCopied?: boolean;
     generationMeta?: {
         type: string;

@@ -315,17 +315,17 @@ export const generateDatasetPrompts = async (params: {
     // Map to internal PromptItem structure - store the full JSON as text
     return rawItems.map((item, idx) => {
       const jsonText = JSON.stringify(item);
+      const shotType = item.photography?.shot_type || item.generation_data?.shot_type || 'Shot';
+      const angle = item.photography?.angle || item.generation_data?.angle || '';
       return {
         id: generateId(),
         text: jsonText,
-        prompt: jsonText,
-        category: item.photography?.shot_type || 'general',
         tags: item.background?.elements || [],
         generationMeta: {
-          type: 'lora',
+          type: shotType.toUpperCase(),
           index: params.startCount + idx + 1,
           total: params.totalTarget,
-          label: `LORA-${params.startCount + idx + 1}`
+          label: angle
         }
       };
     });

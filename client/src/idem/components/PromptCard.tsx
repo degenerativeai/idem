@@ -14,7 +14,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState('');
 
-    const promptText = prompt.text || prompt.prompt || '';
+    const promptText = prompt.text;
 
     const parsedContent = useMemo(() => {
         try {
@@ -49,15 +49,15 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
     const handleCopy = () => {
         const textToCopy = isLoRAMode ? finalString : (parsedContent ? JSON.stringify(parsedContent, null, 2) : promptText);
         navigator.clipboard.writeText(textToCopy);
-        onToggleCopy(prompt.id || '');
+        onToggleCopy(prompt.id);
     };
 
     const saveEdit = () => {
         if (isLoRAMode && parsedContent) {
             parsedContent.generation_data.final_prompt_string = editText;
-            onUpdate(prompt.id || '', JSON.stringify(parsedContent));
+            onUpdate(prompt.id, JSON.stringify(parsedContent));
         } else {
-            onUpdate(prompt.id || '', editText);
+            onUpdate(prompt.id, editText);
         }
         setIsEditing(false);
     };
