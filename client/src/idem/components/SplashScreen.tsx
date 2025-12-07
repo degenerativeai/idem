@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { IdemLogo } from './IdemLogo';
 
 interface SplashScreenProps {
     onComplete: (key: string | null) => void;
@@ -42,8 +43,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
                 {/* Logo Section */}
                 <div style={{ textAlign: 'center' }}>
-                    {/* Placeholder for logo if missing */}
-                    <div style={{ width: '128px', height: '128px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', borderRadius: '24px', margin: '0 auto 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', fontWeight: 'bold' }}>I</div>
+                    <IdemLogo width={128} height={128} style={{ margin: '0 auto 1rem' }} />
                     <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>IDEM</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Identity & Dataset Manifest</p>
                 </div>

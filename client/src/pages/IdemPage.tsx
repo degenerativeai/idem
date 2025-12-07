@@ -4,6 +4,7 @@ import VisionStructParser from '../idem/components/VisionStructParser';
 import DatasetGenerator from '../idem/components/DatasetGenerator';
 import ImageGenerator from '../idem/components/ImageGenerator';
 import { SplashScreen } from '../idem/components/SplashScreen';
+import { IdemLogo } from '../idem/components/IdemLogo';
 
 const IdemPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'vision' | 'dataset' | 'generator'>('vision');
@@ -64,8 +65,7 @@ const IdemPage: React.FC = () => {
                 marginInline: '1rem'
             }}>
                 <div className="flex-center gap-md" style={{ gap: '1rem' }}>
-                    {/* Replaced img with Icon or text if asset missing */}
-                    <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', borderRadius: '8px' }} />
+                    <IdemLogo width={32} height={32} />
                     <h1 style={{ fontSize: '1.25rem', margin: 0 }}>IDEM</h1>
                 </div>
 
