@@ -139,7 +139,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         setSaveError(null);
         try {
             const savedProfile = await apiService.createIdentityProfile({
-                uid: identity.identity_profile.uid,
+                uid: identity.identity_profile.name,
                 identityProfile: identity.identity_profile,
                 headshotImage: effectiveHeadshot || null,
                 bodyshotImage: effectiveBodyshot || null,
@@ -243,7 +243,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                 taskType: 'lora',
                 subjectDescription: identity.identity_profile.body_stack,
                 identity: {
-                    name: identity.identity_profile.uid,
+                    name: identity.identity_profile.name,
                     age_estimate: identity.identity_profile.age_estimate,
                     profession: identity.identity_profile.archetype_anchor,
                     backstory: identity.identity_profile.realism_stack
@@ -276,7 +276,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                 taskType: 'lora',
                 subjectDescription: identity.identity_profile.body_stack,
                 identity: {
-                    name: identity.identity_profile.uid,
+                    name: identity.identity_profile.name,
                     age_estimate: identity.identity_profile.age_estimate,
                     profession: identity.identity_profile.archetype_anchor,
                     backstory: identity.identity_profile.realism_stack
@@ -338,7 +338,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     taskType: 'lora',
                     subjectDescription: identity.identity_profile.body_stack,
                     identity: {
-                        name: identity.identity_profile.uid,
+                        name: identity.identity_profile.name,
                         age_estimate: identity.identity_profile.age_estimate,
                         profession: identity.identity_profile.archetype_anchor,
                         backstory: identity.identity_profile.realism_stack
@@ -511,7 +511,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                                     {savedIdentities.map(profile => (
                                         <div key={profile.id} onClick={() => handleLoadIdentity(profile.id)} data-testid={`card-identity-${profile.id}`}
                                             style={{ padding: '0.5rem', background: savedIdentityId === profile.id ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0.3)', borderRadius: '6px', cursor: 'pointer', border: savedIdentityId === profile.id ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid transparent' }}>
-                                            <div style={{ fontSize: '0.75rem', color: 'white' }}>{(profile.identityProfile as any)?.uid || 'Unknown'}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'white' }}>{(profile.identityProfile as any)?.name || 'Unknown'}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -578,7 +578,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div>
                             <label style={labelStyle}>Name</label>
-                            <input readOnly value={identity?.identity_profile?.uid || ''} placeholder="Waiting..." style={{ ...inputStyle, color: identity?.identity_profile?.uid ? 'white' : '#64748b' }} data-testid="input-identity-name" />
+                            <input readOnly value={identity?.identity_profile?.name || ''} placeholder="Waiting..." style={{ ...inputStyle, color: identity?.identity_profile?.name ? 'white' : '#64748b' }} data-testid="input-identity-name" />
                         </div>
                         <div>
                             <label style={labelStyle}>Age</label>
@@ -779,7 +779,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                                 <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>Your dataset has been generated successfully.</p>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '280px' }}>
-                                <button onClick={() => { if (batchZipBlob) saveAs(batchZipBlob, `dataset_${identity?.identity_profile?.uid || 'export'}.zip`); }} data-testid="button-download-zip" style={{ padding: '0.75rem', borderRadius: '0.5rem', border: 'none', background: 'white', color: 'black', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                <button onClick={() => { if (batchZipBlob) saveAs(batchZipBlob, `dataset_${identity?.identity_profile?.name || 'export'}.zip`); }} data-testid="button-download-zip" style={{ padding: '0.75rem', borderRadius: '0.5rem', border: 'none', background: 'white', color: 'black', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                                     <IconDownload style={{ width: '16px' }} /> Download Zip
                                 </button>
                                 <button onClick={() => { setIsBatchComplete(false); setBatchZipBlob(null); setDatasetPrompts([]); }} data-testid="button-start-new" style={{ padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #374151', background: 'transparent', color: '#9ca3af', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer' }}>

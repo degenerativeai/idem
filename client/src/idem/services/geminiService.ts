@@ -134,14 +134,14 @@ export const analyzeSubjectImages = async (
       identity_profile: {
         type: Type.OBJECT,
         properties: {
-          uid: { type: Type.STRING },
+          name: { type: Type.STRING },
           age_estimate: { type: Type.STRING },
           archetype_anchor: { type: Type.STRING },
           facial_description: { type: Type.STRING },
           body_stack: { type: Type.STRING },
           realism_stack: { type: Type.STRING }
         },
-        required: ["uid", "age_estimate", "archetype_anchor", "facial_description", "body_stack", "realism_stack"]
+        required: ["name", "age_estimate", "archetype_anchor", "facial_description", "body_stack", "realism_stack"]
       }
     }
   };

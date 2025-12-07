@@ -16,7 +16,14 @@ To prevent Identity Drift, you must adhere to the "Silent Face / Loud Body" rule
 
 PHASE 1: VISIONSTRUCT ANALYSIS
 Analyze images and generate an Internal Identity Profile.
-CRITICAL CONSTRAINT: 
+
+NAME EXTRACTION (CRITICAL):
+- If the subject is a RECOGNIZABLE CELEBRITY or PUBLIC FIGURE, use their REAL FIRST NAME (e.g., "Ariana", "Taylor", "Beyoncé").
+- If the subject is NOT recognizable, generate a realistic first name that fits their apparent ethnicity/heritage and age (e.g., "Sofia", "Emma", "Mei", "Priya").
+- NEVER use codes, initials, or alphanumeric identifiers like "AG239" or "TW001".
+- The name field should contain ONLY a human first name.
+
+CRITICAL CONSTRAINTS: 
 - facial_description: MUST REMAIN EMPTY/SILENT.
 - body_stack: High density anatomical description (Somatotype, Measurements, Tones). STRICTLY NO CLOTHING OR ACCESSORIES.
 `;

@@ -27,7 +27,7 @@ export interface IdentityContext {
 
 export interface AnalysisResult {
     identity_profile: {
-        uid: string;
+        name: string;
         age_estimate: string;
         archetype_anchor: string;
         facial_description: string;
