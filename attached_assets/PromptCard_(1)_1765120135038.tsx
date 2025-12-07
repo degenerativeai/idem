@@ -14,14 +14,15 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState('');
 
-    const promptText = prompt.text || prompt.prompt || '';
-
+    // Robust JSON Parsing
     const parsedContent = useMemo(() => {
         try {
-            if (!promptText) return null;
+            if (!prompt.text) return null;
 
-            let cleaned = promptText.replace(/```json\s*|```/gi, '').trim();
+            // 1. Try removing markdown code blocks (case insensitive)
+            let cleaned = prompt.text.replace(/```json\s*|```/gi, '').trim();
 
+            // 2. If it looks like it has a prefix/suffix, try to extract the JSON object
             const firstBrace = cleaned.indexOf('{');
             const lastBrace = cleaned.lastIndexOf('}');
 
@@ -34,49 +35,55 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
             console.warn("Failed to parse prompt JSON:", e);
             return null;
         }
-    }, [promptText]);
+    }, [prompt.text]);
 
+    // Determine Mode
     const isLoRAMode = !!parsedContent?.generation_data;
     const isVisionStruct = !!parsedContent?.subject_core && !!parsedContent?.atmosphere_and_context;
 
-    const finalString = parsedContent?.generation_data?.final_prompt_string || (parsedContent?.subject ? `Hyper-realistic ${parsedContent.photography?.shot_type || 'Shot'}, ${parsedContent.subject.description || ''}, ${parsedContent.background?.setting || ''}, ${parsedContent.subject.clothing?.top?.type || ''} ${parsedContent.subject.clothing?.top?.color || ''}, ${parsedContent.subject.clothing?.bottom?.type || ''} ${parsedContent.subject.clothing?.bottom?.color || ''}, 8k, raw photo.` : promptText);
+    // Dense Data (LoRA)
+    const finalString = parsedContent?.generation_data?.final_prompt_string || (parsedContent?.subject ? `Hyper-realistic ${parsedContent.photography?.shot_type || 'Shot'}, ${parsedContent.subject.description || ''}, ${parsedContent.background?.setting || ''}, ${parsedContent.subject.clothing?.top?.type || ''} ${parsedContent.subject.clothing?.top?.color || ''}, ${parsedContent.subject.clothing?.bottom?.type || ''} ${parsedContent.subject.clothing?.bottom?.color || ''}, 8k, raw photo.` : prompt.text);
     const refLogic = parsedContent?.generation_data?.reference_logic;
 
+    // Rich Data (Product/Generic)
     const subject = parsedContent?.subject;
     const background = parsedContent?.background;
     const photography = parsedContent?.photography;
 
     const handleCopy = () => {
-        const textToCopy = isLoRAMode ? finalString : (parsedContent ? JSON.stringify(parsedContent, null, 2) : promptText);
+        // If Multi-Pane, copy prettified JSON. If LoRA, copy dense string.
+        const textToCopy = isLoRAMode ? finalString : (parsedContent ? JSON.stringify(parsedContent, null, 2) : prompt.text);
         navigator.clipboard.writeText(textToCopy);
-        onToggleCopy(prompt.id || '');
+        onToggleCopy(prompt.id);
     };
 
     const saveEdit = () => {
         if (isLoRAMode && parsedContent) {
             parsedContent.generation_data.final_prompt_string = editText;
-            onUpdate(prompt.id || '', JSON.stringify(parsedContent));
+            onUpdate(prompt.id, JSON.stringify(parsedContent));
         } else {
-            onUpdate(prompt.id || '', editText);
+            onUpdate(prompt.id, editText);
         }
         setIsEditing(false);
     };
 
     const startEdit = () => {
-        setEditText(isLoRAMode ? finalString : promptText);
+        setEditText(isLoRAMode ? finalString : prompt.text);
         setIsEditing(true);
     }
 
     const meta = prompt.generationMeta;
 
-    const SectionHeader = ({ title, colorClass, icon }: { title: string; colorClass: string; icon: React.ReactNode }) => (
+    // --- Helper Components for Multi-Pane ---
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SectionHeader = ({ title, colorClass, icon }: any) => (
         <div className={`flex items-center gap-2 mb-2 pb-1 border-b ${colorClass} border-opacity-20`}>
             {icon}
             <span className={`text-[10px] font-bold uppercase tracking-wider ${colorClass} brightness-125`}>{title}</span>
         </div>
     );
 
-    const KeyVal = ({ label, val }: { label: string, val: string | undefined }) => (
+    const KeyVal = ({ label, val }: { label: string, val: string }) => (
         val ? (
             <div className="mb-1">
                 <span className="text-[10px] text-gray-500 mr-2 uppercase">{label}:</span>
@@ -85,7 +92,8 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
         ) : null
     );
 
-    const ClothingItem = ({ label, item }: { label: string, item: { type?: string; style?: string; item?: string; name?: string; color?: string; details?: string; description?: string } | undefined }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ClothingItem = ({ label, item }: { label: string, item: any }) => {
         let content = <span className="text-gray-600 italic text-[10px]">Not specified</span>;
         if (item && Object.keys(item).length > 0) {
             const type = item.type || item.style || item.item || item.name || "Garment";
@@ -100,20 +108,23 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
         }
         return (
             <div className="mb-2">
-                <span className="text-[10px] uppercase font-bold text-rose-300/60 block mb-0.5">{label}</span>
+                <span className={`text-[10px] uppercase font-bold text-rose-300/60 block mb-0.5`}>{label}</span>
                 {content}
             </div>
         );
     };
 
+    // --- VisionStruct Render ---
     if (isVisionStruct) {
         const core = parsedContent.subject_core;
         const atm = parsedContent.atmosphere_and_context;
         const details = parsedContent.anatomical_details;
-        const vsMeta = parsedContent.meta;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const meta = parsedContent.meta;
 
         return (
-            <div className="bg-black/40 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-600 transition-all duration-300 group relative" data-testid={`prompt-card-vision-${prompt.id}`}>
+            <div className="bg-black/40 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-600 transition-all duration-300 group relative">
+                {/* Header */}
                 <div className="bg-gradient-to-r from-gray-900 to-black px-4 py-3 border-b border-gray-800 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="w-6 h-6 rounded-full bg-indigo-900/50 flex items-center justify-center border border-indigo-500/30 text-indigo-400 font-mono text-xs">
@@ -123,7 +134,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                             <div className="flex items-center gap-2">
                                 <span className="text-xs font-bold text-gray-200 tracking-wide uppercase">{prompt.generationMeta?.type || 'SCENE MATCH'}</span>
                                 <span className="px-1.5 py-0.5 rounded bg-indigo-900/30 border border-indigo-500/20 text-[9px] text-indigo-300 font-mono">
-                                    {vsMeta?.visual_fidelity || 'High Fidelity'}
+                                    {meta?.visual_fidelity || 'High Fidelity'}
                                 </span>
                             </div>
                             <div className="text-[10px] text-gray-500 font-mono mt-0.5">
@@ -132,13 +143,16 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                         </div>
                     </div>
                     <div className="flex items-center gap-1">
-                        <button onClick={handleCopy} className={`p-1.5 rounded-lg transition-all ${isCopied ? 'bg-green-900/30 text-green-400' : 'hover:bg-gray-800 text-gray-500 hover:text-white'}`} data-testid="button-copy-vision">
+                        <button onClick={handleCopy} className={`p-1.5 rounded-lg transition-all ${isCopied ? 'bg-green-900/30 text-green-400' : 'hover:bg-gray-800 text-gray-500 hover:text-white'}`}>
                             {isCopied ? <IconCheck className="w-3.5 h-3.5" /> : <IconCopy className="w-3.5 h-3.5" />}
                         </button>
                     </div>
                 </div>
 
+                {/* Content Grid */}
                 <div className="p-4 grid grid-cols-1 gap-4">
+
+                    {/* Subject Core */}
                     <div className="space-y-2">
                         <SectionHeader title="Subject Core" colorClass="text-indigo-400" icon={<IconUser className="w-3 h-3 text-indigo-500" />} />
                         <div className="bg-black/20 rounded-lg p-3 border border-gray-800/50 space-y-2">
@@ -157,6 +171,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                         </div>
                     </div>
 
+                    {/* Atmosphere */}
                     <div className="space-y-2">
                         <SectionHeader title="Atmosphere & Context" colorClass="text-amber-400" icon={<IconSettings className="w-3 h-3 text-amber-500" />} />
                         <div className="grid grid-cols-2 gap-2">
@@ -171,6 +186,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                         </div>
                     </div>
 
+                    {/* Details (Collapsible-ish or just small) */}
                     <div className="space-y-2">
                         <SectionHeader title="Anatomical Details" colorClass="text-emerald-400" icon={<IconCheck className="w-3 h-3 text-emerald-500" />} />
                         <div className="bg-black/20 rounded-lg p-3 border border-gray-800/50 grid grid-cols-2 gap-x-4 gap-y-2">
@@ -180,19 +196,21 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                             <KeyVal label="Posture" val={details?.posture_and_spine} />
                         </div>
                     </div>
+
                 </div>
             </div>
         );
     }
 
     return (
-        <div className={`group relative bg-[#181a1f] border rounded-xl p-0 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-black/60 ${isCopied
+        <div className={`group relative bg-charcoal border rounded-xl p-0 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-black/60 ${isCopied
             ? 'border-green-500/50 ring-1 ring-green-500/30'
             : 'border-gray-800 hover:border-gray-600'
-            }`} data-testid={`prompt-card-${prompt.id}`}>
+            }`}>
 
             {isCopied && <div className="absolute inset-0 bg-green-500/5 pointer-events-none z-0" />}
 
+            {/* HEADER BAR */}
             <div className="bg-black/40 p-3 border-b border-white/5 flex flex-wrap items-center justify-between gap-2 relative z-10">
                 <div className="flex items-center gap-2">
                     {meta ? (
@@ -214,29 +232,29 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                     <button
                         onClick={handleCopy}
                         className={`p-1.5 rounded-lg transition-all ${isCopied ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]' : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'}`}
-                        data-testid="button-copy"
                     >
                         {isCopied ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
                     </button>
-                    <button onClick={startEdit} className="p-1.5 bg-gray-800 text-gray-400 rounded-lg hover:text-white hover:bg-gray-700" data-testid="button-edit">
+                    <button onClick={startEdit} className="p-1.5 bg-gray-800 text-gray-400 rounded-lg hover:text-white hover:bg-gray-700">
                         <IconEdit className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
+            {/* CONTENT AREA */}
             <div className="p-4 relative z-10">
                 {isEditing ? (
                     <textarea
-                        className="w-full h-64 bg-black/50 text-gray-200 p-4 rounded-lg border border-gray-700 focus:border-indigo-500 outline-none text-xs font-mono leading-relaxed resize-none"
+                        className="w-full h-64 bg-black/50 text-gray-200 p-4 rounded-lg border border-gray-700 focus:border-musaicPurple outline-none text-xs font-mono leading-relaxed resize-none"
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
                         onBlur={saveEdit}
                         autoFocus
-                        data-testid="textarea-prompt-edit"
                     />
                 ) : (
                     <div className="space-y-4">
 
+                        {/* VIEW A: LORA DENSE STRING */}
                         {isLoRAMode && (
                             <>
                                 <div className="bg-black/30 p-4 rounded-lg border border-white/5 font-mono text-xs text-green-400/90 leading-relaxed break-words shadow-inner">
@@ -255,6 +273,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                             </>
                         )}
 
+                        {/* VIEW B: RICH JSON PANELS */}
                         {subject && (
                             <>
                                 <div className="bg-gradient-to-br from-gray-800/30 to-black/30 p-3 rounded-lg border border-white/5">
@@ -264,10 +283,12 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {/* Identity */}
                                     <div className="bg-indigo-900/10 border border-indigo-500/20 rounded-lg p-3">
                                         <SectionHeader title="Subject Identity" colorClass="text-indigo-400 border-indigo-500" icon={<IconUser className="w-3 h-3 text-indigo-400" />} />
                                         <KeyVal label="Age" val={subject.age} />
                                         <KeyVal label="Expression" val={subject.expression} />
+                                        {/* Imperfections */}
                                         {subject.imperfections && (
                                             <div className="mt-2 pt-2 border-t border-indigo-500/10">
                                                 <span className="text-[10px] text-gray-500 block mb-1 font-bold uppercase">Authenticity</span>
@@ -276,12 +297,14 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                                         )}
                                     </div>
 
+                                    {/* Wardrobe */}
                                     <div className="bg-rose-900/10 border border-rose-500/20 rounded-lg p-3">
                                         <SectionHeader title="Wardrobe" colorClass="text-rose-400 border-rose-500" icon={<div className="w-3 h-3 rounded-full bg-rose-400/50" />} />
                                         <ClothingItem label="Top" item={subject.clothing?.top} />
                                         <ClothingItem label="Bottom" item={subject.clothing?.bottom} />
                                     </div>
 
+                                    {/* Environment */}
                                     <div className="bg-emerald-900/10 border border-emerald-500/20 rounded-lg p-3">
                                         <SectionHeader title="Environment" colorClass="text-emerald-400 border-emerald-500" icon={<div className="w-3 h-3 border border-emerald-400 rounded-sm" />} />
                                         <KeyVal label="Setting" val={background?.setting} />
@@ -292,6 +315,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                                         </div>
                                     </div>
 
+                                    {/* Camera */}
                                     <div className="bg-amber-900/10 border border-amber-500/20 rounded-lg p-3">
                                         <SectionHeader title="Camera" colorClass="text-amber-400 border-amber-500" icon={<IconSettings className="w-3 h-3 text-amber-400" />} />
                                         <KeyVal label="Shot" val={photography?.shot_type} />
@@ -299,6 +323,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                                         <KeyVal label="Device" val={photography?.camera_style} />
                                     </div>
 
+                                    {/* Tech Specs (Realism) */}
                                     {parsedContent.tech_specs && (
                                         <div className="bg-cyan-900/10 border border-cyan-500/20 rounded-lg p-3">
                                             <SectionHeader title="Tech Specs" colorClass="text-cyan-400 border-cyan-500" icon={<IconSettings className="w-3 h-3 text-cyan-400" />} />
@@ -311,8 +336,9 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
                             </>
                         )}
 
+                        {/* FALLBACK */}
                         {!isLoRAMode && !subject && (
-                            <p className="text-gray-200 text-sm font-mono leading-relaxed whitespace-pre-wrap">{promptText}</p>
+                            <p className="text-gray-200 text-sm font-mono leading-relaxed whitespace-pre-wrap">{prompt.text}</p>
                         )}
                     </div>
                 )}

@@ -312,19 +312,23 @@ export const generateDatasetPrompts = async (params: {
     
     const rawItems = JSON.parse(text) as any[];
     
-    // Map to internal PromptItem structure - store the full JSON as the prompt
-    return rawItems.map((item, idx) => ({
-      id: generateId(),
-      prompt: JSON.stringify(item),
-      category: item.photography?.shot_type || 'general',
-      tags: item.background?.elements || [],
-      generationMeta: {
-        type: 'lora',
-        index: params.startCount + idx + 1,
-        total: params.totalTarget,
-        label: `LORA-${params.startCount + idx + 1}`
-      }
-    }));
+    // Map to internal PromptItem structure - store the full JSON as text
+    return rawItems.map((item, idx) => {
+      const jsonText = JSON.stringify(item);
+      return {
+        id: generateId(),
+        text: jsonText,
+        prompt: jsonText,
+        category: item.photography?.shot_type || 'general',
+        tags: item.background?.elements || [],
+        generationMeta: {
+          type: 'lora',
+          index: params.startCount + idx + 1,
+          total: params.totalTarget,
+          label: `LORA-${params.startCount + idx + 1}`
+        }
+      };
+    });
 
   } catch (e: any) {
     console.error("Prompt Generation Error:", e);
