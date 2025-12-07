@@ -17,11 +17,20 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     const [finalPrompt, setFinalPrompt] = useState<string>('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isCopied, setIsCopied] = useState(false);
     
     const [provider, setProvider] = useState<ImageProvider>('google');
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('1:1');
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    
+    const handleCopyPrompt = async () => {
+        if (iniResult?.raw) {
+            await navigator.clipboard.writeText(iniResult.raw);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        }
+    };
 
     const fileToBase64 = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
@@ -529,45 +538,150 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                         <>
                             {iniResult && (
                                 <div style={{ marginBottom: '1.5rem' }}>
-                                    <label style={labelStyle}>Generated Prompt</label>
                                     <div style={{
-                                        background: 'rgba(0,0,0,0.3)',
-                                        borderRadius: '8px',
-                                        padding: '1rem',
-                                        maxHeight: '200px',
-                                        overflow: 'auto'
+                                        background: isCopied ? 'rgba(34, 197, 94, 0.05)' : 'rgba(0,0,0,0.4)',
+                                        borderRadius: '12px',
+                                        border: isCopied ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255,255,255,0.08)',
+                                        overflow: 'hidden',
+                                        transition: 'all 0.3s'
                                     }}>
-                                        <pre style={{
-                                            margin: 0,
-                                            fontSize: '0.75rem',
-                                            color: '#a5b4fc',
-                                            whiteSpace: 'pre-wrap',
-                                            wordBreak: 'break-word',
-                                            fontFamily: 'monospace'
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '0.75rem 1rem',
+                                            background: 'rgba(0,0,0,0.3)',
+                                            borderBottom: '1px solid rgba(255,255,255,0.05)'
                                         }}>
-                                            {iniResult.raw}
-                                        </pre>
-                                    </div>
-                                    
-                                    <div style={{ marginTop: '1rem' }}>
-                                        <label style={labelStyle}>Flattened Prompt</label>
-                                        <textarea
-                                            data-testid="input-final-prompt"
-                                            value={finalPrompt}
-                                            onChange={(e) => setFinalPrompt(e.target.value)}
-                                            style={{
-                                                width: '100%',
-                                                minHeight: '80px',
-                                                background: 'rgba(0,0,0,0.3)',
-                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                borderRadius: '8px',
-                                                padding: '0.75rem',
-                                                fontSize: '0.8rem',
-                                                color: 'white',
-                                                resize: 'vertical',
-                                                outline: 'none'
-                                            }}
-                                        />
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    INI Prompt
+                                                </span>
+                                                <span style={{ fontSize: '0.65rem', color: '#6b7280', fontFamily: 'monospace' }}>
+                                                    gemini-2.5-pro
+                                                </span>
+                                            </div>
+                                            <button
+                                                data-testid="button-copy-ini"
+                                                onClick={handleCopyPrompt}
+                                                style={{
+                                                    padding: '0.4rem 0.75rem',
+                                                    borderRadius: '6px',
+                                                    border: 'none',
+                                                    background: isCopied ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.05)',
+                                                    color: isCopied ? '#22c55e' : '#9ca3af',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: '500',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.4rem',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                {isCopied ? (
+                                                    <>
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                            <polyline points="20 6 9 17 4 12" />
+                                                        </svg>
+                                                        Copied
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                            <rect x="9" y="9" width="13" height="13" rx="2" />
+                                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                                        </svg>
+                                                        Copy
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                        
+                                        <div style={{ padding: '1rem', display: 'grid', gap: '0.75rem' }}>
+                                            {iniResult.desc && (
+                                                <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[desc]</span>
+                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.desc}</p>
+                                                </div>
+                                            )}
+                                            
+                                            {iniResult.chars && (
+                                                <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[chars]</span>
+                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.chars}</p>
+                                                </div>
+                                            )}
+                                            
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                {iniResult.comp && (
+                                                    <div style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#eab308', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[comp]</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.comp}</p>
+                                                    </div>
+                                                )}
+                                                
+                                                {iniResult.light && (
+                                                    <div style={{ background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[light]</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.light}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {iniResult.scene && (
+                                                <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[scene]</span>
+                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.scene}</p>
+                                                </div>
+                                            )}
+                                            
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                {iniResult.style && (
+                                                    <div style={{ background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236, 72, 153, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#ec4899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[style]</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.style}</p>
+                                                    </div>
+                                                )}
+                                                
+                                                {iniResult.pal && (
+                                                    <div style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[pal]</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.pal}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {iniResult.must && (
+                                                <div style={{ background: 'rgba(20, 184, 166, 0.1)', border: '1px solid rgba(20, 184, 166, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#14b8a6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[must]</span>
+                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.must}</p>
+                                                </div>
+                                            )}
+                                            
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                {iniResult.objs && (
+                                                    <div style={{ background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[objs]</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.objs}</p>
+                                                    </div>
+                                                )}
+                                                
+                                                {iniResult.geom && (
+                                                    <div style={{ background: 'rgba(107, 114, 128, 0.1)', border: '1px solid rgba(107, 114, 128, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[geom]</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.geom}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {iniResult.avoid && (
+                                                <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[avoid]</span>
+                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.avoid}</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     
                                     <button
