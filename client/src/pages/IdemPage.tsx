@@ -172,7 +172,7 @@ const IdemPage: React.FC = () => {
                         onAnalysisComplete={setVisionStruct}
                     />
                 )}
-                {activeTab === 'generator' && <ImageGenerator />}
+                {activeTab === 'generator' && <ImageGenerator identityImages={generatedImages} />}
             </main>
         </div>
     );

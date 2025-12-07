@@ -1,12 +1,13 @@
 
 import { GoogleGenAI, Schema, Type } from "@google/genai";
-import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings } from "../types";
+import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, INIPrompt } from "../types";
 import { 
   LORA_FORGE_DIRECTIVE, 
   VACUUM_COMPILER_DIRECTIVE, 
   RICH_MEDIA_DIRECTIVE_CANDID, 
   RICH_MEDIA_DIRECTIVE_STUDIO, 
-  VISION_STRUCT_DIRECTIVE 
+  VISION_STRUCT_DIRECTIVE,
+  IMAGE_INI_COMPILER_DIRECTIVE
 } from "../prompts/systemPrompts";
 
 // Security: Retrieve key from session storage dynamically. Never store in variables.
@@ -400,4 +401,88 @@ export const generateDatasetPrompts = async (params: {
     console.error("Prompt Generation Error:", e);
     throw e;
   }
+};
+
+export const analyzeImageINI = async (
+  imageDataUrl: string,
+  modelId: string = 'gemini-2.5-flash'
+): Promise<INIPrompt> => {
+  const ai = getAiClient();
+  const { mimeType, data } = parseDataUrl(imageDataUrl);
+
+  try {
+    const result = await ai.models.generateContent({
+      model: modelId,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: IMAGE_INI_COMPILER_DIRECTIVE },
+            { inlineData: { mimeType, data } }
+          ]
+        }
+      ],
+      config: {
+        temperature: 0.3
+      }
+    });
+
+    const responseText = result.text;
+    if (!responseText) throw new Error("No response from INI Compiler");
+    
+    const iniMatch = responseText.match(/```ini\s*([\s\S]*?)```/);
+    const iniContent = iniMatch ? iniMatch[1] : responseText;
+    
+    const parseField = (field: string): string => {
+      const regex = new RegExp(`\\[${field}\\]\\s*=\\s*(.*)`, 'i');
+      const match = iniContent.match(regex);
+      return match ? match[1].trim() : '';
+    };
+
+    return {
+      desc: parseField('desc'),
+      objs: parseField('objs'),
+      chars: parseField('chars'),
+      style: parseField('style'),
+      comp: parseField('comp'),
+      light: parseField('light'),
+      pal: parseField('pal'),
+      geom: parseField('geom'),
+      micro: parseField('micro') || undefined,
+      sym: parseField('sym') || undefined,
+      scene: parseField('scene'),
+      must: parseField('must'),
+      avoid: parseField('avoid'),
+      notes: parseField('notes') || undefined,
+      raw: iniContent.trim()
+    };
+
+  } catch (e: any) {
+    console.error("INI Compiler Error:", e);
+    throw new Error("Failed to analyze image: " + e.message);
+  }
+};
+
+export const convertINIToPrompt = (ini: INIPrompt, stripIdentity: boolean = false): string => {
+  let parts: string[] = [];
+  
+  if (ini.desc) parts.push(ini.desc);
+  if (ini.style) parts.push(ini.style);
+  if (ini.comp) parts.push(ini.comp);
+  if (ini.light) parts.push(ini.light);
+  if (ini.scene) parts.push(ini.scene);
+  if (ini.objs) parts.push(`Objects: ${ini.objs}`);
+  if (!stripIdentity && ini.chars) parts.push(ini.chars);
+  if (ini.geom) parts.push(ini.geom);
+  if (ini.pal) parts.push(`Colors: ${ini.pal}`);
+  if (ini.micro) parts.push(ini.micro);
+  if (ini.must) parts.push(`Must include: ${ini.must}`);
+  
+  let prompt = parts.join('. ').replace(/\.\./g, '.');
+  
+  if (stripIdentity) {
+    prompt = stripIdentityDescriptions(prompt);
+  }
+  
+  return prompt;
 };

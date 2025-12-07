@@ -35,12 +35,32 @@ export interface AnalysisResult {
     }
 }
 
+export type UGCMode = 'replicate' | 'inject' | 'text_prompt';
+
 export interface UGCSettings {
     platform: 'instagram' | 'tiktok' | 'youtube' | 'linkedin' | 'general';
     customInstruction: string;
     modelId: string;
-    mode?: 'social_prompt';
-    styleMode?: 'studio' | 'candid';
+    mode: UGCMode;
+    styleMode: 'studio' | 'candid';
+}
+
+export interface INIPrompt {
+    desc: string;
+    objs: string;
+    chars: string;
+    style: string;
+    comp: string;
+    light: string;
+    pal: string;
+    geom: string;
+    micro?: string;
+    sym?: string;
+    scene: string;
+    must: string;
+    avoid: string;
+    notes?: string;
+    raw?: string;
 }
 
 export interface ImageGenerationOptions {
