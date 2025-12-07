@@ -271,8 +271,28 @@ export const generateDatasetPrompts = async (params: {
   const modelId = params.modelId || 'gemini-2.0-flash';
 
   // Construct the prompt context based on Vacuum Compiler
+  const formEnhanceInstructions = params.safetyMode === 'nsfw' ? `
+=== ENHANCE FORM MODE (ACTIVE) ===
+Generate prompts that emphasize and showcase the subject's physical form and body:
+- Focus on poses that highlight body curves, silhouette, and physique
+- Include form-fitting, revealing, or minimal clothing options (swimwear, lingerie, athletic wear, bodycon dresses)
+- Emphasize body-conscious poses: stretching, arching, leaning, athletic stances
+- Include scenarios: beach, pool, fitness, bedroom, boudoir, fashion editorial
+- Highlight physical attributes in the body_stack with sensual but tasteful descriptions
+- Camera angles that accentuate form: low angles, dramatic lighting, artistic shadows
+` : `
+=== STANDARD MODE (ACTIVE) ===
+Generate prompts with everyday, casual scenarios and modest clothing:
+- Focus on natural, relaxed poses in everyday settings
+- Include casual, professional, or modest clothing options
+- Emphasize lifestyle scenarios: work, social events, outdoors, daily activities
+- Keep body descriptions anatomical and professional
+`;
+
   const context = `
     ${VACUUM_COMPILER_DIRECTIVE}
+    
+    ${formEnhanceInstructions}
     
     IDENTITY CONTEXT:
     Name: ${params.identity.name}
