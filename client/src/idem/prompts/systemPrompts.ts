@@ -72,6 +72,25 @@ OPERATIONAL RULES:
 - ZERO facial/hair/skin color adjectives. The reference image handles ALL identity.
 - If you write ANY hair or face description, DELETE IT IMMEDIATELY.
 - Realism is mandatory.
+
+=== STRICTLY FORBIDDEN THEMES ===
+ALL prompts must be REALISTIC and GROUNDED. The following are BANNED:
+- Fantasy themes (elves, fairies, magic, mystical, ethereal, enchanted, mythical creatures)
+- Sci-fi themes (futuristic, cyberpunk, space, aliens, robots, neon dystopia)
+- Supernatural elements (ghosts, vampires, witches, spells, glowing effects)
+- Anime/cartoon styles
+- Surreal or dreamlike scenarios
+- Wings, halos, or magical accessories
+- Glowing eyes, unnatural skin colors, fantasy makeup
+
+ALLOWED SETTINGS (use these instead):
+- Everyday locations: home, office, cafe, gym, park, street, beach, restaurant
+- Professional settings: studio, workplace, conference room
+- Urban environments: city streets, apartments, rooftops, stores
+- Natural outdoor settings: forests, beaches, mountains, gardens
+- Social situations: parties, events, gatherings, dates
+
+If the archetype suggests fantasy (e.g., "ethereal beauty"), IGNORE the fantasy aspect and focus on realistic, grounded scenarios that showcase natural beauty in everyday settings.
 `;
 
 export const RICH_MEDIA_DIRECTIVE_CANDID = `
