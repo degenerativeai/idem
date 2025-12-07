@@ -1,125 +1,24 @@
 
 import React, { useState } from 'react';
-import { INIPrompt, UGCMode, ImageAspect, ImageProvider } from '../types';
-import { analyzeImageINI, convertINIToPrompt, stripIdentityDescriptions } from '../services/geminiService';
+import { ImageAspect, ImageProvider } from '../types';
 
 interface ImageGeneratorProps {
     identityImages?: { headshot: string | null; bodyshot: string | null };
 }
 
 const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
-    const [targetImage, setTargetImage] = useState<string | null>(null);
-    const [mode, setMode] = useState<UGCMode>('text_prompt');
     const [styleMode, setStyleMode] = useState<'candid' | 'studio'>('candid');
     const [textPrompt, setTextPrompt] = useState('');
-    
-    const [iniResult, setIniResult] = useState<INIPrompt | null>(null);
-    const [finalPrompt, setFinalPrompt] = useState<string>('');
-    const [sceneOnlyPrompt, setSceneOnlyPrompt] = useState<string>('');
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [copiedType, setCopiedType] = useState<'full' | 'scene' | null>(null);
     
     const [provider, setProvider] = useState<ImageProvider>('google');
-    const [aspectRatio, setAspectRatio] = useState<ImageAspect>('source');
+    const [aspectRatio, setAspectRatio] = useState<ImageAspect>('9:16');
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    
-    const handleCopyFull = async () => {
-        if (finalPrompt) {
-            await navigator.clipboard.writeText(finalPrompt);
-            setCopiedType('full');
-            setTimeout(() => setCopiedType(null), 2000);
-        }
-    };
-    
-    const handleCopySceneOnly = async () => {
-        if (sceneOnlyPrompt) {
-            await navigator.clipboard.writeText(sceneOnlyPrompt);
-            setCopiedType('scene');
-            setTimeout(() => setCopiedType(null), 2000);
-        }
-    };
-    
-    const buildSceneOnlyPrompt = (ini: INIPrompt): string => {
-        const lines: string[] = ['[IMAGE_PROMPT]'];
-        
-        if (ini.desc) lines.push(`[desc]  = ${stripIdentityDescriptions(ini.desc)}`);
-        if (ini.objs) lines.push(`[objs]  = ${ini.objs}`);
-        if (ini.style) lines.push(`[style] = ${ini.style}`);
-        if (ini.comp) lines.push(`[comp]  = ${ini.comp}`);
-        if (ini.light) lines.push(`[light] = ${ini.light}`);
-        if (ini.pal) lines.push(`[pal]   = ${ini.pal}`);
-        if (ini.geom) lines.push(`[geom]  = ${ini.geom}`);
-        if (ini.micro) lines.push(`[micro] = ${ini.micro}`);
-        if (ini.sym) lines.push(`[sym]   = ${ini.sym}`);
-        if (ini.scene) lines.push(`[scene] = ${ini.scene}`);
-        if (ini.must) {
-            const stripped = stripIdentityDescriptions(ini.must);
-            if (stripped) lines.push(`[must]  = ${stripped}`);
-        }
-        if (ini.avoid) lines.push(`[avoid] = ${ini.avoid}`);
-        if (ini.notes) lines.push(`[notes] = ${ini.notes}`);
-        
-        return lines.join('\n');
-    };
-
-    const fileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = error => reject(error);
-        });
-    };
-
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        try {
-            const base64 = await fileToBase64(file);
-            setTargetImage(base64);
-            setIniResult(null);
-            setFinalPrompt('');
-            setSceneOnlyPrompt('');
-            setGeneratedImage(null);
-            setError(null);
-        } catch (err) {
-            console.error("Upload failed", err);
-            setError("Failed to upload image");
-        }
-    };
-
-    const handleAnalyzeImage = async () => {
-        if (!targetImage) {
-            setError("Please upload an image first");
-            return;
-        }
-        
-        setIsAnalyzing(true);
-        setError(null);
-        
-        try {
-            const ini = await analyzeImageINI(targetImage);
-            setIniResult(ini);
-            
-            const fullPrompt = convertINIToPrompt(ini, false);
-            setFinalPrompt(fullPrompt);
-            
-            const scenePrompt = buildSceneOnlyPrompt(ini);
-            setSceneOnlyPrompt(scenePrompt);
-        } catch (e: any) {
-            console.error(e);
-            setError(e.message || "Failed to analyze image");
-        } finally {
-            setIsAnalyzing(false);
-        }
-    };
 
     const handleGenerateImage = async () => {
-        const promptToUse = mode === 'text_prompt' ? textPrompt : finalPrompt;
-        if (!promptToUse) {
-            setError("No prompt available. Generate a replica prompt first or enter text.");
+        if (!textPrompt.trim()) {
+            setError("Please enter a prompt description first.");
             return;
         }
         
@@ -131,15 +30,19 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
             if (!apiKey) throw new Error("API key not found");
             
             const referenceImages: string[] = [];
-            if (mode === 'inject' && identityImages?.headshot) {
+            if (identityImages?.headshot) {
                 referenceImages.push(identityImages.headshot);
-            } else if (mode === 'replicate' && targetImage) {
-                referenceImages.push(targetImage);
             }
             
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
             
-            const parts: any[] = [{ text: promptToUse }];
+            const stylePrefix = styleMode === 'studio' 
+                ? 'Professional studio photography, polished and elegant. ' 
+                : 'Candid amateur photo style, authentic and natural. ';
+            
+            const fullPrompt = stylePrefix + textPrompt;
+            
+            const parts: any[] = [{ text: fullPrompt }];
             referenceImages.forEach(img => {
                 const mimeMatch = img.match(/^data:([^;]+);base64,/);
                 const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
@@ -208,26 +111,6 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
         letterSpacing: '0.05em'
     };
 
-    const radioOptionStyle = (isActive: boolean): React.CSSProperties => ({
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '0.75rem',
-        padding: '1rem',
-        borderRadius: '12px',
-        background: isActive ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0,0,0,0.2)',
-        border: isActive ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid rgba(255,255,255,0.08)',
-        cursor: 'pointer',
-        transition: 'all 0.2s'
-    });
-
-    const modeOptions = [
-        { 
-            value: 'text_prompt' as UGCMode, 
-            label: 'Create Social Media Style Prompts',
-            desc: 'Text-to-Prompt. Describe Vibe/Outfit.'
-        }
-    ];
-
     return (
         <div style={{
             display: 'grid',
@@ -242,149 +125,32 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
             <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <div style={{ width: '6px', height: '6px', background: '#eab308', borderRadius: '50%' }} />
-                    <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#eab308' }}>Context</h2>
+                    <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#eab308' }}>Social Media / UGC</h2>
                 </div>
 
                 <div style={panelStyle}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label style={labelStyle}>Target Scene</label>
-                    </div>
-                    
-                    <div 
-                        data-testid="upload-target-image"
-                        onClick={() => document.getElementById('target-upload')?.click()}
-                        style={{
-                            aspectRatio: '4/3',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            border: targetImage ? '2px solid #a855f7' : '2px dashed #4b5563',
-                            background: 'rgba(0,0,0,0.3)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative'
-                        }}
-                    >
-                        {targetImage ? (
-                            <img src={targetImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Target" />
-                        ) : (
-                            <div style={{ textAlign: 'center', color: '#6b7280', padding: '1.5rem' }}>
-                                <div style={{ 
-                                    width: '48px', 
-                                    height: '48px', 
-                                    margin: '0 auto 1rem',
-                                    background: 'rgba(168, 85, 247, 0.2)',
-                                    borderRadius: '12px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2">
-                                        <path d="M12 5v14M5 12h14" />
-                                    </svg>
-                                </div>
-                                <p style={{ fontSize: '0.9rem', fontWeight: '500', color: '#e5e7eb', marginBottom: '0.25rem' }}>
-                                    Upload Image to Analyze
-                                </p>
-                                <p style={{ fontSize: '0.7rem', color: '#6b7280' }}>
-                                    Upload an image to analyze and generate prompts
-                                </p>
-                            </div>
-                        )}
-                        <input 
-                            type="file" 
-                            id="target-upload" 
-                            hidden 
-                            accept="image/*" 
-                            onChange={handleImageUpload}
-                        />
-                    </div>
-                    
-                    <button
-                        data-testid="button-analyze-image"
-                        onClick={handleAnalyzeImage}
-                        disabled={isAnalyzing || !targetImage}
+                    <label style={labelStyle}>Describe Your Scene</label>
+                    <textarea
+                        data-testid="input-social-prompt"
+                        value={textPrompt}
+                        onChange={(e) => setTextPrompt(e.target.value)}
+                        placeholder="Describe the vibe, outfit, scene, and mood you want...
+
+Example: 'Influencer in cozy fall outfit holding coffee at a trendy cafe, warm lighting, instagram aesthetic'"
                         style={{
                             width: '100%',
+                            minHeight: '180px',
+                            background: 'rgba(0,0,0,0.3)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '8px',
                             padding: '0.75rem',
-                            borderRadius: '10px',
-                            border: 'none',
-                            background: (isAnalyzing || !targetImage) ? '#374151' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
+                            fontSize: '0.85rem',
                             color: 'white',
-                            fontSize: '0.8rem',
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            cursor: (isAnalyzing || !targetImage) ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            marginTop: '0.75rem',
-                            opacity: !targetImage ? 0.5 : 1
+                            resize: 'vertical',
+                            outline: 'none',
+                            lineHeight: '1.5'
                         }}
-                    >
-                        {isAnalyzing ? (
-                            <>
-                                <div style={{
-                                    width: '14px',
-                                    height: '14px',
-                                    border: '2px solid rgba(255,255,255,0.3)',
-                                    borderTopColor: 'white',
-                                    borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite'
-                                }} />
-                                Analyzing...
-                            </>
-                        ) : (
-                            <>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="11" cy="11" r="8" />
-                                    <path d="M21 21l-4.35-4.35" />
-                                </svg>
-                                Analyze Image
-                            </>
-                        )}
-                    </button>
-                </div>
-
-                <div style={panelStyle}>
-                    <label style={labelStyle}>Generation Mode</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {modeOptions.map(opt => (
-                            <div
-                                key={opt.value}
-                                data-testid={`mode-${opt.value}`}
-                                onClick={() => setMode(opt.value)}
-                                style={radioOptionStyle(mode === opt.value)}
-                            >
-                                <div style={{
-                                    width: '18px',
-                                    height: '18px',
-                                    borderRadius: '50%',
-                                    border: mode === opt.value ? '2px solid #a855f7' : '2px solid #4b5563',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                    marginTop: '2px'
-                                }}>
-                                    {mode === opt.value && (
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#a855f7' }} />
-                                    )}
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: '0.85rem', fontWeight: '600', color: '#e5e7eb', margin: 0 }}>
-                                        {opt.label}
-                                    </p>
-                                    <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.25rem 0 0' }}>
-                                        {opt.desc}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    />
                 </div>
 
                 <div style={panelStyle}>
@@ -414,13 +180,13 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                             </div>
                         </div>
                         <button
-                            data-testid="toggle-style-mode"
+                            data-testid="toggle-social-style"
                             onClick={() => setStyleMode(s => s === 'candid' ? 'studio' : 'candid')}
                             style={{
                                 width: '48px',
                                 height: '26px',
                                 borderRadius: '13px',
-                                background: styleMode === 'studio' ? '#a855f7' : '#374151',
+                                background: styleMode === 'studio' ? '#eab308' : '#374151',
                                 border: 'none',
                                 cursor: 'pointer',
                                 position: 'relative',
@@ -441,29 +207,103 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                     </div>
                 </div>
 
-                {mode === 'text_prompt' && (
-                    <div style={panelStyle}>
-                        <label style={labelStyle}>Custom Prompt</label>
-                        <textarea
-                            data-testid="input-custom-prompt"
-                            value={textPrompt}
-                            onChange={(e) => setTextPrompt(e.target.value)}
-                            placeholder="Describe the vibe, outfit, and scene you want..."
-                            style={{
-                                width: '100%',
-                                minHeight: '120px',
-                                background: 'rgba(0,0,0,0.3)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '8px',
-                                padding: '0.75rem',
-                                fontSize: '0.85rem',
-                                color: 'white',
-                                resize: 'vertical',
-                                outline: 'none'
-                            }}
-                        />
+                <div style={panelStyle}>
+                    <label style={labelStyle}>Aspect Ratio</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                        {(['9:16', '1:1', '16:9', '4:3', '3:4'] as ImageAspect[]).map((ratio) => (
+                            <button
+                                key={ratio}
+                                data-testid={`aspect-${ratio.replace(':', '-')}`}
+                                onClick={() => setAspectRatio(ratio)}
+                                style={{
+                                    padding: '0.5rem',
+                                    borderRadius: '8px',
+                                    border: aspectRatio === ratio ? '2px solid #eab308' : '1px solid rgba(255,255,255,0.1)',
+                                    background: aspectRatio === ratio ? 'rgba(234, 179, 8, 0.15)' : 'rgba(0,0,0,0.2)',
+                                    color: aspectRatio === ratio ? '#fde047' : '#9ca3af',
+                                    fontSize: '0.75rem',
+                                    fontWeight: aspectRatio === ratio ? '600' : '400',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {ratio}
+                            </button>
+                        ))}
                     </div>
-                )}
+                </div>
+
+                <div style={panelStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            background: identityImages?.headshot ? 'rgba(34, 197, 94, 0.2)' : 'rgba(107, 114, 128, 0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={identityImages?.headshot ? '#22c55e' : '#6b7280'} strokeWidth="2">
+                                <circle cx="12" cy="8" r="5" />
+                                <path d="M20 21a8 8 0 1 0-16 0" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '0.85rem', fontWeight: '600', color: '#e5e7eb', margin: 0 }}>
+                                Identity Reference
+                            </p>
+                            <p style={{ fontSize: '0.7rem', color: identityImages?.headshot ? '#86efac' : '#9ca3af', margin: 0 }}>
+                                {identityImages?.headshot ? 'Using identity from Tab 1' : 'No identity loaded - create one in Tab 1'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <button
+                    data-testid="button-generate-social"
+                    onClick={handleGenerateImage}
+                    disabled={isGenerating || !textPrompt.trim()}
+                    style={{
+                        width: '100%',
+                        padding: '1rem',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: (isGenerating || !textPrompt.trim()) ? '#374151' : 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
+                        color: (isGenerating || !textPrompt.trim()) ? '#9ca3af' : 'black',
+                        fontSize: '0.9rem',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        cursor: (isGenerating || !textPrompt.trim()) ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        opacity: !textPrompt.trim() ? 0.5 : 1
+                    }}
+                >
+                    {isGenerating ? (
+                        <>
+                            <div style={{
+                                width: '16px',
+                                height: '16px',
+                                border: '2px solid rgba(0,0,0,0.3)',
+                                borderTopColor: 'black',
+                                borderRadius: '50%',
+                                animation: 'spin 1s linear infinite'
+                            }} />
+                            Generating...
+                        </>
+                    ) : (
+                        <>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            Generate Image
+                        </>
+                    )}
+                </button>
 
                 {error && (
                     <div style={{
@@ -485,45 +325,11 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                         <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#e5e7eb', margin: 0 }}>
                             Output
                         </h2>
-                        {iniResult && (
+                        {generatedImage && (
                             <span style={{ fontSize: '0.85rem', color: '#9ca3af' }}>
-                                Prompt Ready
+                                Ready to download
                             </span>
                         )}
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{ 
-                            fontSize: '0.65rem', 
-                            textTransform: 'uppercase', 
-                            fontWeight: 'bold', 
-                            color: '#94a3b8',
-                            letterSpacing: '0.05em'
-                        }}>
-                            Aspect Ratio
-                        </span>
-                        <select
-                            data-testid="select-aspect-ratio"
-                            value={aspectRatio}
-                            onChange={(e) => setAspectRatio(e.target.value as ImageAspect)}
-                            style={{
-                                padding: '0.5rem 1rem',
-                                borderRadius: '8px',
-                                background: aspectRatio === 'source' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(0,0,0,0.3)',
-                                border: aspectRatio === 'source' ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid rgba(255,255,255,0.1)',
-                                color: aspectRatio === 'source' ? '#c4b5fd' : 'white',
-                                fontSize: '0.8rem',
-                                cursor: 'pointer',
-                                fontWeight: aspectRatio === 'source' ? '600' : '400'
-                            }}
-                        >
-                            <option value="source">Keep Source</option>
-                            <option value="1:1">1:1</option>
-                            <option value="16:9">16:9</option>
-                            <option value="9:16">9:16</option>
-                            <option value="4:3">4:3</option>
-                            <option value="3:4">3:4</option>
-                        </select>
                     </div>
                 </div>
 
@@ -533,7 +339,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                     display: 'flex',
                     flexDirection: 'column'
                 }}>
-                    {!iniResult && !generatedImage && !isGenerating ? (
+                    {!generatedImage && !isGenerating ? (
                         <div style={{
                             flex: 1,
                             display: 'flex',
@@ -547,246 +353,46 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                             <div style={{
                                 width: '64px',
                                 height: '64px',
-                                background: 'rgba(168, 85, 247, 0.1)',
+                                background: 'rgba(234, 179, 8, 0.1)',
                                 borderRadius: '16px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 marginBottom: '1.5rem'
                             }}>
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="1.5">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <circle cx="8" cy="8" r="2" />
+                                    <path d="M21 15l-5-5L5 21" />
                                 </svg>
                             </div>
                             <p style={{ fontSize: '1rem', fontWeight: '500', color: '#9ca3af', marginBottom: '0.5rem' }}>
-                                Configured & Ready
+                                Ready to Create
                             </p>
-                            <p style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-                                Upload context or click Generate to begin.
+                            <p style={{ fontSize: '0.85rem', color: '#6b7280', maxWidth: '300px' }}>
+                                Describe the scene you want and click Generate to create social media content.
                             </p>
                         </div>
                     ) : (
                         <>
-                            {iniResult && (
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{
-                                        background: copiedType ? 'rgba(34, 197, 94, 0.05)' : 'rgba(0,0,0,0.4)',
-                                        borderRadius: '12px',
-                                        border: copiedType ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255,255,255,0.08)',
-                                        overflow: 'hidden',
-                                        transition: 'all 0.3s'
-                                    }}>
-                                        <div style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: '0.75rem 1rem',
-                                            background: 'rgba(0,0,0,0.3)',
-                                            borderBottom: '1px solid rgba(255,255,255,0.05)'
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    INI Prompt
-                                                </span>
-                                                <span style={{ fontSize: '0.65rem', color: '#6b7280', fontFamily: 'monospace' }}>
-                                                    gemini-2.5-pro
-                                                </span>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <button
-                                                    data-testid="button-copy-full"
-                                                    onClick={handleCopyFull}
-                                                    style={{
-                                                        padding: copiedType === 'full' ? '0.5rem 1rem' : '0.4rem 0.75rem',
-                                                        borderRadius: '6px',
-                                                        border: copiedType === 'full' ? '2px solid #22c55e' : 'none',
-                                                        background: copiedType === 'full' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(255,255,255,0.05)',
-                                                        color: copiedType === 'full' ? '#4ade80' : '#9ca3af',
-                                                        fontSize: copiedType === 'full' ? '0.75rem' : '0.65rem',
-                                                        fontWeight: copiedType === 'full' ? '700' : '500',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.4rem',
-                                                        transition: 'all 0.2s',
-                                                        transform: copiedType === 'full' ? 'scale(1.05)' : 'scale(1)',
-                                                        boxShadow: copiedType === 'full' ? '0 0 12px rgba(34, 197, 94, 0.5)' : 'none'
-                                                    }}
-                                                >
-                                                    {copiedType === 'full' ? (
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                                            <polyline points="20 6 9 17 4 12" />
-                                                        </svg>
-                                                    ) : (
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                            <rect x="9" y="9" width="13" height="13" rx="2" />
-                                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                                        </svg>
-                                                    )}
-                                                    {copiedType === 'full' ? 'Copied!' : 'Full Prompt'}
-                                                </button>
-                                                <button
-                                                    data-testid="button-copy-scene"
-                                                    onClick={handleCopySceneOnly}
-                                                    style={{
-                                                        padding: copiedType === 'scene' ? '0.5rem 1rem' : '0.4rem 0.75rem',
-                                                        borderRadius: '6px',
-                                                        border: copiedType === 'scene' ? '2px solid #a855f7' : 'none',
-                                                        background: copiedType === 'scene' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(168, 85, 247, 0.1)',
-                                                        color: copiedType === 'scene' ? '#e9d5ff' : '#a855f7',
-                                                        fontSize: copiedType === 'scene' ? '0.75rem' : '0.65rem',
-                                                        fontWeight: copiedType === 'scene' ? '700' : '500',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.4rem',
-                                                        transition: 'all 0.2s',
-                                                        transform: copiedType === 'scene' ? 'scale(1.05)' : 'scale(1)',
-                                                        boxShadow: copiedType === 'scene' ? '0 0 12px rgba(168, 85, 247, 0.5)' : 'none'
-                                                    }}
-                                                >
-                                                    {copiedType === 'scene' ? (
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                                            <polyline points="20 6 9 17 4 12" />
-                                                        </svg>
-                                                    ) : (
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                                                            <circle cx="8" cy="8" r="2" />
-                                                            <path d="M21 15l-5-5L5 21" />
-                                                        </svg>
-                                                    )}
-                                                    {copiedType === 'scene' ? 'Copied!' : 'Scene Only'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <div style={{ padding: '1rem', display: 'grid', gap: '0.75rem' }}>
-                                            {iniResult.desc && (
-                                                <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[desc]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.desc}</p>
-                                                </div>
-                                            )}
-                                            
-                                            {iniResult.chars && (
-                                                <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[chars]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.chars}</p>
-                                                </div>
-                                            )}
-                                            
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                {iniResult.comp && (
-                                                    <div style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#eab308', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[comp]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.comp}</p>
-                                                    </div>
-                                                )}
-                                                
-                                                {iniResult.light && (
-                                                    <div style={{ background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[light]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.light}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            
-                                            {iniResult.scene && (
-                                                <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[scene]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.scene}</p>
-                                                </div>
-                                            )}
-                                            
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                {iniResult.style && (
-                                                    <div style={{ background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236, 72, 153, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#ec4899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[style]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.style}</p>
-                                                    </div>
-                                                )}
-                                                
-                                                {iniResult.pal && (
-                                                    <div style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[pal]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.pal}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            
-                                            {iniResult.must && (
-                                                <div style={{ background: 'rgba(20, 184, 166, 0.1)', border: '1px solid rgba(20, 184, 166, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#14b8a6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[must]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.must}</p>
-                                                </div>
-                                            )}
-                                            
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                {iniResult.objs && (
-                                                    <div style={{ background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[objs]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.objs}</p>
-                                                    </div>
-                                                )}
-                                                
-                                                {iniResult.geom && (
-                                                    <div style={{ background: 'rgba(107, 114, 128, 0.1)', border: '1px solid rgba(107, 114, 128, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[geom]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.geom}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            
-                                            {iniResult.avoid && (
-                                                <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[avoid]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.avoid}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    
-                                    <button
-                                        data-testid="button-generate-image"
-                                        onClick={handleGenerateImage}
-                                        disabled={isGenerating || !finalPrompt}
-                                        style={{
-                                            marginTop: '1rem',
-                                            padding: '0.75rem 1.5rem',
-                                            borderRadius: '8px',
-                                            border: 'none',
-                                            background: isGenerating ? '#374151' : '#eab308',
-                                            color: isGenerating ? '#9ca3af' : 'black',
-                                            fontSize: '0.8rem',
-                                            fontWeight: 'bold',
-                                            textTransform: 'uppercase',
-                                            cursor: isGenerating || !finalPrompt ? 'not-allowed' : 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem'
-                                        }}
-                                    >
-                                        {isGenerating ? 'Generating...' : 'Generate Image'}
-                                    </button>
-                                </div>
-                            )}
-                            
                             {isGenerating && (
                                 <div style={{
                                     flex: 1,
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
-                                    justifyContent: 'center'
+                                    justifyContent: 'center',
+                                    gap: '1rem'
                                 }}>
                                     <div style={{
                                         width: '48px',
                                         height: '48px',
-                                        border: '3px solid rgba(168, 85, 247, 0.2)',
-                                        borderTopColor: '#a855f7',
+                                        border: '3px solid rgba(234, 179, 8, 0.2)',
+                                        borderTopColor: '#eab308',
                                         borderRadius: '50%',
                                         animation: 'spin 1s linear infinite'
                                     }} />
+                                    <p style={{ fontSize: '0.9rem', color: '#9ca3af' }}>Creating your image...</p>
                                 </div>
                             )}
                             
@@ -796,40 +402,56 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                     <div style={{
                                         borderRadius: '12px',
                                         overflow: 'hidden',
-                                        border: '1px solid rgba(168, 85, 247, 0.3)'
+                                        border: '1px solid rgba(234, 179, 8, 0.3)'
                                     }}>
                                         <img 
                                             src={generatedImage} 
-                                            alt="Generated" 
-                                            style={{ 
-                                                width: '100%', 
-                                                height: 'auto',
-                                                display: 'block'
-                                            }} 
+                                            alt="Generated social media content" 
+                                            style={{ width: '100%', display: 'block' }}
+                                            data-testid="img-social-result"
                                         />
                                     </div>
                                     <div style={{ 
+                                        display: 'flex', 
+                                        gap: '0.75rem', 
                                         marginTop: '1rem',
-                                        display: 'flex',
-                                        gap: '0.75rem'
+                                        justifyContent: 'flex-end'
                                     }}>
                                         <button
-                                            data-testid="button-download-image"
-                                            onClick={() => {
-                                                const link = document.createElement('a');
-                                                link.href = generatedImage;
-                                                link.download = `ugc-${Date.now()}.png`;
-                                                link.click();
-                                            }}
+                                            data-testid="button-regenerate-social"
+                                            onClick={handleGenerateImage}
+                                            disabled={isGenerating}
                                             style={{
-                                                padding: '0.6rem 1.25rem',
+                                                padding: '0.5rem 1rem',
                                                 borderRadius: '8px',
-                                                border: '1px solid rgba(168, 85, 247, 0.4)',
-                                                background: 'rgba(168, 85, 247, 0.15)',
-                                                color: '#c4b5fd',
+                                                background: 'rgba(107, 114, 128, 0.15)',
+                                                border: '1px solid rgba(107, 114, 128, 0.3)',
+                                                color: '#9ca3af',
                                                 fontSize: '0.8rem',
-                                                fontWeight: '500',
                                                 cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem'
+                                            }}
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M23 4v6h-6" />
+                                                <path d="M1 20v-6h6" />
+                                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                            </svg>
+                                            Regenerate
+                                        </button>
+                                        <a
+                                            href={generatedImage}
+                                            download="social-media-image.png"
+                                            data-testid="button-download-social"
+                                            style={{
+                                                padding: '0.5rem 1rem',
+                                                borderRadius: '8px',
+                                                background: 'rgba(234, 179, 8, 0.15)',
+                                                color: '#fde047',
+                                                fontSize: '0.8rem',
+                                                textDecoration: 'none',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '0.5rem'
@@ -841,23 +463,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                                                 <line x1="12" y1="15" x2="12" y2="3" />
                                             </svg>
                                             Download
-                                        </button>
-                                        <button
-                                            data-testid="button-regenerate"
-                                            onClick={handleGenerateImage}
-                                            style={{
-                                                padding: '0.6rem 1.25rem',
-                                                borderRadius: '8px',
-                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                background: 'rgba(0,0,0,0.3)',
-                                                color: '#9ca3af',
-                                                fontSize: '0.8rem',
-                                                fontWeight: '500',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            Regenerate
-                                        </button>
+                                        </a>
                                     </div>
                                 </div>
                             )}
@@ -865,12 +471,6 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
                     )}
                 </div>
             </div>
-
-            <style>{`
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
         </div>
     );
 };

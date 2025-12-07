@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import VisionStructParser from '../idem/components/VisionStructParser';
 import DatasetGenerator from '../idem/components/DatasetGenerator';
+import CloneImage from '../idem/components/CloneImage';
 import ImageGenerator from '../idem/components/ImageGenerator';
 import { SplashScreen } from '../idem/components/SplashScreen';
 import { IdemLogo } from '../idem/components/IdemLogo';
 
 const IdemPage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'vision' | 'dataset' | 'generator'>('vision');
+    const [activeTab, setActiveTab] = useState<'vision' | 'dataset' | 'clone' | 'generator'>('vision');
     const [apiKey, setApiKey] = useState<string | null>(null);
     const [showSplash, setShowSplash] = useState(true);
     const [visionStruct, setVisionStruct] = useState<any | null>(null);
@@ -31,7 +32,6 @@ const IdemPage: React.FC = () => {
     };
 
     const handleSetKey = () => {
-        // If user wants to reset/change key
         sessionStorage.removeItem('gemini_api_key');
         setApiKey(null);
         setShowSplash(true);
@@ -39,13 +39,6 @@ const IdemPage: React.FC = () => {
 
     const handleImagesGenerated = (images: { source: string | null; headshot: string | null; bodyshot: string | null }) => {
         setGeneratedImages(images);
-        // Optional: Auto-switch? User said "move to the next tab", implying manual or auto.
-        // Let's not auto-switch immediately to let them verify, OR just make the button in VisionStruct "Next" switch tabs?
-        // User said "Then we can click the button on that tab".
-        // Let's auto-switch to Dataset tab for convenience after generation?
-        // Actually, the user flow is: Generate Images -> Go to Dataset Tab -> Click Analyze.
-        // So maybe we don't auto-switch, or we provide a clear "Proceed to Dataset" button.
-        // For now, I'll just save state.
     };
 
     if (showSplash) {
@@ -54,7 +47,6 @@ const IdemPage: React.FC = () => {
 
     return (
         <div className="app-container" style={{ minHeight: '100vh', background: 'var(--bg-obsidian)', color: 'var(--text-primary)' }}>
-            {/* Header / Nav */}
             <header className="glass-panel" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -73,12 +65,13 @@ const IdemPage: React.FC = () => {
                 </div>
 
                 <nav style={{ display: 'flex', gap: '0.5rem' }}>
-                    {(['vision', 'dataset', 'generator'] as const).map((tab) => {
+                    {(['vision', 'dataset', 'clone', 'generator'] as const).map((tab) => {
                         const isActive = activeTab === tab;
                         const labels = {
                             vision: 'Create Identity',
                             dataset: 'Dataset Generator',
-                            generator: 'Social Media/UGC'
+                            clone: 'Clone Image',
+                            generator: 'Social Media'
                         };
                         return (
                             <button
@@ -155,7 +148,6 @@ const IdemPage: React.FC = () => {
                 </div>
             </header>
 
-            {/* Main Content Area */}
             <main className="no-scrollbar" style={{ padding: '0 1rem', maxWidth: '100%', margin: '0 auto', minHeight: 'calc(100vh - 120px)', paddingBottom: '2rem' }}>
                 <div style={{ display: activeTab === 'vision' ? 'block' : 'none' }}>
                     <VisionStructParser
@@ -172,6 +164,7 @@ const IdemPage: React.FC = () => {
                         onAnalysisComplete={setVisionStruct}
                     />
                 )}
+                {activeTab === 'clone' && <CloneImage identityImages={generatedImages} />}
                 {activeTab === 'generator' && <ImageGenerator identityImages={generatedImages} />}
             </main>
         </div>
