@@ -9,9 +9,10 @@ const ASPECTS: ImageAspect[] = ['1:1', '16:9', '9:16', '4:3', '3:4'];
 
 interface VisionStructParserProps {
     onImagesComplete: (images: { source: string | null; headshot: string | null; bodyshot: string | null }) => void;
+    onNavigateToDataset?: () => void;
 }
 
-const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplete }) => {
+const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplete, onNavigateToDataset }) => {
     const [provider, setProvider] = useState<ImageProvider>('google');
     const [wavespeedKey, setWavespeedKey] = useState('');
     const [googleKey, setGoogleKey] = useState(sessionStorage.getItem('gemini_api_key') || '');
@@ -28,6 +29,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
     const [selectedHeadshot, setSelectedHeadshot] = useState<string | null>(null);
     const [generatedBodyshots, setGeneratedBodyshots] = useState<string[]>([]);
     const [selectedBodyshot, setSelectedBodyshot] = useState<string | null>(null);
+
+    const hasReferences = generatedHeadshots.length > 0 && generatedBodyshots.length > 0;
 
     const getApiKey = () => {
         if (provider === 'wavespeed') return wavespeedKey;
@@ -166,12 +169,12 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
 
     const inputStyle: React.CSSProperties = {
         width: '100%',
-        background: 'rgba(0,0,0,0.3)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'rgba(0,0,0,0.5)',
+        border: '1px solid rgba(255,255,255,0.15)',
         borderRadius: '8px',
         padding: '0.5rem 0.75rem',
         fontSize: '0.85rem',
-        color: 'white',
+        color: '#e2e8f0',
         outline: 'none',
         transition: 'border-color 0.2s',
         minHeight: '36px'
@@ -185,7 +188,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'right 0.5rem center',
         backgroundSize: '1.25rem',
-        paddingRight: '2rem'
+        paddingRight: '2rem',
+        backgroundColor: 'rgba(0,0,0,0.5)'
     };
 
     const buttonPrimaryStyle: React.CSSProperties = {
@@ -227,11 +231,31 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         cursor: 'pointer',
         padding: '2rem',
         borderRadius: '12px',
-        border: '2px dashed rgba(255,255,255,0.15)',
+        border: '2px dashed rgba(168, 85, 247, 0.4)',
         transition: 'all 0.2s',
         width: '100%',
         height: '100%',
-        minHeight: '200px'
+        minHeight: '200px',
+        background: 'rgba(168, 85, 247, 0.05)'
+    };
+
+    const startDatasetButtonStyle: React.CSSProperties = {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '0.75rem',
+        padding: '1rem 2rem',
+        borderRadius: '0.75rem',
+        background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+        color: 'white',
+        fontSize: '1rem',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        letterSpacing: '0.05em',
+        boxShadow: '0 4px 15px rgba(34, 197, 94, 0.3)'
     };
 
     return (
@@ -322,7 +346,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                     onChange={e => setWavespeedKey(e.target.value)}
                                     style={{
                                         ...inputStyle,
-                                        borderColor: wavespeedKey ? 'rgba(34, 197, 94, 0.5)' : 'rgba(255,255,255,0.1)',
+                                        borderColor: wavespeedKey ? 'rgba(34, 197, 94, 0.5)' : 'rgba(255,255,255,0.15)',
                                         paddingRight: '2rem'
                                     }}
                                     data-testid="input-wavespeed-key"
@@ -358,13 +382,32 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                     )}
                 </div>
 
-                <div style={panelStyle}>
-                    <div style={{ display: 'flex', gap: '0.75rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#93c5fd' }}>Upload your source image to begin</span>
-                    </div>
-                    <p style={{ fontSize: '0.7rem', color: '#64748b', lineHeight: '1.6' }}>
-                        Add your image here to create the perfect references for your LoRA training. The system will generate both headshot and full-body reference images.
+                <div style={{
+                    ...panelStyle,
+                    background: 'rgba(59, 130, 246, 0.05)',
+                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                }}>
+                    <p style={{ fontSize: '0.75rem', color: '#93c5fd', lineHeight: '1.6', margin: 0 }}>
+                        Already have your reference images? Go directly to the Dataset Generator tab to upload them and start creating your training dataset.
                     </p>
+                    {onNavigateToDataset && (
+                        <button
+                            onClick={onNavigateToDataset}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                borderRadius: '6px',
+                                background: 'rgba(59, 130, 246, 0.2)',
+                                border: '1px solid rgba(59, 130, 246, 0.3)',
+                                color: '#93c5fd',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                            data-testid="button-go-to-dataset"
+                        >
+                            Go to Dataset Generator
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -382,9 +425,23 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                         ) : (
                             <label style={uploadTriggerStyle}>
                                 <input type="file" onChange={handleFileUpload} accept="image/*" style={{ display: 'none' }} data-testid="input-source-upload" />
-                                <span style={{ fontSize: '2rem', opacity: 0.5, color: '#a855f7' }}>+</span>
-                                <span style={{ textAlign: 'center', lineHeight: '1.4', color: '#64748b', fontSize: '0.75rem' }}>
-                                    Click or Drag<br />to Upload Source
+                                <div style={{ 
+                                    width: '48px', 
+                                    height: '48px', 
+                                    borderRadius: '50%', 
+                                    background: 'rgba(168, 85, 247, 0.2)', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    border: '2px solid rgba(168, 85, 247, 0.4)'
+                                }}>
+                                    <span style={{ fontSize: '1.5rem', color: '#a855f7' }}>+</span>
+                                </div>
+                                <span style={{ textAlign: 'center', lineHeight: '1.5', color: '#c4b5fd', fontSize: '0.85rem', fontWeight: '500' }}>
+                                    Drop your image here
+                                </span>
+                                <span style={{ textAlign: 'center', color: '#64748b', fontSize: '0.7rem' }}>
+                                    or click to browse
                                 </span>
                             </label>
                         )}
@@ -484,6 +541,23 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                         )}
                     </div>
                 </div>
+
+                {hasReferences && onNavigateToDataset && (
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        marginTop: '1rem'
+                    }}>
+                        <button
+                            onClick={onNavigateToDataset}
+                            style={startDatasetButtonStyle}
+                            data-testid="button-start-dataset"
+                        >
+                            <IconSparkles style={{ width: '20px', height: '20px' }} />
+                            Start Building Your Dataset
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

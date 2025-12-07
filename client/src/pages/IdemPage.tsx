@@ -106,8 +106,8 @@ const IdemPage: React.FC = () => {
                     <VisionStructParser
                         onImagesComplete={(imgs) => {
                             handleImagesGenerated(imgs);
-                            // User requested manual tab switch
                         }}
+                        onNavigateToDataset={() => setActiveTab('dataset')}
                     />
                 </div>
                 {activeTab === 'dataset' && (
