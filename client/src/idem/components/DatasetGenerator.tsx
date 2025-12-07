@@ -640,17 +640,6 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <textarea readOnly value={identity?.identity_profile?.realism_stack || identity?.identity_profile?.facial_description || ''} placeholder="Waiting..." style={{ ...inputStyle, resize: 'none', height: '100px', color: (identity?.identity_profile?.realism_stack) ? 'white' : '#64748b', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflow: 'hidden' }} data-testid="textarea-realism-stack" />
                     </div>
 
-                    {identity?.identity_profile && !savedIdentityId && (
-                        <button onClick={handleSaveIdentity} disabled={isSaving} data-testid="button-save-identity" style={{ width: '100%', padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid rgba(34, 197, 94, 0.5)', background: 'rgba(34, 197, 94, 0.1)', color: '#4ade80', fontSize: '0.75rem', fontWeight: 'bold', cursor: isSaving ? 'wait' : 'pointer' }}>
-                            {isSaving ? 'Saving...' : 'Save Identity to Database'}
-                        </button>
-                    )}
-                    {savedIdentityId && (
-                        <div style={{ padding: '0.5rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(34, 197, 94, 0.3)', textAlign: 'center' }}>
-                            <span style={{ color: '#4ade80', fontSize: '0.75rem', fontWeight: 'bold' }}>✓ Identity Saved</span>
-                        </div>
-                    )}
-
                     <div style={{ marginTop: '0.5rem' }}>
                         <label style={labelStyle}>Wardrobe Style</label>
                         <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -670,16 +659,6 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <button onClick={handleGeneratePrompts} disabled={isGeneratingPrompts || !identity} data-testid="button-generate-prompts" style={{ width: '100%', padding: '1rem', borderRadius: '0.75rem', border: 'none', background: isGeneratingPrompts || !identity ? '#374151' : 'linear-gradient(to right, #a855f7, #2563eb)', color: isGeneratingPrompts || !identity ? '#9ca3af' : 'white', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: isGeneratingPrompts || !identity ? 'default' : 'pointer', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                             {isGeneratingPrompts ? 'Synthesizing...' : (datasetPrompts.length > 0 ? 'Restart Generation' : 'Start Generation')}
                         </button>
-                        {datasetPrompts.length > 0 && savedIdentityId && !savedDatasetId && (
-                            <button onClick={handleSaveDataset} disabled={isSaving} data-testid="button-save-dataset" style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(168, 85, 247, 0.5)', background: 'rgba(168, 85, 247, 0.1)', color: '#e9d5ff', fontSize: '0.75rem', fontWeight: 'bold', cursor: isSaving ? 'wait' : 'pointer' }}>
-                                {isSaving ? 'Saving...' : 'Save Dataset to Database'}
-                            </button>
-                        )}
-                        {savedDatasetId && (
-                            <div style={{ padding: '0.5rem', background: 'rgba(168, 85, 247, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(168, 85, 247, 0.3)', textAlign: 'center' }}>
-                                <span style={{ color: '#e9d5ff', fontSize: '0.75rem', fontWeight: 'bold' }}>✓ Dataset Saved</span>
-                            </div>
-                        )}
                         {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
                     </div>
                 ) : (
