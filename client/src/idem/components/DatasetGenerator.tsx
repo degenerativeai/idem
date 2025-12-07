@@ -473,6 +473,25 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         minHeight: '36px'
     };
 
+    const selectStyle: React.CSSProperties = {
+        width: '100%',
+        background: 'rgba(88, 28, 135, 0.3)',
+        border: '1px solid rgba(168, 85, 247, 0.4)',
+        borderRadius: '8px',
+        padding: '0.5rem 0.75rem',
+        fontSize: '0.85rem',
+        color: '#e9d5ff',
+        outline: 'none',
+        cursor: 'pointer',
+        minHeight: '36px',
+        appearance: 'none',
+        WebkitAppearance: 'none',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c4b5fd' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 0.75rem center',
+        paddingRight: '2rem'
+    };
+
     return (
         <div style={{
             display: 'grid',
@@ -641,14 +660,14 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div>
                                 <label style={labelStyle}>Provider</label>
-                                <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={inputStyle} data-testid="select-provider">
+                                <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle} data-testid="select-provider">
                                     <option value="google">Google (Imagen)</option>
                                     <option value="wavespeed">Wavespeed (Flux)</option>
                                 </select>
                             </div>
                             <div>
                                 <label style={labelStyle}>Quality</label>
-                                <select value={resolution} onChange={(e) => setResolution(e.target.value as any)} style={inputStyle} data-testid="select-resolution">
+                                <select value={resolution} onChange={(e) => setResolution(e.target.value as any)} style={selectStyle} data-testid="select-resolution">
                                     <option value="2k">2K (Standard)</option>
                                     <option value="4k">4K (High Res)</option>
                                 </select>
@@ -663,7 +682,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
                             <div>
                                 <label style={labelStyle}>Aspect Ratio</label>
-                                <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as ImageAspect)} style={inputStyle} data-testid="select-aspect-ratio">
+                                <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as ImageAspect)} style={selectStyle} data-testid="select-aspect-ratio">
                                     <option value="1:1">1:1 (Square)</option>
                                     <option value="4:3">4:3</option>
                                     <option value="3:4">3:4</option>
