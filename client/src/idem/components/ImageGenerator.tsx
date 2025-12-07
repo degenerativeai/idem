@@ -106,17 +106,17 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
             {/* Top Control Bar - Compact Layout */}
             <div style={{
                 display: 'flex',
-                gap: '1.5rem',
+                gap: '1rem',
                 background: 'rgba(24, 26, 31, 0.6)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
                 borderRadius: '16px',
-                padding: '1.25rem',
+                padding: '1rem',
                 border: '1px solid rgba(255,255,255,0.08)',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}>
-                {/* Left Side - Describe + Controls (compact) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '320px' }}>
+                {/* Left Side - Describe + Controls (expanded) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
                     {/* Describe Box */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <label style={{
@@ -264,30 +264,30 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                     </div>
                 </div>
 
-                {/* Right Side - Large Identity Images in Portrait */}
+                {/* Right Side - Tight Reference Images Box */}
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.75rem',
-                    padding: '1rem',
+                    gap: '0.5rem',
+                    padding: '0.75rem',
                     background: hasIdentity ? 'rgba(34, 197, 94, 0.08)' : 'rgba(107, 114, 128, 0.08)',
-                    borderRadius: '12px',
-                    border: `1px solid ${hasIdentity ? 'rgba(34, 197, 94, 0.2)' : 'rgba(107, 114, 128, 0.2)'}`,
-                    flex: 1
+                    borderRadius: '10px',
+                    border: `1px solid ${hasIdentity ? 'rgba(34, 197, 94, 0.2)' : 'rgba(107, 114, 128, 0.2)'}`
                 }}>
                     <span style={{ 
-                        fontSize: '0.6rem', 
+                        fontSize: '0.55rem', 
                         fontWeight: 'bold', 
                         textTransform: 'uppercase', 
                         color: hasIdentity ? '#4ade80' : '#9ca3af',
-                        letterSpacing: '0.05em'
+                        letterSpacing: '0.05em',
+                        textAlign: 'center'
                     }}>
-                        Reference Images
+                        Reference
                     </span>
                     
-                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flex: 1 }}>
-                        {/* Headshot - Large Portrait */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                        {/* Headshot - Portrait */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             {effectiveHeadshot ? (
                                 <div style={{ position: 'relative' }}>
                                     <img 
@@ -295,23 +295,23 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                                         alt="Headshot"
                                         data-testid="img-identity-headshot"
                                         style={{
-                                            width: '140px',
-                                            height: '200px',
+                                            width: '100px',
+                                            height: '140px',
                                             objectFit: 'cover',
-                                            borderRadius: '12px',
-                                            border: '3px solid rgba(34, 197, 94, 0.4)'
+                                            borderRadius: '8px',
+                                            border: '2px solid rgba(34, 197, 94, 0.4)'
                                         }}
                                     />
                                     <span style={{
                                         position: 'absolute',
-                                        bottom: '-8px',
+                                        bottom: '-6px',
                                         left: '50%',
                                         transform: 'translateX(-50%)',
-                                        fontSize: '0.55rem',
+                                        fontSize: '0.5rem',
                                         background: 'rgba(34, 197, 94, 0.9)',
                                         color: 'white',
-                                        padding: '3px 12px',
-                                        borderRadius: '6px',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
                                         fontWeight: 'bold',
                                         textTransform: 'uppercase'
                                     }}>Head</span>
@@ -320,9 +320,9 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                                 <div 
                                     onClick={() => headInputRef.current?.click()}
                                     style={{
-                                        width: '140px',
-                                        height: '200px',
-                                        borderRadius: '12px',
+                                        width: '100px',
+                                        height: '140px',
+                                        borderRadius: '8px',
                                         border: '2px dashed rgba(107, 114, 128, 0.4)',
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -334,12 +334,12 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                                     }}
                                     data-testid="upload-headshot"
                                 >
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
                                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                                         <polyline points="17 8 12 3 7 8" />
                                         <line x1="12" y1="3" x2="12" y2="15" />
                                     </svg>
-                                    <span style={{ fontSize: '0.65rem', color: '#6b7280', marginTop: '8px', fontWeight: 'bold' }}>HEAD</span>
+                                    <span style={{ fontSize: '0.55rem', color: '#6b7280', marginTop: '6px', fontWeight: 'bold' }}>HEAD</span>
                                 </div>
                             )}
                             <input
@@ -351,8 +351,8 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                             />
                         </div>
 
-                        {/* Bodyshot - Large Portrait */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                        {/* Bodyshot - Portrait */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             {effectiveBodyshot ? (
                                 <div style={{ position: 'relative' }}>
                                     <img 
@@ -360,23 +360,23 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                                         alt="Bodyshot"
                                         data-testid="img-identity-bodyshot"
                                         style={{
-                                            width: '140px',
-                                            height: '200px',
+                                            width: '100px',
+                                            height: '140px',
                                             objectFit: 'cover',
-                                            borderRadius: '12px',
-                                            border: '3px solid rgba(34, 197, 94, 0.4)'
+                                            borderRadius: '8px',
+                                            border: '2px solid rgba(34, 197, 94, 0.4)'
                                         }}
                                     />
                                     <span style={{
                                         position: 'absolute',
-                                        bottom: '-8px',
+                                        bottom: '-6px',
                                         left: '50%',
                                         transform: 'translateX(-50%)',
-                                        fontSize: '0.55rem',
+                                        fontSize: '0.5rem',
                                         background: 'rgba(34, 197, 94, 0.9)',
                                         color: 'white',
-                                        padding: '3px 12px',
-                                        borderRadius: '6px',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
                                         fontWeight: 'bold',
                                         textTransform: 'uppercase'
                                     }}>Body</span>
@@ -385,9 +385,9 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                                 <div 
                                     onClick={() => bodyInputRef.current?.click()}
                                     style={{
-                                        width: '140px',
-                                        height: '200px',
-                                        borderRadius: '12px',
+                                        width: '100px',
+                                        height: '140px',
+                                        borderRadius: '8px',
                                         border: '2px dashed rgba(107, 114, 128, 0.4)',
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -399,12 +399,12 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                                     }}
                                     data-testid="upload-bodyshot"
                                 >
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
                                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                                         <polyline points="17 8 12 3 7 8" />
                                         <line x1="12" y1="3" x2="12" y2="15" />
                                     </svg>
-                                    <span style={{ fontSize: '0.65rem', color: '#6b7280', marginTop: '8px', fontWeight: 'bold' }}>BODY</span>
+                                    <span style={{ fontSize: '0.55rem', color: '#6b7280', marginTop: '6px', fontWeight: 'bold' }}>BODY</span>
                                 </div>
                             )}
                             <input
@@ -423,27 +423,27 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                             onClick={() => onNavigateToTab(0)}
                             data-testid="button-create-identity"
                             style={{
-                                padding: '0.6rem 1rem',
-                                borderRadius: '8px',
+                                padding: '0.4rem 0.6rem',
+                                borderRadius: '6px',
                                 border: '1px solid rgba(99, 102, 241, 0.3)',
                                 background: 'rgba(99, 102, 241, 0.1)',
                                 color: '#a5b4fc',
-                                fontSize: '0.7rem',
+                                fontSize: '0.6rem',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '0.5rem',
+                                gap: '0.4rem',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.03em'
                             }}
                         >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="12" cy="8" r="5" />
                                 <path d="M20 21a8 8 0 1 0-16 0" />
                             </svg>
-                            Create Identity in Tab 1
+                            Go to Tab 1
                         </button>
                     )}
                 </div>
@@ -547,10 +547,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages, onNavig
                     <div style={{ 
                         display: 'grid', 
                         gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', 
-                        gap: '1rem',
-                        maxHeight: '60vh',
-                        overflow: 'auto',
-                        paddingRight: '0.5rem'
+                        gap: '1rem'
                     }}>
                         {generatedPrompts.map((prompt, index) => {
                             const isCopied = copiedIds.has(prompt.id);
