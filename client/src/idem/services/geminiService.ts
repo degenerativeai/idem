@@ -30,6 +30,58 @@ export const listAvailableModels = async (): Promise<string[]> => {
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
+const IDENTITY_PATTERNS = [
+  /\b(blonde|brunette|redhead|auburn|raven|ginger|platinum|strawberry)[- ]?(hair(ed)?)?/gi,
+  /\b(black|brown|golden|silver|grey|gray|white|dark|light)[- ]?hair(ed)?/gi,
+  /\b(long|short|medium)[- ]?(length)?[- ]?hair(ed)?/gi,
+  /\b(shoulder|waist|mid[- ]?back)[- ]?length[- ]?hair/gi,
+  /\b(curly|wavy|straight|frizzy|kinky|coiled)[- ]?hair(ed)?/gi,
+  /\bhair[- ]?(color|colour|style|length|texture)/gi,
+  /\b(blue|green|brown|hazel|gray|grey|amber|violet)[- ]?eye[ds]?/gi,
+  /\beye[- ]?(color|colour)/gi,
+  /\balmond[- ]?shaped[- ]?eyes?/gi,
+  /\b(pale|tan|tanned|fair|dark|light|olive|ebony|ivory|porcelain|caramel|chocolate|mocha|bronze|copper|golden|warm|cool|neutral|rosy|peachy|yellow|pink)[- ]?(toned|skinned)[- ]?(skin)?/gi,
+  /\b(pale|tan|tanned|fair|dark|light|olive|ebony|ivory|porcelain|caramel|chocolate|mocha|bronze|copper|golden|warm|cool|neutral|rosy|peachy|yellow|pink)[- ]?(skin|complexion)/gi,
+  /\bwith\s+(\w+[- ]?)*skin\b/gi,
+  /\b(\w+[,\s]+)*(pale|tan|tanned|fair|dark|light|olive|ebony|ivory|porcelain|caramel|chocolate|mocha|bronze|copper|golden|warm|cool|neutral|freckled)\s+skin\b/gi,
+  /\bskin[- ]?(tone|color|colour)/gi,
+  /\b(fair|dark|light)[- ]?complex(ion(ed)?)?/gi,
+  /\b(freckled|freckles|moles?|birthmarks?)[- ]?(face|skin|cheeks?)?/gi,
+  /\b(full|thin|pouty|plump)[- ]?lips/gi,
+  /\b(small|large|button|pointed)[- ]?nose/gi,
+  /\b(high|prominent|defined)[- ]?cheekbones?/gi,
+  /\b(strong|soft|angular|rounded|square|chiseled)[- ]?jaw(line)?/gi,
+  /\b(asian|caucasian|african|hispanic|latina?o?|european|middle[- ]?eastern)\b/gi,
+  /\b(ethnicity|ethnic|race|racial)\b/gi,
+  /\bwith\s+(blonde|brunette|brown|black|red|auburn|dark|light|golden)\s+hair/gi,
+  /\bwith\s+(blue|green|brown|hazel)\s+eyes/gi,
+];
+
+export const stripIdentityDescriptions = (text: string): string => {
+  let result = text;
+  for (const pattern of IDENTITY_PATTERNS) {
+    result = result.replace(pattern, '');
+  }
+  result = result.replace(/,\s*,/g, ',');
+  result = result.replace(/\s{2,}/g, ' ');
+  result = result.replace(/,\s*\./g, '.');
+  result = result.replace(/^\s*,\s*/g, '');
+  result = result.replace(/\s*,\s*$/g, '');
+  return result.trim();
+};
+
+const filterPromptItem = (item: any): any => {
+  if (item.generation_data?.final_prompt_string) {
+    item.generation_data.final_prompt_string = stripIdentityDescriptions(
+      item.generation_data.final_prompt_string
+    );
+  }
+  if (item.subject?.description) {
+    item.subject.description = stripIdentityDescriptions(item.subject.description);
+  }
+  return item;
+};
+
 // Helper to extract MIME type and data from Base64 Data URI
 const parseDataUrl = (dataUrl: string) => {
   const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
@@ -320,8 +372,11 @@ export const generateDatasetPrompts = async (params: {
     
     const rawItems = JSON.parse(text) as any[];
     
+    // Apply identity filter to strip facial/hair/skin descriptions
+    const filteredItems = rawItems.map(filterPromptItem);
+    
     // Map to internal PromptItem structure - store the full JSON as text
-    return rawItems.map((item, idx) => {
+    return filteredItems.map((item, idx) => {
       const jsonText = JSON.stringify(item);
       const shotType = item.photography?.shot_type || item.generation_data?.shot_type || 'Shot';
       const angle = item.photography?.angle || item.generation_data?.angle || '';
