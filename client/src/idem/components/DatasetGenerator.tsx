@@ -69,6 +69,15 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         loadSavedData();
     }, []);
 
+    useEffect(() => {
+        if (datasetPrompts.length > 0) {
+            setDatasetPrompts([]);
+            setBatchZipBlob(null);
+            setIsBatchComplete(false);
+            console.log(`Safety mode changed to ${safetyMode}, clearing existing prompts`);
+        }
+    }, [safetyMode]);
+
     const loadSavedData = async () => {
         setIsLoadingData(true);
         try {
