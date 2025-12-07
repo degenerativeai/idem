@@ -7,6 +7,17 @@ interface ImageGeneratorProps {
     identityImages?: { headshot: string | null; bodyshot: string | null };
 }
 
+const CARD_COLORS = [
+    { bg: 'rgba(99, 102, 241, 0.1)', border: 'rgba(99, 102, 241, 0.3)', accent: '#818cf8', label: '#a5b4fc' },
+    { bg: 'rgba(244, 63, 94, 0.1)', border: 'rgba(244, 63, 94, 0.3)', accent: '#fb7185', label: '#fda4af' },
+    { bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)', accent: '#34d399', label: '#6ee7b7' },
+    { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', accent: '#fbbf24', label: '#fcd34d' },
+    { bg: 'rgba(6, 182, 212, 0.1)', border: 'rgba(6, 182, 212, 0.3)', accent: '#22d3ee', label: '#67e8f9' },
+    { bg: 'rgba(168, 85, 247, 0.1)', border: 'rgba(168, 85, 247, 0.3)', accent: '#a78bfa', label: '#c4b5fd' },
+    { bg: 'rgba(236, 72, 153, 0.1)', border: 'rgba(236, 72, 153, 0.3)', accent: '#f472b6', label: '#f9a8d4' },
+    { bg: 'rgba(20, 184, 166, 0.1)', border: 'rgba(20, 184, 166, 0.3)', accent: '#2dd4bf', label: '#5eead4' },
+];
+
 const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     const [textPrompt, setTextPrompt] = useState('');
     const [promptCount, setPromptCount] = useState(5);
@@ -14,7 +25,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
     const [generatedPrompts, setGeneratedPrompts] = useState<UGCPromptCard[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
 
     const handleGeneratePrompts = async () => {
         if (!textPrompt.trim()) {
@@ -51,9 +62,10 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ identityImages }) => {
 
     const handleCopyPrompt = async (prompt: UGCPromptCard) => {
         await navigator.clipboard.writeText(prompt.fullPrompt);
-        setCopiedId(prompt.id);
-        setTimeout(() => setCopiedId(null), 2000);
+        setCopiedIds(prev => new Set(prev).add(prompt.id));
     };
+
+    const getCardColor = (index: number) => CARD_COLORS[index % CARD_COLORS.length];
 
     const panelStyle: React.CSSProperties = {
         background: 'rgba(24, 26, 31, 0.6)',
@@ -395,108 +407,163 @@ Examples:
                             
                             {generatedPrompts.length > 0 && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {generatedPrompts.map((prompt, index) => (
-                                        <div 
-                                            key={prompt.id}
-                                            data-testid={`prompt-card-${index}`}
-                                            style={{
-                                                background: copiedId === prompt.id ? 'rgba(234, 179, 8, 0.05)' : 'rgba(0,0,0,0.4)',
-                                                borderRadius: '12px',
-                                                border: copiedId === prompt.id ? '1px solid rgba(234, 179, 8, 0.4)' : '1px solid rgba(255,255,255,0.08)',
-                                                overflow: 'hidden',
-                                                transition: 'all 0.3s'
-                                            }}
-                                        >
-                                            <div style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                padding: '0.75rem 1rem',
-                                                background: 'rgba(0,0,0,0.3)',
-                                                borderBottom: '1px solid rgba(255,255,255,0.05)'
-                                            }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <span style={{ 
-                                                        fontSize: '0.7rem', 
-                                                        fontWeight: 'bold', 
-                                                        color: '#eab308', 
-                                                        textTransform: 'uppercase', 
-                                                        letterSpacing: '0.05em' 
+                                    {generatedPrompts.map((prompt, index) => {
+                                        const color = getCardColor(index);
+                                        const isCopied = copiedIds.has(prompt.id);
+                                        
+                                        return (
+                                            <div 
+                                                key={prompt.id}
+                                                data-testid={`prompt-card-${index}`}
+                                                style={{
+                                                    background: isCopied ? color.bg : 'rgba(0,0,0,0.4)',
+                                                    borderRadius: '12px',
+                                                    border: `1px solid ${isCopied ? color.border : 'rgba(255,255,255,0.08)'}`,
+                                                    overflow: 'hidden',
+                                                    transition: 'all 0.3s'
+                                                }}
+                                            >
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    padding: '0.75rem 1rem',
+                                                    background: isCopied ? `linear-gradient(135deg, ${color.bg}, rgba(0,0,0,0.3))` : 'rgba(0,0,0,0.3)',
+                                                    borderBottom: `1px solid ${isCopied ? color.border : 'rgba(255,255,255,0.05)'}`
+                                                }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                        <div style={{
+                                                            width: '28px',
+                                                            height: '28px',
+                                                            borderRadius: '8px',
+                                                            background: isCopied ? color.bg : 'rgba(234, 179, 8, 0.15)',
+                                                            border: `1px solid ${isCopied ? color.border : 'rgba(234, 179, 8, 0.3)'}`,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: isCopied ? color.accent : '#eab308',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 'bold'
+                                                        }}>
+                                                            {index + 1}
+                                                        </div>
+                                                        <span style={{ 
+                                                            fontSize: '0.7rem', 
+                                                            fontWeight: 'bold', 
+                                                            color: isCopied ? color.label : '#eab308', 
+                                                            textTransform: 'uppercase', 
+                                                            letterSpacing: '0.05em' 
+                                                        }}>
+                                                            {isCopied ? 'Copied' : 'Prompt'}
+                                                        </span>
+                                                    </div>
+                                                    <button
+                                                        data-testid={`button-copy-prompt-${index}`}
+                                                        onClick={() => handleCopyPrompt(prompt)}
+                                                        style={{
+                                                            padding: '0.5rem 0.75rem',
+                                                            borderRadius: '6px',
+                                                            border: isCopied ? `1px solid ${color.border}` : 'none',
+                                                            background: isCopied ? color.bg : 'rgba(255,255,255,0.05)',
+                                                            color: isCopied ? color.accent : '#9ca3af',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: '600',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.4rem',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {isCopied ? (
+                                                            <>
+                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                    <polyline points="20 6 9 17 4 12" />
+                                                                </svg>
+                                                                Copied
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                                                </svg>
+                                                                Copy
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                                
+                                                <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                    <div style={{
+                                                        background: isCopied ? `linear-gradient(135deg, ${color.bg}, rgba(0,0,0,0.2))` : 'rgba(0,0,0,0.2)',
+                                                        borderRadius: '8px',
+                                                        padding: '0.75rem',
+                                                        border: `1px solid ${isCopied ? color.border : 'rgba(255,255,255,0.05)'}`
                                                     }}>
-                                                        Prompt {index + 1}
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    data-testid={`button-copy-prompt-${index}`}
-                                                    onClick={() => handleCopyPrompt(prompt)}
-                                                    style={{
-                                                        padding: copiedId === prompt.id ? '0.5rem 1rem' : '0.4rem 0.75rem',
-                                                        borderRadius: '6px',
-                                                        border: copiedId === prompt.id ? '2px solid #eab308' : 'none',
-                                                        background: copiedId === prompt.id ? 'rgba(234, 179, 8, 0.3)' : 'rgba(255,255,255,0.05)',
-                                                        color: copiedId === prompt.id ? '#fde047' : '#9ca3af',
-                                                        fontSize: copiedId === prompt.id ? '0.75rem' : '0.65rem',
-                                                        fontWeight: copiedId === prompt.id ? '700' : '500',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.4rem',
-                                                        transition: 'all 0.2s'
-                                                    }}
-                                                >
-                                                    {copiedId === prompt.id ? (
-                                                        <>
-                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                <polyline points="20 6 9 17 4 12" />
-                                                            </svg>
-                                                            Copied!
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                                            </svg>
-                                                            Copy
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </div>
-                                            
-                                            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                                <div>
-                                                    <span style={{ fontSize: '0.65rem', color: '#eab308', fontWeight: '600', textTransform: 'uppercase' }}>Scenario</span>
-                                                    <p style={{ fontSize: '0.85rem', color: '#e5e7eb', margin: '0.25rem 0 0 0' }}>{prompt.scenario}</p>
-                                                </div>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                    <div>
-                                                        <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Setting</span>
-                                                        <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>{prompt.setting}</p>
+                                                        <span style={{ fontSize: '0.65rem', color: isCopied ? color.accent : '#eab308', fontWeight: '600', textTransform: 'uppercase' }}>Scenario</span>
+                                                        <p style={{ fontSize: '0.85rem', color: '#e5e7eb', margin: '0.25rem 0 0 0', lineHeight: '1.4' }}>{prompt.scenario}</p>
                                                     </div>
-                                                    <div>
-                                                        <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Outfit</span>
-                                                        <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>{prompt.outfit}</p>
-                                                    </div>
-                                                    <div>
-                                                        <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Pose</span>
-                                                        <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>{prompt.pose}</p>
-                                                    </div>
-                                                    <div>
-                                                        <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Lighting</span>
-                                                        <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>{prompt.lighting}</p>
-                                                    </div>
-                                                    <div>
-                                                        <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Camera</span>
-                                                        <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>{prompt.camera}</p>
-                                                    </div>
-                                                    <div>
-                                                        <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Imperfections</span>
-                                                        <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>{prompt.imperfections}</p>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                                        <div style={{ 
+                                                            background: 'rgba(0,0,0,0.2)', 
+                                                            borderRadius: '6px', 
+                                                            padding: '0.5rem 0.75rem',
+                                                            border: `1px solid ${isCopied ? `${color.border}50` : 'rgba(255,255,255,0.03)'}`
+                                                        }}>
+                                                            <span style={{ fontSize: '0.6rem', color: isCopied ? color.label : '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Setting</span>
+                                                            <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.setting}</p>
+                                                        </div>
+                                                        <div style={{ 
+                                                            background: 'rgba(0,0,0,0.2)', 
+                                                            borderRadius: '6px', 
+                                                            padding: '0.5rem 0.75rem',
+                                                            border: `1px solid ${isCopied ? `${color.border}50` : 'rgba(255,255,255,0.03)'}`
+                                                        }}>
+                                                            <span style={{ fontSize: '0.6rem', color: isCopied ? color.label : '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Outfit</span>
+                                                            <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.outfit}</p>
+                                                        </div>
+                                                        <div style={{ 
+                                                            background: 'rgba(0,0,0,0.2)', 
+                                                            borderRadius: '6px', 
+                                                            padding: '0.5rem 0.75rem',
+                                                            border: `1px solid ${isCopied ? `${color.border}50` : 'rgba(255,255,255,0.03)'}`
+                                                        }}>
+                                                            <span style={{ fontSize: '0.6rem', color: isCopied ? color.label : '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Pose</span>
+                                                            <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.pose}</p>
+                                                        </div>
+                                                        <div style={{ 
+                                                            background: 'rgba(0,0,0,0.2)', 
+                                                            borderRadius: '6px', 
+                                                            padding: '0.5rem 0.75rem',
+                                                            border: `1px solid ${isCopied ? `${color.border}50` : 'rgba(255,255,255,0.03)'}`
+                                                        }}>
+                                                            <span style={{ fontSize: '0.6rem', color: isCopied ? color.label : '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Lighting</span>
+                                                            <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.lighting}</p>
+                                                        </div>
+                                                        <div style={{ 
+                                                            background: 'rgba(0,0,0,0.2)', 
+                                                            borderRadius: '6px', 
+                                                            padding: '0.5rem 0.75rem',
+                                                            border: `1px solid ${isCopied ? `${color.border}50` : 'rgba(255,255,255,0.03)'}`
+                                                        }}>
+                                                            <span style={{ fontSize: '0.6rem', color: isCopied ? color.label : '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Camera</span>
+                                                            <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.camera}</p>
+                                                        </div>
+                                                        <div style={{ 
+                                                            background: 'rgba(0,0,0,0.2)', 
+                                                            borderRadius: '6px', 
+                                                            padding: '0.5rem 0.75rem',
+                                                            border: `1px solid ${isCopied ? `${color.border}50` : 'rgba(255,255,255,0.03)'}`
+                                                        }}>
+                                                            <span style={{ fontSize: '0.6rem', color: isCopied ? color.label : '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>Imperfections</span>
+                                                            <p style={{ fontSize: '0.75rem', color: '#c4c4c4', margin: '0.2rem 0 0 0' }}>{prompt.imperfections}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </>
