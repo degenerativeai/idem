@@ -19,7 +19,7 @@ export const IdemLogo: React.FC<IdemLogoProps> = ({ className, style, width = 32
             style={style}
         >
             {/* Background Container */}
-            <rect width="100" height="100" rx="28" fill="#0A0A0A" />
+            <rect width="100" height="100" rx="20" fill="#0A0A0A" />
             
             <defs>
                 <linearGradient id="grad_purple" x1="20" y1="20" x2="80" y2="80" gradientUnits="userSpaceOnUse">
