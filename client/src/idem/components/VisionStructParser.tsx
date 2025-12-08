@@ -548,8 +548,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                     }}
                                     style={{
                                         position: 'absolute',
-                                        bottom: '20px',
-                                        right: '20px',
+                                        bottom: '8px',
+                                        right: '8px',
                                         background: 'rgba(220, 38, 38, 0.9)',
                                         border: '1px solid rgba(255, 255, 255, 0.2)',
                                         borderRadius: '8px',
