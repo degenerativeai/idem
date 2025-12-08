@@ -51,17 +51,17 @@ const IdemPage: React.FC = () => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '1rem 2rem',
+                padding: '0.75rem 2rem',
                 marginBottom: '1rem',
-                marginTop: '1rem',
+                marginTop: '0.5rem',
                 marginInline: '1rem',
                 position: 'sticky',
                 top: '0.5rem',
                 zIndex: 100
             }}>
-                <div className="flex-center gap-md" style={{ gap: '1rem' }}>
-                    <IdemLogo width={32} height={32} />
-                    <h1 style={{ fontSize: '1.25rem', margin: 0 }}>IDEM</h1>
+                <div className="flex-center gap-md" style={{ gap: '0.35rem', display: 'flex', alignItems: 'center' }}>
+                    <IdemLogo width={24} height={24} />
+                    <h1 style={{ fontSize: '1.5rem', margin: 0, fontFamily: '"Archivo Black", sans-serif', lineHeight: 1 }}>IDEM</h1>
                 </div>
 
                 <nav style={{ display: 'flex', gap: '0.5rem' }}>
@@ -121,7 +121,7 @@ const IdemPage: React.FC = () => {
                 </nav>
 
                 <div>
-                    <button 
+                    <button
                         onClick={handleSetKey}
                         data-testid="button-set-api-key"
                         style={{
