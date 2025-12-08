@@ -541,6 +541,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                         {sourceImage ? (
                             <div style={{ width: '100%', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                                 <img src={sourceImage} alt="Source" style={{ maxWidth: '100%', maxHeight: '250px', borderRadius: '8px', objectFit: 'contain' }} />
+                                {isProcessing && <div className="animate-scanline" />}
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -658,10 +659,26 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 </button>
                             </div>
                         ) : (
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
-                                    Waiting for generation...
-                                </div>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={isProcessing ? "synth-grid" : ""}>
+                                {isProcessing ? (
+                                    <div style={{
+                                        padding: '0.75rem 1.25rem',
+                                        background: 'rgba(15, 23, 42, 0.8)',
+                                        border: '1px solid rgba(168, 85, 247, 0.3)',
+                                        borderRadius: '999px',
+                                        backdropFilter: 'blur(4px)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem'
+                                    }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#a855f7', animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
+                                        <span style={{ color: '#e9d5ff', fontSize: '0.75rem', fontWeight: '500', letterSpacing: '0.05em' }}>Synthesizing Image</span>
+                                    </div>
+                                ) : (
+                                    <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
+                                        Waiting for generation...
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -706,10 +723,26 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 </button>
                             </div>
                         ) : (
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
-                                    Waiting for generation...
-                                </div>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={isProcessing ? "synth-grid" : ""}>
+                                {isProcessing ? (
+                                    <div style={{
+                                        padding: '0.75rem 1.25rem',
+                                        background: 'rgba(15, 23, 42, 0.8)',
+                                        border: '1px solid rgba(168, 85, 247, 0.3)',
+                                        borderRadius: '999px',
+                                        backdropFilter: 'blur(4px)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem'
+                                    }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#a855f7', animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
+                                        <span style={{ color: '#e9d5ff', fontSize: '0.75rem', fontWeight: '500', letterSpacing: '0.05em' }}>Synthesizing Image</span>
+                                    </div>
+                                ) : (
+                                    <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
+                                        Waiting for generation...
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
