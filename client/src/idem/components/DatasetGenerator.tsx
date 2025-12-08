@@ -572,27 +572,27 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a855f7' }}>Dataset Configuration</h2>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: '#1f2937', padding: '0.35rem', borderRadius: '0.75rem', alignItems: 'start' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <button
-                            onClick={() => setMode('manual')}
-                            data-testid="button-mode-manual"
-                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                            style={{ ...buttonBaseStyle, padding: '0.6rem', width: '100%', borderRadius: '0.5rem', background: mode === 'manual' ? 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)' : 'transparent', color: mode === 'manual' ? 'white' : '#9ca3af', boxShadow: mode === 'manual' ? '0 2px 8px rgba(168, 85, 247, 0.3)' : 'none' }}>
-                            <IconEdit className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Manual Creation
-                        </button>
-                        <span style={{ fontSize: '0.65rem', color: '#9ca3af', textAlign: 'center', lineHeight: '1.2', padding: '0 0.5rem' }}>Create and edit prompts individually with fine-grained control.</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <button
-                            onClick={() => setMode('api')}
-                            data-testid="button-mode-api"
-                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                            style={{ ...buttonBaseStyle, padding: '0.6rem', width: '100%', borderRadius: '0.5rem', background: mode === 'api' ? 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)' : 'transparent', color: mode === 'api' ? 'black' : '#9ca3af', boxShadow: mode === 'api' ? '0 2px 8px rgba(234, 179, 8, 0.3)' : 'none' }}>
-                            <IconSparkles className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Batch Generation
-                        </button>
-                        <span style={{ fontSize: '0.65rem', color: '#9ca3af', textAlign: 'center', lineHeight: '1.2', padding: '0 0.5rem' }}>Create and send your prompts to an API provider to generate your dataset.</span>
-                    </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: '#1f2937', padding: '0.35rem', borderRadius: '0.75rem' }}>
+                    <button
+                        onClick={() => setMode('manual')}
+                        data-testid="button-mode-manual"
+                        onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                        style={{ ...buttonBaseStyle, padding: '0.6rem', borderRadius: '0.5rem', background: mode === 'manual' ? 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)' : 'transparent', color: mode === 'manual' ? 'white' : '#9ca3af', boxShadow: mode === 'manual' ? '0 2px 8px rgba(168, 85, 247, 0.3)' : 'none' }}>
+                        <IconEdit className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Manual Creation
+                    </button>
+                    <button
+                        onClick={() => setMode('api')}
+                        data-testid="button-mode-api"
+                        onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                        style={{ ...buttonBaseStyle, padding: '0.6rem', borderRadius: '0.5rem', background: mode === 'api' ? 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)' : 'transparent', color: mode === 'api' ? 'black' : '#9ca3af', boxShadow: mode === 'api' ? '0 2px 8px rgba(234, 179, 8, 0.3)' : 'none' }}>
+                        <IconSparkles className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Batch Generation
+                    </button>
+                </div>
+
+                <div style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', padding: '0 0.5rem', lineHeight: '1.4' }}>
+                    {mode === 'manual'
+                        ? "Create and edit prompts individually with fine-grained control."
+                        : "Create and send your prompts to an API provider to generate your dataset."}
                 </div>
 
                 {mode === 'api' && (
