@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import os from "os";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -89,10 +90,31 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
     },
     () => {
-      log(`serving on port ${port}`);
+      const formattedTime = new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      });
+
+      console.log(`${formattedTime} [express] serving on port ${port}`);
+      console.log(`\n  ➜  Local:   http://localhost:${port}`);
+
+      try {
+        const networkInterfaces = os.networkInterfaces();
+        for (const name of Object.keys(networkInterfaces)) {
+          for (const net of networkInterfaces[name] || []) {
+            if (net.family === 'IPv4' && !net.internal) {
+              console.log(`  ➜  Network: http://${net.address}:${port}`);
+            }
+          }
+        }
+      } catch (e) {
+        // ignore network interface errors
+      }
+      console.log(``);
     },
   );
 })();
