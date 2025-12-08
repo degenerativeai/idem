@@ -59,6 +59,42 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
     const [targetTotal, setTargetTotal] = useState(100);
     const [apiBatchSize, setApiBatchSize] = useState(25);
 
+    // Tactile Handlers & Styles
+    const buttonBaseStyle: React.CSSProperties = {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '0.5rem',
+        padding: '0.75rem 1.5rem',
+        borderRadius: '0.6rem',
+        fontSize: '0.85rem',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        letterSpacing: '0.05em',
+        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+        position: 'relative',
+        overflow: 'hidden',
+        color: 'white'
+    };
+
+    const handleBtnEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.currentTarget.style.transform = 'scale(1.02)';
+        e.currentTarget.style.filter = 'brightness(1.1)';
+    };
+    const handleBtnLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.filter = 'brightness(1)';
+    };
+    const handleBtnDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.currentTarget.style.transform = 'scale(0.98)';
+    };
+    const handleBtnUp = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.currentTarget.style.transform = 'scale(1.02)';
+    };
+
     useEffect(() => {
         if (inputIdentity) {
             setIdentity(inputIdentity);
@@ -398,7 +434,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                 const batchNum = Math.floor(i / BATCH_SIZE) + 1;
                 const totalBatches = Math.ceil(limit / BATCH_SIZE);
                 console.log(`Processing batch ${batchNum}/${totalBatches} (items ${i + 1}-${Math.min(i + BATCH_SIZE, limit)} of ${limit})`);
-                
+
                 await Promise.all(chunk.map(async (item, chunkIdx) => {
                     const globalIdx = i + chunkIdx;
                     if (globalIdx >= limit) return;
@@ -536,11 +572,19 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a855f7' }}>Dataset Configuration</h2>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem', background: '#1f2937', padding: '0.25rem', borderRadius: '0.75rem' }}>
-                    <button onClick={() => setMode('manual')} data-testid="button-mode-manual" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: mode === 'manual' ? '#a855f7' : 'transparent', color: mode === 'manual' ? 'white' : '#9ca3af', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: '#1f2937', padding: '0.35rem', borderRadius: '0.75rem' }}>
+                    <button
+                        onClick={() => setMode('manual')}
+                        data-testid="button-mode-manual"
+                        onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                        style={{ ...buttonBaseStyle, padding: '0.6rem', borderRadius: '0.5rem', background: mode === 'manual' ? 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)' : 'transparent', color: mode === 'manual' ? 'white' : '#9ca3af', boxShadow: mode === 'manual' ? '0 2px 8px rgba(168, 85, 247, 0.3)' : 'none' }}>
                         <IconEdit className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Manual Control
                     </button>
-                    <button onClick={() => setMode('api')} data-testid="button-mode-api" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: mode === 'api' ? '#eab308' : 'transparent', color: mode === 'api' ? 'black' : '#9ca3af', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+                    <button
+                        onClick={() => setMode('api')}
+                        data-testid="button-mode-api"
+                        onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                        style={{ ...buttonBaseStyle, padding: '0.6rem', borderRadius: '0.5rem', background: mode === 'api' ? 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)' : 'transparent', color: mode === 'api' ? 'black' : '#9ca3af', boxShadow: mode === 'api' ? '0 2px 8px rgba(234, 179, 8, 0.3)' : 'none' }}>
                         <IconSparkles className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Auto / API Phase
                     </button>
                 </div>
@@ -614,7 +658,12 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                             </div>
                         </div>
                     </div>
-                    <button onClick={handleAnalyzeProfile} disabled={isAnalyzing || (!effectiveHeadshot && !effectiveBodyshot)} data-testid="button-analyze-profile" style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem', borderRadius: '0.6rem', border: 'none', background: isAnalyzing ? '#374151' : 'linear-gradient(to right, #374151, #1f2937)', color: isAnalyzing ? '#9ca3af' : 'white', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: isAnalyzing ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                    <button
+                        onClick={handleAnalyzeProfile}
+                        disabled={isAnalyzing || (!effectiveHeadshot && !effectiveBodyshot)}
+                        data-testid="button-analyze-profile"
+                        onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                        style={{ ...buttonBaseStyle, width: '100%', marginTop: '0.5rem', background: isAnalyzing ? '#374151' : 'linear-gradient(to right, #374151, #1f2937)', color: isAnalyzing ? '#9ca3af' : 'white', cursor: isAnalyzing ? 'wait' : 'pointer' }}>
                         {isAnalyzing ? 'Analyzing...' : <><IconSparkles style={{ width: '14px', color: '#facc15' }} /> Analyze Profile</>}
                     </button>
                     {analysisError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.5rem' }}>{analysisError}</p>}
@@ -643,8 +692,8 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     <div style={{ marginTop: '0.5rem' }}>
                         <label style={labelStyle}>Wardrobe Style</label>
                         <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            <button onClick={() => setSafetyMode('sfw')} data-testid="button-safety-sfw" style={{ flex: 1, padding: '0.5rem', borderRadius: '0.35rem', border: 'none', background: safetyMode === 'sfw' ? '#3b82f6' : 'transparent', color: safetyMode === 'sfw' ? 'white' : '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}>Standard</button>
-                            <button onClick={() => setSafetyMode('nsfw')} data-testid="button-safety-nsfw" style={{ flex: 1, padding: '0.5rem', borderRadius: '0.35rem', border: 'none', background: safetyMode === 'nsfw' ? '#ec4899' : 'transparent', color: safetyMode === 'nsfw' ? 'white' : '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}>Enhance Form</button>
+                            <button onClick={() => setSafetyMode('sfw')} data-testid="button-safety-sfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'sfw' ? '#3b82f6' : 'transparent', color: safetyMode === 'sfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>Standard</button>
+                            <button onClick={() => setSafetyMode('nsfw')} data-testid="button-safety-nsfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'nsfw' ? '#ec4899' : 'transparent', color: safetyMode === 'nsfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>Enhance Form</button>
                         </div>
                     </div>
                 </div>
@@ -656,7 +705,12 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                             <span style={{ color: 'white' }}>{targetTotal} Prompts</span>
                         </div>
                         <input type="range" min="10" max="100" step="10" value={targetTotal} onChange={(e) => setTargetTotal(Number(e.target.value))} style={{ width: '100%', marginBottom: '1rem' }} data-testid="slider-target-total" />
-                        <button onClick={handleGeneratePrompts} disabled={isGeneratingPrompts || !identity} data-testid="button-generate-prompts" style={{ width: '100%', padding: '1rem', borderRadius: '0.75rem', border: 'none', background: isGeneratingPrompts || !identity ? '#374151' : 'linear-gradient(to right, #a855f7, #2563eb)', color: isGeneratingPrompts || !identity ? '#9ca3af' : 'white', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: isGeneratingPrompts || !identity ? 'default' : 'pointer', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                        <button
+                            onClick={handleGeneratePrompts}
+                            disabled={isGeneratingPrompts || !identity}
+                            data-testid="button-generate-prompts"
+                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                            style={{ ...buttonBaseStyle, width: '100%', padding: '1rem', background: isGeneratingPrompts || !identity ? '#374151' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)', color: isGeneratingPrompts || !identity ? '#9ca3af' : 'white', cursor: isGeneratingPrompts || !identity ? 'default' : 'pointer' }}>
                             {isGeneratingPrompts ? 'Synthesizing...' : (datasetPrompts.length > 0 ? 'Restart Generation' : 'Start Generation')}
                         </button>
                         {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
@@ -704,7 +758,12 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                                 <input type="range" min="10" max="100" step="10" value={apiBatchSize} onChange={(e) => setApiBatchSize(Number(e.target.value))} style={{ width: '100%' }} data-testid="slider-batch-size" />
                             </div>
                         </div>
-                        <button onClick={handleBatchGeneration} disabled={isBatchProcessing || !identity} data-testid="button-submit-api" style={{ width: '100%', padding: '1rem', borderRadius: '0.75rem', border: 'none', background: isBatchProcessing || !identity ? '#374151' : 'linear-gradient(to right, #f59e0b, #ea580c)', color: isBatchProcessing || !identity ? '#9ca3af' : 'black', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: isBatchProcessing || !identity ? 'default' : 'pointer', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <button
+                            onClick={handleBatchGeneration}
+                            disabled={isBatchProcessing || !identity}
+                            data-testid="button-submit-api"
+                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                            style={{ ...buttonBaseStyle, width: '100%', padding: '1rem', background: isBatchProcessing || !identity ? '#374151' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)', color: isBatchProcessing || !identity ? '#9ca3af' : 'black', cursor: isBatchProcessing || !identity ? 'default' : 'pointer', marginTop: '0.5rem' }}>
                             {isBatchProcessing ? 'Processing Batch...' : <><IconSparkles style={{ width: '16px', color: 'black' }} /> Submit Prompts to API</>}
                         </button>
                         {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
@@ -719,7 +778,11 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <span style={{ fontSize: '1rem', color: '#6b7280' }}>{datasetPrompts.length > 0 ? `${Math.min(currentPage * ITEMS_PER_PAGE, datasetPrompts.length)} / ${datasetPrompts.length}` : ''}</span>
                     </div>
                     {datasetPrompts.length > 0 && (
-                        <button onClick={() => { const blob = new Blob([JSON.stringify(datasetPrompts, null, 2)], { type: 'application/json' }); saveAs(blob, 'prompts.json'); }} data-testid="button-download-json" style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.08)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', gap: '0.5rem', alignItems: 'center', transition: 'all 0.2s' }}>
+                        <button
+                            onClick={() => { const blob = new Blob([JSON.stringify(datasetPrompts, null, 2)], { type: 'application/json' }); saveAs(blob, 'prompts.json'); }}
+                            data-testid="button-download-json"
+                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                            style={{ ...buttonBaseStyle, padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'none' }}>
                             <IconDownload style={{ width: '14px' }} /> JSON
                         </button>
                     )}
@@ -758,7 +821,12 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
 
                                 {(currentPage * ITEMS_PER_PAGE) >= datasetPrompts.length && datasetPrompts.length < targetTotal && (
                                     <div>
-                                        <button onClick={handleGenerateNextBatch} disabled={isGeneratingPrompts} data-testid="button-generate-next" style={{ padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #a855f7', background: 'rgba(168, 85, 247, 0.1)', color: '#e9d5ff', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: isGeneratingPrompts ? 'wait' : 'pointer', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <button
+                                            onClick={handleGenerateNextBatch}
+                                            disabled={isGeneratingPrompts}
+                                            data-testid="button-generate-next"
+                                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                                            style={{ ...buttonBaseStyle, border: '1px solid #a855f7', background: 'rgba(168, 85, 247, 0.1)', color: '#e9d5ff', cursor: isGeneratingPrompts ? 'wait' : 'pointer' }}>
                                             {isGeneratingPrompts ? 'Synthesizing...' : <><IconSparkles style={{ width: '16px' }} /> Generate Next {Math.min(ITEMS_PER_PAGE, targetTotal - datasetPrompts.length)}</>}
                                         </button>
                                     </div>
@@ -804,10 +872,18 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                                 <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>Your dataset has been generated successfully.</p>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '280px' }}>
-                                <button onClick={() => { if (batchZipBlob) saveAs(batchZipBlob, `dataset_${identity?.identity_profile?.name || 'export'}.zip`); }} data-testid="button-download-zip" style={{ padding: '0.75rem', borderRadius: '0.5rem', border: 'none', background: 'white', color: 'black', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                <button
+                                    onClick={() => { if (batchZipBlob) saveAs(batchZipBlob, `dataset_${identity?.identity_profile?.name || 'export'}.zip`); }}
+                                    data-testid="button-download-zip"
+                                    onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                                    style={{ ...buttonBaseStyle, padding: '0.75rem', background: 'white', color: 'black' }}>
                                     <IconDownload style={{ width: '16px' }} /> Download Zip
                                 </button>
-                                <button onClick={() => { setIsBatchComplete(false); setBatchZipBlob(null); setDatasetPrompts([]); }} data-testid="button-start-new" style={{ padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #374151', background: 'transparent', color: '#9ca3af', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer' }}>
+                                <button
+                                    onClick={() => { setIsBatchComplete(false); setBatchZipBlob(null); setDatasetPrompts([]); }}
+                                    data-testid="button-start-new"
+                                    onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                                    style={{ ...buttonBaseStyle, padding: '0.75rem', border: '1px solid #374151', background: 'transparent', color: '#9ca3af', boxShadow: 'none' }}>
                                     Start New Dataset
                                 </button>
                             </div>
