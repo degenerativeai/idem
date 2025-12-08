@@ -775,7 +775,17 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                     }}>
                         <button
                             onClick={onNavigateToDataset}
-                            style={startDatasetButtonStyle}
+                            style={{ ...startDatasetButtonStyle, position: 'relative' }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.02)';
+                                e.currentTarget.style.filter = 'brightness(1.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.filter = 'brightness(1)';
+                            }}
+                            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+                            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
                             data-testid="button-start-dataset"
                         >
                             <IconSparkles style={{ width: '16px', height: '16px' }} />
@@ -783,21 +793,17 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                         </button>
                         <button
                             onClick={handleDownloadImages}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '0.5rem',
-                                padding: '0.6rem 1.25rem',
-                                borderRadius: '0.5rem',
-                                background: 'rgba(99, 102, 241, 0.15)',
-                                border: '1px solid rgba(99, 102, 241, 0.3)',
-                                color: '#a5b4fc',
-                                fontSize: '0.8rem',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
+                            style={{ ...startDatasetButtonStyle, background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.1)', position: 'relative' }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.02)';
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
                             }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                            }}
+                            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+                            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
                             data-testid="button-download-images"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
