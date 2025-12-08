@@ -60,6 +60,7 @@ export interface INIPrompt {
     must: string;
     avoid: string;
     notes?: string;
+    scene_only?: string;
     raw?: string;
 }
 

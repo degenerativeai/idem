@@ -1,11 +1,11 @@
 
 import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, INIPrompt, UGCPromptCard, PhysicalAppearance } from "../types";
-import { 
-  LORA_FORGE_DIRECTIVE, 
-  VACUUM_COMPILER_DIRECTIVE, 
-  RICH_MEDIA_DIRECTIVE_CANDID, 
-  RICH_MEDIA_DIRECTIVE_STUDIO, 
+import {
+  LORA_FORGE_DIRECTIVE,
+  VACUUM_COMPILER_DIRECTIVE,
+  RICH_MEDIA_DIRECTIVE_CANDID,
+  RICH_MEDIA_DIRECTIVE_STUDIO,
   VISION_STRUCT_DIRECTIVE,
   IMAGE_INI_COMPILER_DIRECTIVE,
   CANDID_VIEW_DIRECTIVE,
@@ -188,7 +188,7 @@ export const analyzeImageWithDirective = async (
 
     const responseText = result.text;
     if (!responseText) throw new Error("No response from VisionStruct");
-    
+
     return JSON.parse(responseText);
 
   } catch (e: any) {
@@ -408,7 +408,7 @@ Generate prompts with everyday, casual scenarios and modest clothing:
       return JSON.parse(text);
     } catch (parseError: any) {
       console.warn("JSON parse failed, attempting recovery:", parseError.message);
-      
+
       // Try to recover partial array by finding last complete object
       const lastBracket = text.lastIndexOf('}');
       if (lastBracket > 0) {
@@ -418,7 +418,7 @@ Generate prompts with everyday, casual scenarios and modest clothing:
         const openBrackets = (recovered.match(/\[/g) || []).length;
         const closeBrackets = (recovered.match(/\]/g) || []).length;
         recovered += ']'.repeat(openBrackets - closeBrackets);
-        
+
         try {
           const parsed = JSON.parse(recovered);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -439,7 +439,7 @@ Generate prompts with everyday, casual scenarios and modest clothing:
       `TASK: Generate ${params.count} distinct image prompts.`,
       `TASK: Generate ${batchSize} distinct image prompts.`
     );
-    
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const result = await ai.models.generateContent({
@@ -454,11 +454,11 @@ Generate prompts with everyday, casual scenarios and modest clothing:
 
         const text = result.text;
         if (!text) throw new Error("No response");
-        
+
         return parseJSONWithRecovery(text);
       } catch (e: any) {
         const isJsonError = e.message?.includes('JSON') || e.message?.includes('Unterminated');
-        
+
         if (isJsonError && attempt < maxRetries) {
           // Reduce batch size and retry
           const reducedSize = Math.max(3, Math.floor(batchSize / 2));
@@ -476,7 +476,7 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     // For large batches, split into smaller chunks to avoid truncation
     const MAX_BATCH_SIZE = 10;
     let allItems: any[] = [];
-    
+
     if (params.count <= MAX_BATCH_SIZE) {
       allItems = await generateWithRetry(params.count);
     } else {
@@ -487,15 +487,15 @@ Generate prompts with everyday, casual scenarios and modest clothing:
         const batchItems = await generateWithRetry(batchSize);
         allItems = allItems.concat(batchItems);
         remaining -= batchItems.length;
-        
+
         // If we got fewer than requested, stop to avoid infinite loop
         if (batchItems.length < batchSize) break;
       }
     }
-    
+
     // Apply identity filter to strip facial/hair/skin descriptions
     const filteredItems = allItems.map(filterPromptItem);
-    
+
     // Map to internal PromptItem structure - store the full JSON as text
     return filteredItems.map((item, idx) => {
       const jsonText = JSON.stringify(item);
@@ -546,10 +546,10 @@ export const analyzeImageINI = async (
 
     const responseText = result.text;
     if (!responseText) throw new Error("No response from INI Compiler");
-    
+
     const iniMatch = responseText.match(/```ini\s*([\s\S]*?)```/);
     const iniContent = iniMatch ? iniMatch[1] : responseText;
-    
+
     const parseField = (field: string): string => {
       const regex = new RegExp(`\\[${field}\\]\\s*=\\s*(.*)`, 'i');
       const match = iniContent.match(regex);
@@ -571,6 +571,7 @@ export const analyzeImageINI = async (
       must: parseField('must'),
       avoid: parseField('avoid'),
       notes: parseField('notes') || undefined,
+      scene_only: parseField('scene_only') || undefined,
       raw: iniContent.trim()
     };
 
@@ -582,7 +583,7 @@ export const analyzeImageINI = async (
 
 export const convertINIToPrompt = (ini: INIPrompt, stripIdentity: boolean = false): string => {
   let parts: string[] = [];
-  
+
   if (ini.desc) parts.push(ini.desc);
   if (ini.style) parts.push(ini.style);
   if (ini.comp) parts.push(ini.comp);
@@ -594,13 +595,13 @@ export const convertINIToPrompt = (ini: INIPrompt, stripIdentity: boolean = fals
   if (ini.pal) parts.push(`Colors: ${ini.pal}`);
   if (ini.micro) parts.push(ini.micro);
   if (ini.must) parts.push(`Must include: ${ini.must}`);
-  
+
   let prompt = parts.join('. ').replace(/\.\./g, '.');
-  
+
   if (stripIdentity) {
     prompt = stripIdentityDescriptions(prompt);
   }
-  
+
   return prompt;
 };
 
@@ -610,16 +611,16 @@ export const analyzePhysicalAppearance = async (
   modelId: string = 'gemini-2.0-flash'
 ): Promise<PhysicalAppearance | null> => {
   if (!headshotBase64 && !bodyshotBase64) return null;
-  
+
   const ai = getAiClient();
   const parts: any[] = [{ text: PHYSICAL_APPEARANCE_DIRECTIVE }];
-  
+
   if (headshotBase64) {
     const headshot = parseDataUrl(headshotBase64);
     parts.push({ inlineData: { mimeType: headshot.mimeType, data: headshot.data } });
     parts.push({ text: "Reference 1: Headshot - Focus on face details" });
   }
-  
+
   if (bodyshotBase64) {
     const bodyshot = parseDataUrl(bodyshotBase64);
     parts.push({ inlineData: { mimeType: bodyshot.mimeType, data: bodyshot.data } });
@@ -685,7 +686,7 @@ export const analyzePhysicalAppearance = async (
 
     const text = result.text;
     if (!text) return null;
-    
+
     return JSON.parse(text) as PhysicalAppearance;
   } catch (e: any) {
     console.error("Physical Appearance Analysis Error:", e);
@@ -768,41 +769,41 @@ Generate ${params.count} prompts as a JSON array.
     items: {
       type: Type.OBJECT,
       properties: {
-        scenario: { 
-          type: Type.STRING, 
-          description: "Brief 1-2 sentence description of the candid moment being captured" 
+        scenario: {
+          type: Type.STRING,
+          description: "Brief 1-2 sentence description of the candid moment being captured"
         },
-        setting: { 
-          type: Type.STRING, 
-          description: "Specific location/environment with realistic details" 
+        setting: {
+          type: Type.STRING,
+          description: "Specific location/environment with realistic details"
         },
-        outfit: { 
-          type: Type.STRING, 
-          description: "Casual, realistic clothing appropriate for the scenario" 
+        outfit: {
+          type: Type.STRING,
+          description: "Casual, realistic clothing appropriate for the scenario"
         },
-        pose: { 
-          type: Type.STRING, 
-          description: "Natural, unposed body position and action" 
+        pose: {
+          type: Type.STRING,
+          description: "Natural, unposed body position and action"
         },
         expression: {
           type: Type.STRING,
           description: "Facial expression (candid smile, focused, mid-laugh, relaxed, etc.)"
         },
-        lighting: { 
-          type: Type.STRING, 
-          description: "Imperfect lighting (mixed color temp, harsh flash, window light with shadows, etc.)" 
+        lighting: {
+          type: Type.STRING,
+          description: "Imperfect lighting (mixed color temp, harsh flash, window light with shadows, etc.)"
         },
-        camera: { 
-          type: Type.STRING, 
-          description: "Camera style (iPhone 15 Pro, Pixel 8, etc.) with angle and framing notes" 
+        camera: {
+          type: Type.STRING,
+          description: "Camera style (iPhone 15 Pro, Pixel 8, etc.) with angle and framing notes"
         },
-        imperfections: { 
-          type: Type.STRING, 
-          description: "Specific UGC imperfections (visible pores, flyaway hair, motion blur, crushed shadows, etc.)" 
+        imperfections: {
+          type: Type.STRING,
+          description: "Specific UGC imperfections (visible pores, flyaway hair, motion blur, crushed shadows, etc.)"
         },
-        fullPrompt: { 
-          type: Type.STRING, 
-          description: "Complete prompt describing: action/pose, clothing, expression, scene/setting, skin imperfections (pores, texture), camera angle, imperfect lighting, 1-2 photo authenticity terms. NO physical appearance (hair color, eye color, body type). Subject is 'a young woman'. Must look like authentic amateur UGC." 
+        fullPrompt: {
+          type: Type.STRING,
+          description: "Complete prompt describing: action/pose, clothing, expression, scene/setting, skin imperfections (pores, texture), camera angle, imperfect lighting, 1-2 photo authenticity terms. NO physical appearance (hair color, eye color, body type). Subject is 'a young woman'. Must look like authentic amateur UGC."
         }
       },
       required: ["scenario", "setting", "outfit", "pose", "expression", "lighting", "camera", "imperfections", "fullPrompt"]
@@ -822,19 +823,19 @@ Generate ${params.count} prompts as a JSON array.
 
     const text = result.text;
     if (!text) throw new Error("No response from Candid-View-I");
-    
+
     const rawItems = JSON.parse(text) as any[];
-    
+
     return rawItems.map((item) => {
       let finalPrompt = item.fullPrompt || '';
-      
+
       // Ensure UGC elements are appended if missing
       const hasUGCElements = /\b(iphone|smartphone|phone camera|amateur|candid|motion blur|flyaway|pores|texture)\b/i.test(finalPrompt);
       if (!hasUGCElements && finalPrompt) {
         const ugcSuffix = `. Shot on iPhone, amateur framing, natural smartphone lighting, visible skin pores, flyaway strands, authentic candid UGC aesthetic. Solo subject in frame.`;
         finalPrompt = finalPrompt.replace(/\.?\s*$/, '') + ugcSuffix;
       }
-      
+
       return {
         id: `ugc-${generateId()}`,
         scenario: item.scenario || '',

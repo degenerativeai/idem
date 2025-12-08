@@ -9,19 +9,19 @@ interface CloneImageProps {
 
 const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
     const [targetImage, setTargetImage] = useState<string | null>(null);
-    
+
     const [iniResult, setIniResult] = useState<INIPrompt | null>(null);
     const [finalPrompt, setFinalPrompt] = useState<string>('');
     const [sceneOnlyPrompt, setSceneOnlyPrompt] = useState<string>('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copiedType, setCopiedType] = useState<'full' | 'scene' | null>(null);
-    
+
     const [provider, setProvider] = useState<ImageProvider>('google');
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('source');
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    
+
     const handleCopyFull = async () => {
         if (finalPrompt) {
             await navigator.clipboard.writeText(finalPrompt);
@@ -29,7 +29,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             setTimeout(() => setCopiedType(null), 2000);
         }
     };
-    
+
     const handleCopySceneOnly = async () => {
         if (sceneOnlyPrompt) {
             await navigator.clipboard.writeText(sceneOnlyPrompt);
@@ -37,10 +37,15 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             setTimeout(() => setCopiedType(null), 2000);
         }
     };
-    
+
     const buildSceneOnlyPrompt = (ini: INIPrompt): string => {
+        // START NEW LOGIC: Use the dedicated [scene_only] field if the AI generated it
+        if (ini.scene_only && ini.scene_only.length > 50) {
+            return ini.scene_only;
+        }
+        // FALLBACK LOGIC: Old regex-based stripping (kept for safety/revert)
         const lines: string[] = ['[IMAGE_PROMPT]'];
-        
+
         if (ini.desc) {
             const stripped = stripIdentityDescriptions(ini.desc);
             if (stripped) lines.push(`[desc]  = ${stripped}`);
@@ -69,7 +74,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             const stripped = stripIdentityDescriptions(ini.notes);
             if (stripped) lines.push(`[notes] = ${stripped}`);
         }
-        
+
         return lines.join('\n');
     };
 
@@ -104,17 +109,17 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             setError("Please upload an image first");
             return;
         }
-        
+
         setIsAnalyzing(true);
         setError(null);
-        
+
         try {
             const ini = await analyzeImageINI(targetImage);
             setIniResult(ini);
-            
+
             const fullPrompt = convertINIToPrompt(ini, false);
             setFinalPrompt(fullPrompt);
-            
+
             const scenePrompt = buildSceneOnlyPrompt(ini);
             setSceneOnlyPrompt(scenePrompt);
         } catch (e: any) {
@@ -130,21 +135,21 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             setError("No prompt available. Analyze an image first.");
             return;
         }
-        
+
         setIsGenerating(true);
         setError(null);
-        
+
         try {
             const apiKey = sessionStorage.getItem('gemini_api_key');
             if (!apiKey) throw new Error("API key not found");
-            
+
             const referenceImages: string[] = [];
             if (targetImage) {
                 referenceImages.push(targetImage);
             }
-            
+
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
-            
+
             const parts: any[] = [{ text: finalPrompt }];
             referenceImages.forEach(img => {
                 const mimeMatch = img.match(/^data:([^;]+);base64,/);
@@ -152,28 +157,28 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                 const b64 = img.includes('base64,') ? img.split('base64,')[1] : img;
                 parts.push({ inlineData: { mimeType, data: b64 } });
             });
-            
+
             const payload = {
                 contents: [{ parts }],
                 generationConfig: {
                     responseModalities: ["TEXT", "IMAGE"]
                 }
             };
-            
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            
+
             if (!response.ok) {
                 const errText = await response.text();
                 throw new Error(`Generation failed: ${errText}`);
             }
-            
+
             const data = await response.json();
             const cand = data.candidates?.[0];
-            
+
             if (cand?.content?.parts) {
                 for (const part of cand.content.parts) {
                     if (part.inlineData?.data) {
@@ -182,9 +187,9 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                     }
                 }
             }
-            
+
             throw new Error("No image in response");
-            
+
         } catch (e: any) {
             console.error(e);
             setError(e.message || "Failed to generate image");
@@ -235,8 +240,8 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <label style={labelStyle}>Upload Image to Clone</label>
                     </div>
-                    
-                    <div 
+
+                    <div
                         data-testid="upload-clone-image"
                         onClick={() => document.getElementById('clone-upload')?.click()}
                         style={{
@@ -256,9 +261,9 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                             <img src={targetImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Target" />
                         ) : (
                             <div style={{ textAlign: 'center', color: '#6b7280', padding: '1.5rem' }}>
-                                <div style={{ 
-                                    width: '48px', 
-                                    height: '48px', 
+                                <div style={{
+                                    width: '48px',
+                                    height: '48px',
                                     margin: '0 auto 1rem',
                                     background: 'rgba(34, 197, 94, 0.2)',
                                     borderRadius: '12px',
@@ -278,15 +283,15 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                 </p>
                             </div>
                         )}
-                        <input 
-                            type="file" 
-                            id="clone-upload" 
-                            hidden 
-                            accept="image/*" 
+                        <input
+                            type="file"
+                            id="clone-upload"
+                            hidden
+                            accept="image/*"
                             onChange={handleImageUpload}
                         />
                     </div>
-                    
+
                     <button
                         data-testid="button-analyze-clone"
                         onClick={handleAnalyzeImage}
@@ -389,12 +394,12 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                             </span>
                         )}
                     </div>
-                    
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{ 
-                            fontSize: '0.65rem', 
-                            textTransform: 'uppercase', 
-                            fontWeight: 'bold', 
+                        <span style={{
+                            fontSize: '0.65rem',
+                            textTransform: 'uppercase',
+                            fontWeight: 'bold',
                             color: '#94a3b8',
                             letterSpacing: '0.05em'
                         }}>
@@ -568,7 +573,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                 </button>
                                             </div>
                                         </div>
-                                        
+
                                         <div style={{ padding: '1rem', display: 'grid', gap: '0.75rem' }}>
                                             {iniResult.desc && (
                                                 <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
@@ -576,14 +581,14 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                     <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.desc}</p>
                                                 </div>
                                             )}
-                                            
+
                                             {iniResult.chars && (
                                                 <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
                                                     <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[chars]</span>
                                                     <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.chars}</p>
                                                 </div>
                                             )}
-                                            
+
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                                 {iniResult.comp && (
                                                     <div style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
@@ -591,7 +596,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                         <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.comp}</p>
                                                     </div>
                                                 )}
-                                                
+
                                                 {iniResult.light && (
                                                     <div style={{ background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
                                                         <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[light]</span>
@@ -599,14 +604,14 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                     </div>
                                                 )}
                                             </div>
-                                            
+
                                             {iniResult.scene && (
                                                 <div style={{ background: 'rgba(20, 184, 166, 0.1)', border: '1px solid rgba(20, 184, 166, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
                                                     <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#14b8a6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[scene]</span>
                                                     <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.scene}</p>
                                                 </div>
                                             )}
-                                            
+
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                                 {iniResult.style && (
                                                     <div style={{ background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236, 72, 153, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
@@ -614,7 +619,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                         <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.style}</p>
                                                     </div>
                                                 )}
-                                                
+
                                                 {iniResult.pal && (
                                                     <div style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
                                                         <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[pal]</span>
@@ -622,14 +627,14 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                     </div>
                                                 )}
                                             </div>
-                                            
+
                                             {iniResult.must && (
                                                 <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
                                                     <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[must]</span>
                                                     <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.must}</p>
                                                 </div>
                                             )}
-                                            
+
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                                 {iniResult.objs && (
                                                     <div style={{ background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', padding: '0.75rem' }}>
@@ -637,7 +642,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                         <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.objs}</p>
                                                     </div>
                                                 )}
-                                                
+
                                                 {iniResult.geom && (
                                                     <div style={{ background: 'rgba(107, 114, 128, 0.1)', border: '1px solid rgba(107, 114, 128, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
                                                         <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[geom]</span>
@@ -645,7 +650,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                     </div>
                                                 )}
                                             </div>
-                                            
+
                                             {iniResult.avoid && (
                                                 <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', padding: '0.75rem' }}>
                                                     <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[avoid]</span>
@@ -654,7 +659,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                             )}
                                         </div>
                                     </div>
-                                    
+
                                     <button
                                         data-testid="button-generate-clone"
                                         onClick={handleGenerateImage}
@@ -679,7 +684,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                     </button>
                                 </div>
                             )}
-                            
+
                             {isGenerating && (
                                 <div style={{
                                     flex: 1,
@@ -697,7 +702,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                     }} />
                                 </div>
                             )}
-                            
+
                             {generatedImage && (
                                 <div style={{ flex: 1 }}>
                                     <label style={labelStyle}>Cloned Result</label>
@@ -706,16 +711,16 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                         overflow: 'hidden',
                                         border: '1px solid rgba(34, 197, 94, 0.3)'
                                     }}>
-                                        <img 
-                                            src={generatedImage} 
-                                            alt="Generated clone" 
+                                        <img
+                                            src={generatedImage}
+                                            alt="Generated clone"
                                             style={{ width: '100%', display: 'block' }}
                                             data-testid="img-clone-result"
                                         />
                                     </div>
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        gap: '0.75rem', 
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '0.75rem',
                                         marginTop: '1rem',
                                         justifyContent: 'flex-end'
                                     }}>

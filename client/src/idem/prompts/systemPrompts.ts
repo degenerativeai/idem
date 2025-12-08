@@ -206,6 +206,7 @@ Task: Encode the image into a DETAILED INI-style prompt that preserves EVERYTHIN
 [must]  = Critical elements that MUST appear for accuracy. Example: "Camo leggings, brown crop top, big curly hair, balcony setting, over-shoulder pose."
 [avoid] = Elements that would break the scene. Example: "Direct front view, bright neon colors, indoor setting."
 [notes] = Additional context for scene recreation. Example: "Focus on the contrast between the sharp subject and the soft city background."
+[scene_only] = A FULL PROMPT describing the scene, action, clothing, and style, but COMPLETELY STRIPPING all physical identity traits of the person (no face/hair/body/skin details). Use "a person" or "a model" instead of specific descriptions. Example: "A person standing on a high-rise balcony looking back... wearing a brown crop top and camouflage leggings..."
 
 ============================================================
 [Behavior.Rules]
@@ -241,6 +242,7 @@ Enclose the entire output in a Markdown code block (\`\`\`ini) so it is easy to 
 [must]  = 
 [avoid] = 
 [notes] = 
+[scene_only] = 
 
 ============================================================
 End of system instructions.
