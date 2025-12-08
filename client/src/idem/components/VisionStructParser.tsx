@@ -548,12 +548,12 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                     }}
                                     style={{
                                         position: 'absolute',
-                                        bottom: '12px',
-                                        right: '12px',
+                                        bottom: '20px',
+                                        right: '20px',
                                         background: 'rgba(220, 38, 38, 0.9)',
                                         border: '1px solid rgba(255, 255, 255, 0.2)',
                                         borderRadius: '8px',
-                                        padding: '10px',
+                                        padding: '8px',
                                         cursor: 'pointer',
                                         color: 'white',
                                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
@@ -581,7 +581,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                     }}
                                     title="Remove Image"
                                 >
-                                    <IconTrash style={{ width: '22px', height: '22px' }} />
+                                    <IconTrash style={{ width: '18px', height: '18px' }} />
                                 </button>
                             </div>
                         ) : (
