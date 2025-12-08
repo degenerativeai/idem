@@ -578,14 +578,14 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         data-testid="button-mode-manual"
                         onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
                         style={{ ...buttonBaseStyle, padding: '0.6rem', borderRadius: '0.5rem', background: mode === 'manual' ? 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)' : 'transparent', color: mode === 'manual' ? 'white' : '#9ca3af', boxShadow: mode === 'manual' ? '0 2px 8px rgba(168, 85, 247, 0.3)' : 'none' }}>
-                        <IconEdit className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Manual Control
+                        <IconEdit className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Manual Creation
                     </button>
                     <button
                         onClick={() => setMode('api')}
                         data-testid="button-mode-api"
                         onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
                         style={{ ...buttonBaseStyle, padding: '0.6rem', borderRadius: '0.5rem', background: mode === 'api' ? 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)' : 'transparent', color: mode === 'api' ? 'black' : '#9ca3af', boxShadow: mode === 'api' ? '0 2px 8px rgba(234, 179, 8, 0.3)' : 'none' }}>
-                        <IconSparkles className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Auto / API Phase
+                        <IconSparkles className="w-4 h-4" style={{ width: '14px', height: '14px' }} /> Submit to API
                     </button>
                 </div>
 
