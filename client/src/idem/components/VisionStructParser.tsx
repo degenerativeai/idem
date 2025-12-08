@@ -520,7 +520,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                     border: '1px solid rgba(168, 85, 247, 0.2)'
                 }}>
                     <p style={{ fontSize: '0.75rem', color: '#c4b5fd', lineHeight: '1.6', margin: 0 }}>
-                        Already have your reference images? Go directly to the Dataset Generator tab to upload them and start creating your training dataset.
+                        Already have your reference images? Go directly to the Dataset Creator tab to upload them and start creating your training dataset.
                     </p>
                     {onNavigateToDataset && (
                         <button
@@ -537,7 +537,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                             }}
                             data-testid="button-go-to-dataset"
                         >
-                            Go to Dataset Generator
+                            Go to Dataset Creator
                         </button>
                     )}
                 </div>

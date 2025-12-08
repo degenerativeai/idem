@@ -69,7 +69,7 @@ const IdemPage: React.FC = () => {
                         const isActive = activeTab === tab;
                         const labels = {
                             vision: 'Create Identity',
-                            dataset: 'Dataset Generator',
+                            dataset: 'Dataset Creator',
                             clone: 'Clone Image',
                             generator: 'Social Media'
                         };
