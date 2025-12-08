@@ -424,8 +424,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 value={provider}
                                 onChange={(value) => setProvider(value as ImageProvider)}
                                 options={[
-                                    { value: 'google', label: 'Nano Banana Pro' },
-                                    { value: 'wavespeed', label: 'Wavespeed' }
+                                    { value: 'google', label: 'Google Gemini' },
+                                    { value: 'wavespeed', label: 'Wavespeed.ai' }
                                 ]}
                                 testId="select-provider"
                             />
