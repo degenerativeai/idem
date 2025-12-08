@@ -54,13 +54,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
                         background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(0,0,0,0) 70%)',
                         pointerEvents: 'none',
                         zIndex: 0,
-                        marginTop: '-1rem' 
+                        marginTop: '-1rem'
                     }} />
-                    
+
                     <div style={{ position: 'relative', zIndex: 1 }}>
                         <IdemLogo width={128} height={128} style={{ margin: '0 auto 1rem' }} />
                         <h1 style={{ fontSize: '2.5rem', marginBottom: '0.25rem', color: 'white', fontWeight: 800, fontFamily: 'sans-serif' }}>IDEM</h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Identity & Dataset Manifest</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Professional LoRA & Prompt Creation</p>
                     </div>
                 </div>
 
@@ -101,11 +101,11 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
                         {error && <p style={{ color: '#ef4444', fontSize: '0.8rem' }}>{error}</p>}
                     </div>
 
-                    <button 
-                        onClick={handleEnter} 
-                        className="btn-primary" 
-                        style={{ 
-                            width: '100%', 
+                    <button
+                        onClick={handleEnter}
+                        className="btn-primary"
+                        style={{
+                            width: '100%',
                             justifyContent: 'center',
                             background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
                             fontSize: '1rem',
