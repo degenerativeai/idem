@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ImageAspect, ImageProvider } from '../types';
 import { generateImage } from '../services/imageGenerationService';
 import { HEADSHOT_PROMPT, FULL_BODY_PROMPT } from '../prompts/workflowPrompts';
-import { IconSparkles, IconUser } from './Icons';
+import { IconSparkles, IconUser, IconTrash } from './Icons';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
@@ -539,8 +539,50 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                             <span style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8' }}>Source Image</span>
                         </div>
                         {sourceImage ? (
-                            <div style={{ width: '100%', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                            <div style={{ width: '100%', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                                 <img src={sourceImage} alt="Source" style={{ maxWidth: '100%', maxHeight: '250px', borderRadius: '8px', objectFit: 'contain' }} />
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSourceImage(null);
+                                    }}
+                                    style={{
+                                        position: 'absolute',
+                                        bottom: '12px',
+                                        right: '12px',
+                                        background: 'rgba(220, 38, 38, 0.9)',
+                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                        borderRadius: '8px',
+                                        padding: '10px',
+                                        cursor: 'pointer',
+                                        color: 'white',
+                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                                        transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        zIndex: 10
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = 'scale(1.1) rotate(3deg)';
+                                        e.currentTarget.style.background = '#ef4444';
+                                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.4)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+                                        e.currentTarget.style.background = 'rgba(220, 38, 38, 0.9)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+                                    }}
+                                    onMouseDown={(e) => {
+                                        e.currentTarget.style.transform = 'scale(0.95)';
+                                    }}
+                                    onMouseUp={(e) => {
+                                        e.currentTarget.style.transform = 'scale(1.1) rotate(3deg)';
+                                    }}
+                                    title="Remove Image"
+                                >
+                                    <IconTrash style={{ width: '22px', height: '22px' }} />
+                                </button>
                             </div>
                         ) : (
                             <label style={{
@@ -550,13 +592,13 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 padding: '1rem'
                             }}>
                                 <input type="file" onChange={handleFileUpload} accept="image/*" style={{ display: 'none' }} data-testid="input-source-upload" />
-                                <div style={{ 
-                                    width: '44px', 
-                                    height: '44px', 
-                                    borderRadius: '50%', 
-                                    background: 'rgba(168, 85, 247, 0.2)', 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
+                                <div style={{
+                                    width: '44px',
+                                    height: '44px',
+                                    borderRadius: '50%',
+                                    background: 'rgba(168, 85, 247, 0.2)',
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     justifyContent: 'center',
                                     border: '2px solid rgba(168, 85, 247, 0.4)',
                                     flexShrink: 0
@@ -674,8 +716,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                 </div>
 
                 {hasReferences && onNavigateToDataset && (
-                    <div style={{ 
-                        display: 'flex', 
+                    <div style={{
+                        display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         gap: '0.75rem',
