@@ -128,3 +128,9 @@ export const IconKey = ({ className, style }: { className?: string; style?: Reac
         <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
     </svg>
 );
+
+export const IconShirt = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
+        <path d="M20.38 3.4a1.41 1.41 0 0 0-1.1-1.06 5.63 5.63 0 0 1-2.17-.38A6.27 6.27 0 0 0 12 4.4a6.27 6.27 0 0 0-5.11-2.43 5.37 5.37 0 0 1-2.17.38 1.41 1.41 0 0 0-1.07 1.05l-2 7A1.5 1.5 0 0 0 3.09 12.2l2.36-.67.94 9.11a2 2 0 0 0 2 1.95h7.24a2 2 0 0 0 2-1.95l.94-9.11 2.36.67a1.5 1.5 0 0 0 1.42-1.78l-1.97-7.01Z" />
+    </svg>
+);

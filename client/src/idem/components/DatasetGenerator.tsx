@@ -7,7 +7,7 @@ import { generateImage } from '../services/imageGenerationService';
 import { apiService } from '../services/apiService';
 import type { IdentityProfile, Dataset } from '@shared/schema';
 import {
-    IconSparkles, IconUser, IconEdit, IconDownload
+    IconSparkles, IconUser, IconEdit, IconDownload, IconFlame, IconShirt
 } from './Icons';
 import { PromptCard } from './PromptCard';
 
@@ -747,8 +747,12 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     <div style={{ marginTop: '0.5rem' }}>
                         <label style={labelStyle}>Wardrobe Style</label>
                         <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            <button onClick={() => setSafetyMode('sfw')} data-testid="button-safety-sfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'sfw' ? '#3b82f6' : 'transparent', color: safetyMode === 'sfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>Standard</button>
-                            <button onClick={() => setSafetyMode('nsfw')} data-testid="button-safety-nsfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'nsfw' ? '#ec4899' : 'transparent', color: safetyMode === 'nsfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>Enhance Form</button>
+                            <button onClick={() => setSafetyMode('sfw')} data-testid="button-safety-sfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'sfw' ? '#3b82f6' : 'transparent', color: safetyMode === 'sfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
+                                <IconShirt style={{ width: '14px', color: safetyMode === 'sfw' ? 'white' : '#a855f7' }} /> Everyday
+                            </button>
+                            <button onClick={() => setSafetyMode('nsfw')} data-testid="button-safety-nsfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'nsfw' ? '#ec4899' : 'transparent', color: safetyMode === 'nsfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
+                                <IconFlame style={{ width: '14px', color: safetyMode === 'nsfw' ? 'white' : '#ef4444' }} /> Racy
+                            </button>
                         </div>
                     </div>
                 </div>
