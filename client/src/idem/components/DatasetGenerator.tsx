@@ -750,7 +750,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                             <button onClick={() => setSafetyMode('sfw')} data-testid="button-safety-sfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'sfw' ? '#3b82f6' : 'transparent', color: safetyMode === 'sfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
                                 <IconShirt style={{ width: '14px', color: safetyMode === 'sfw' ? 'white' : '#a855f7' }} /> Everyday
                             </button>
-                            <button onClick={() => setSafetyMode('nsfw')} data-testid="button-safety-nsfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'nsfw' ? '#ec4899' : 'transparent', color: safetyMode === 'nsfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
+                            <button onClick={() => setSafetyMode('nsfw')} data-testid="button-safety-nsfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'nsfw' ? '#ef4444' : 'transparent', color: safetyMode === 'nsfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
                                 <IconFlame style={{ width: '14px', color: safetyMode === 'nsfw' ? 'white' : '#ef4444' }} /> Racy
                             </button>
                         </div>
