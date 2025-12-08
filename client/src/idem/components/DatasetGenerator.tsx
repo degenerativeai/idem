@@ -589,6 +589,61 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     </button>
                 </div>
 
+                {mode === 'api' && (
+                    <div style={panelStyle} className="animate-fade-in">
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div>
+                                <label style={labelStyle}>Provider</label>
+                                <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle} data-testid="select-provider">
+                                    <option value="google" style={{ background: '#1e1030', color: '#e9d5ff' }}>Google Gemini</option>
+                                    <option value="wavespeed" style={{ background: '#1e1030', color: '#e9d5ff' }}>Wavespeed.ai</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Quality</label>
+                                <select value={resolution} onChange={(e) => setResolution(e.target.value as any)} style={selectStyle} data-testid="select-resolution">
+                                    <option value="2k" style={{ background: '#1e1030', color: '#e9d5ff' }}>2K (Standard)</option>
+                                    <option value="4k" style={{ background: '#1e1030', color: '#e9d5ff' }}>4K (High Res)</option>
+                                </select>
+                            </div>
+                        </div>
+                        {provider === 'wavespeed' && (
+                            <div>
+                                <label style={labelStyle}>API Key</label>
+                                <input type="password" value={wavespeedApiKey} onChange={(e) => setWavespeedApiKey(e.target.value)} placeholder="Wavespeed Key" style={inputStyle} data-testid="input-wavespeed-key" />
+                            </div>
+                        )}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+                            <div>
+                                <label style={labelStyle}>Aspect Ratio</label>
+                                <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as ImageAspect)} style={selectStyle} data-testid="select-aspect-ratio">
+                                    <option value="1:1" style={{ background: '#1e1030', color: '#e9d5ff' }}>1:1 (Square)</option>
+                                    <option value="4:3" style={{ background: '#1e1030', color: '#e9d5ff' }}>4:3</option>
+                                    <option value="3:4" style={{ background: '#1e1030', color: '#e9d5ff' }}>3:4</option>
+                                    <option value="16:9" style={{ background: '#1e1030', color: '#e9d5ff' }}>16:9</option>
+                                    <option value="9:16" style={{ background: '#1e1030', color: '#e9d5ff' }}>9:16</option>
+                                </select>
+                            </div>
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
+                                    <span>Batch Size</span>
+                                    <span style={{ color: 'white' }}>{apiBatchSize}</span>
+                                </div>
+                                <input type="range" min="10" max="100" step="10" value={apiBatchSize} onChange={(e) => setApiBatchSize(Number(e.target.value))} style={{ width: '100%' }} data-testid="slider-batch-size" />
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleBatchGeneration}
+                            disabled={isBatchProcessing || !identity}
+                            data-testid="button-submit-api"
+                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                            style={{ ...buttonBaseStyle, width: '100%', padding: '1rem', background: isBatchProcessing || !identity ? '#374151' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)', color: isBatchProcessing || !identity ? '#9ca3af' : 'black', cursor: isBatchProcessing || !identity ? 'default' : 'pointer', marginTop: '0.5rem' }}>
+                            {isBatchProcessing ? 'Processing Batch...' : <><IconSparkles style={{ width: '16px', color: 'black' }} /> Submit Prompts to API</>}
+                        </button>
+                        {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
+                    </div>
+                )}
+
                 {(savedIdentities.length > 0 || savedDatasets.length > 0) && (
                     <div style={panelStyle}>
                         <div style={{ display: 'flex', gap: '0.75rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
@@ -698,7 +753,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     </div>
                 </div>
 
-                {mode === 'manual' ? (
+                {mode === 'manual' && (
                     <div style={panelStyle} className="animate-fade-in-up">
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
                             <span>Target Count</span>
@@ -712,59 +767,6 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                             onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
                             style={{ ...buttonBaseStyle, width: '100%', padding: '1rem', background: isGeneratingPrompts || !identity ? '#374151' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)', color: isGeneratingPrompts || !identity ? '#9ca3af' : 'white', cursor: isGeneratingPrompts || !identity ? 'default' : 'pointer' }}>
                             {isGeneratingPrompts ? 'Synthesizing...' : (datasetPrompts.length > 0 ? 'Restart Generation' : 'Start Generation')}
-                        </button>
-                        {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
-                    </div>
-                ) : (
-                    <div style={panelStyle} className="animate-fade-in-up">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <div>
-                                <label style={labelStyle}>Provider</label>
-                                <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle} data-testid="select-provider">
-                                    <option value="google" style={{ background: '#1e1030', color: '#e9d5ff' }}>Nano Banana Pro</option>
-                                    <option value="wavespeed" style={{ background: '#1e1030', color: '#e9d5ff' }}>Wavespeed</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Quality</label>
-                                <select value={resolution} onChange={(e) => setResolution(e.target.value as any)} style={selectStyle} data-testid="select-resolution">
-                                    <option value="2k" style={{ background: '#1e1030', color: '#e9d5ff' }}>2K (Standard)</option>
-                                    <option value="4k" style={{ background: '#1e1030', color: '#e9d5ff' }}>4K (High Res)</option>
-                                </select>
-                            </div>
-                        </div>
-                        {provider === 'wavespeed' && (
-                            <div>
-                                <label style={labelStyle}>API Key</label>
-                                <input type="password" value={wavespeedApiKey} onChange={(e) => setWavespeedApiKey(e.target.value)} placeholder="Wavespeed Key" style={inputStyle} data-testid="input-wavespeed-key" />
-                            </div>
-                        )}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
-                            <div>
-                                <label style={labelStyle}>Aspect Ratio</label>
-                                <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as ImageAspect)} style={selectStyle} data-testid="select-aspect-ratio">
-                                    <option value="1:1" style={{ background: '#1e1030', color: '#e9d5ff' }}>1:1 (Square)</option>
-                                    <option value="4:3" style={{ background: '#1e1030', color: '#e9d5ff' }}>4:3</option>
-                                    <option value="3:4" style={{ background: '#1e1030', color: '#e9d5ff' }}>3:4</option>
-                                    <option value="16:9" style={{ background: '#1e1030', color: '#e9d5ff' }}>16:9</option>
-                                    <option value="9:16" style={{ background: '#1e1030', color: '#e9d5ff' }}>9:16</option>
-                                </select>
-                            </div>
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
-                                    <span>Batch Size</span>
-                                    <span style={{ color: 'white' }}>{apiBatchSize}</span>
-                                </div>
-                                <input type="range" min="10" max="100" step="10" value={apiBatchSize} onChange={(e) => setApiBatchSize(Number(e.target.value))} style={{ width: '100%' }} data-testid="slider-batch-size" />
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleBatchGeneration}
-                            disabled={isBatchProcessing || !identity}
-                            data-testid="button-submit-api"
-                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                            style={{ ...buttonBaseStyle, width: '100%', padding: '1rem', background: isBatchProcessing || !identity ? '#374151' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)', color: isBatchProcessing || !identity ? '#9ca3af' : 'black', cursor: isBatchProcessing || !identity ? 'default' : 'pointer', marginTop: '0.5rem' }}>
-                            {isBatchProcessing ? 'Processing Batch...' : <><IconSparkles style={{ width: '16px', color: 'black' }} /> Submit Prompts to API</>}
                         </button>
                         {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
                     </div>
