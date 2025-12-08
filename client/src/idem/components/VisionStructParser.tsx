@@ -692,8 +692,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                         <span style={{ color: '#e9d5ff', fontSize: '0.75rem', fontWeight: '500', letterSpacing: '0.05em' }}>Synthesizing Image</span>
                                     </div>
                                 ) : (
-                                    <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
-                                        Waiting for generation...
+                                    <div style={{ color: '#e9d5ff', fontSize: '0.75rem', fontWeight: '500', letterSpacing: '0.05em', textAlign: 'center', opacity: 0.5 }}>
+                                        Pending Generation
                                     </div>
                                 )}
                             </div>
@@ -756,8 +756,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                         <span style={{ color: '#e9d5ff', fontSize: '0.75rem', fontWeight: '500', letterSpacing: '0.05em' }}>Synthesizing Image</span>
                                     </div>
                                 ) : (
-                                    <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
-                                        Waiting for generation...
+                                    <div style={{ color: '#e9d5ff', fontSize: '0.75rem', fontWeight: '500', letterSpacing: '0.05em', textAlign: 'center', opacity: 0.5 }}>
+                                        Pending Generation
                                     </div>
                                 )}
                             </div>
