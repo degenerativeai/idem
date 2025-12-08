@@ -708,3 +708,54 @@ select.settings-input option {
 .controls-bar {
   margin-top: auto;
 }
+
+/* IDEM Animation Styles */
+@keyframes scanline {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes gridPulse {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 20px 20px;
+  }
+}
+
+.animate-scanline {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: #a855f7;
+  box-shadow: 0 0 10px #a855f7, 0 0 20px #a855f7;
+  animation: scanline 1.5s linear forwards;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.synth-grid {
+  background-size: 20px 20px;
+  background-image:
+    linear-gradient(to right, rgba(168, 85, 247, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(168, 85, 247, 0.1) 1px, transparent 1px);
+  animation: gridPulse 2s linear infinite;
+}

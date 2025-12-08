@@ -345,18 +345,6 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         ...panelStyle,
         minHeight: '320px',
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        position: 'relative',
-        border: hasImage ? '1px solid rgba(168, 85, 247, 0.3)' : '1px solid rgba(255,255,255,0.08)',
-        background: hasImage ? 'rgba(168, 85, 247, 0.05)' : 'rgba(24, 26, 31, 0.6)'
-    });
-
-    const uploadTriggerStyle: React.CSSProperties = {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
         justifyContent: 'center',
         gap: '0.75rem',
         cursor: 'pointer',
@@ -545,17 +533,23 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
             <div style={{ flex: '2 1 600px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
                     <div style={imageSlotStyle(!!sourceImage)}>
+                        {scanState === 'scanning' && <div className="animate-scanline" style={{ top: 0, left: 0, height: '4px', width: '100%', zIndex: 10 }} />}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', marginBottom: '1rem' }}>
                             <span style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8' }}>Source Image</span>
                         </div>
                         {sourceImage ? (
                             <div style={{ width: '100%', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                                 <img src={sourceImage} alt="Source" style={{ maxWidth: '100%', maxHeight: '250px', borderRadius: '8px', objectFit: 'contain' }} />
-                                {scanState === 'scanning' && <div className="animate-scanline" />}
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setSourceImage(null);
+                                        setGeneratedHeadshots([]);
+                                        setGeneratedBodyshots([]);
+                                        setSelectedHeadshot(null);
+                                        setSelectedBodyshot(null);
+                                        setScanState('idle');
+                                        setStep(0);
                                     }}
                                     style={{
                                         position: 'absolute',
