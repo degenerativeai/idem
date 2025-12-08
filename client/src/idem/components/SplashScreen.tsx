@@ -59,7 +59,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
                     <div style={{ position: 'relative', zIndex: 1 }}>
                         <IdemLogo width={170} height={170} style={{ margin: '0 auto 1rem' }} />
-                        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.25rem', color: 'white', fontWeight: 800, fontFamily: 'sans-serif' }}>IDEM</h1>
+                        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.25rem', color: 'white', fontWeight: 800, fontFamily: '"Archivo Black", sans-serif' }}>IDEM</h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Professional Dataset & Prompt Creation</p>
                     </div>
                 </div>
