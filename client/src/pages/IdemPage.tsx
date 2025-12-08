@@ -51,13 +51,19 @@ const IdemPage: React.FC = () => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '0.75rem 2rem',
-                marginBottom: '1rem',
-                marginTop: '0.5rem',
-                marginInline: '1rem',
+                padding: '1rem 2rem',
+                marginBottom: '1.5rem',
+                marginTop: '0',
+                marginInline: '0',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(10, 10, 12, 0.6)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                boxShadow: '0 4px 20px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)',
                 position: 'sticky',
-                top: '0.5rem',
-                zIndex: 100
+                top: '0',
+                zIndex: 100,
+                width: '100%'
             }}>
                 <div className="flex-center gap-md" style={{ gap: '0.35rem', display: 'flex', alignItems: 'center' }}>
                     <IdemLogo width={24} height={24} />
@@ -170,7 +176,7 @@ const IdemPage: React.FC = () => {
                 {activeTab === 'clone' && <CloneImage identityImages={generatedImages} />}
                 {activeTab === 'generator' && <ImageGenerator />}
             </main>
-        </div>
+        </div >
     );
 };
 
