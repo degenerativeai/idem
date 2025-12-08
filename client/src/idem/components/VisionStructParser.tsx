@@ -123,6 +123,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
     const [batchSize, setBatchSize] = useState(1);
 
     const [step, setStep] = useState<number>(0);
+    const [scanState, setScanState] = useState<'idle' | 'scanning' | 'synthesizing'>('idle');
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -181,10 +182,18 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
 
     const handleCreateReferences = async () => {
         if (!sourceImage) return;
+
+        // Reset and start scanning
         setIsProcessing(true);
+        setScanState('scanning');
         setError(null);
 
         try {
+            // Wait for scan animation (1.5s)
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            setScanState('synthesizing');
+
             const [headshots, bodyshots] = await Promise.all([
                 generateBatch(HEADSHOT_PROMPT, batchSize),
                 generateBatch(FULL_BODY_PROMPT, batchSize)
@@ -211,6 +220,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
             setError(e.message || "Failed to generate references");
         } finally {
             setIsProcessing(false);
+            setScanState('idle');
         }
     };
 
@@ -541,7 +551,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                         {sourceImage ? (
                             <div style={{ width: '100%', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                                 <img src={sourceImage} alt="Source" style={{ maxWidth: '100%', maxHeight: '250px', borderRadius: '8px', objectFit: 'contain' }} />
-                                {isProcessing && <div className="animate-scanline" />}
+                                {scanState === 'scanning' && <div className="animate-scanline" />}
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -659,8 +669,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 </button>
                             </div>
                         ) : (
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={isProcessing ? "synth-grid" : ""}>
-                                {isProcessing ? (
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={scanState === 'synthesizing' ? "synth-grid" : ""}>
+                                {scanState === 'synthesizing' ? (
                                     <div style={{
                                         padding: '0.75rem 1.25rem',
                                         background: 'rgba(15, 23, 42, 0.8)',
@@ -723,8 +733,8 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
                                 </button>
                             </div>
                         ) : (
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={isProcessing ? "synth-grid" : ""}>
-                                {isProcessing ? (
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={scanState === 'synthesizing' ? "synth-grid" : ""}>
+                                {scanState === 'synthesizing' ? (
                                     <div style={{
                                         padding: '0.75rem 1.25rem',
                                         background: 'rgba(15, 23, 42, 0.8)',
