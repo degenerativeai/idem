@@ -186,9 +186,9 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
             const savedProfile = await apiService.createIdentityProfile({
                 uid: identity.identity_profile.name,
                 identityProfile: identity.identity_profile,
-                headshotImage: effectiveHeadshot || null,
-                bodyshotImage: effectiveBodyshot || null,
-                sourceImage: inputImages.source || null,
+                headshotImage: effectiveHeadshot || undefined,
+                bodyshotImage: effectiveBodyshot || undefined,
+                sourceImage: inputImages.source || undefined,
             });
             setSavedIdentityId(savedProfile.id);
             await loadSavedData();
@@ -330,7 +330,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                 count: batchSize,
                 startCount: currentCount,
                 totalTarget: targetTotal,
-                previousSettings: datasetPrompts.map(p => p.prompt)
+                previousSettings: datasetPrompts.map(p => p.prompt).filter((p): p is string => !!p)
             });
             if (prompts.length === 0) {
                 setPromptError("Generated 0 prompts. Please try again.");
@@ -581,11 +581,13 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                                 border: mode === 'manual' ? '1px solid #c084fc' : '1px solid transparent',
                                 color: 'white',
                                 flexDirection: 'column',
-                                gap: '0.5rem'
+                                gap: '0.5rem',
+                                width: '100%'
                             }}>
                             <IconEdit style={{ width: '24px', opacity: mode === 'manual' ? 1 : 0.5 }} />
                             <span>Manual Creation</span>
                         </button>
+
                         <button
                             onClick={() => setMode('api')}
                             style={{
@@ -595,21 +597,23 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                                 border: mode === 'api' ? '1px solid #fb923c' : '1px solid transparent',
                                 color: 'white',
                                 flexDirection: 'column',
-                                gap: '0.5rem'
+                                gap: '0.5rem',
+                                width: '100%'
                             }}>
                             <IconSparkles style={{ width: '24px', opacity: mode === 'api' ? 1 : 0.5 }} />
                             <span>Batch Generation</span>
                         </button>
                     </div>
+                </div>
 
-                    {/* Persistent Mode Descriptions */}
-                    <div style={{ minHeight: '3rem', fontSize: '0.75rem', color: '#9ca3af', background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '0.5rem', marginTop: '0.25rem' }}>
-                        {mode === 'manual' ? (
-                            "Generate text prompts one by one. Best for refining the identity and testing different scenarios before committing to images."
-                        ) : (
-                            "Automatically generate prompts and send them to the image provider API for bulk processing. Best for large-scale dataset creation."
-                        )}
-                    </div>
+                {/* Mode Descriptions (Outside Panel) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', padding: '0 1.5rem', marginTop: '-1.5rem', marginBottom: '1.5rem' }}>
+                    <p style={{ fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4', textAlign: 'center', padding: '0 0.25rem' }}>
+                        Generate text prompts one by one. Best for refining the identity and testing different scenarios.
+                    </p>
+                    <p style={{ fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4', textAlign: 'center', padding: '0 0.25rem' }}>
+                        Automatically generate prompts and send them to the image provider API for bulk processing.
+                    </p>
                 </div>
 
                 {/* Manual Mode Controls */}
@@ -835,7 +839,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '1rem', paddingRight: '0.5rem' }}>
                             {datasetPrompts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((item, idx) => (
                                 <div key={item.id || idx} style={{ width: '100%' }}>
-                                    <PromptCard index={(currentPage - 1) * ITEMS_PER_PAGE + idx} prompt={item} onUpdate={handleUpdatePrompt} onToggleCopy={handleToggleCopy} isCopied={!!item.isCopied} totalInPage={datasetPrompts.length} />
+                                    <PromptCard prompt={item} onUpdate={handleUpdatePrompt} onToggleCopy={handleToggleCopy} isCopied={!!item.isCopied} />
                                 </div>
                             ))}
                         </div>
