@@ -199,12 +199,25 @@ export const analyzeImageWithDirective = async (
 
 export const analyzeSubjectImages = async (
   headshotBase64: string,
-  bodyshotBase64: string,
+  bodyshotBase64?: string | null,
   modelId: string = 'gemini-2.0-flash'
 ): Promise<AnalysisResult> => {
   const ai = getAiClient();
   const headshot = parseDataUrl(headshotBase64);
-  const bodyshot = parseDataUrl(bodyshotBase64);
+
+  const promptParts: any[] = [
+    { text: LORA_FORGE_DIRECTIVE },
+    { inlineData: { mimeType: headshot.mimeType, data: headshot.data } },
+    { text: "Reference 1: Headshot (Focus on Identity/Face)" }
+  ];
+
+  if (bodyshotBase64) {
+    const bodyshot = parseDataUrl(bodyshotBase64);
+    promptParts.push({ inlineData: { mimeType: bodyshot.mimeType, data: bodyshot.data } });
+    promptParts.push({ text: "Reference 2: Bodyshot (Focus on Somatotype/Body Structure)" });
+  } else {
+    promptParts.push({ text: "Note: No body shot provided. Infer body structure from headshot hints (neck/shoulders) or assign a realistic body type fitting the estimated age/archetype." });
+  }
 
   const schema: Schema = {
     type: Type.OBJECT,
@@ -230,19 +243,13 @@ export const analyzeSubjectImages = async (
       contents: [
         {
           role: "user",
-          parts: [
-            { text: LORA_FORGE_DIRECTIVE },
-            { inlineData: { mimeType: headshot.mimeType, data: headshot.data } },
-            { text: "Reference 1: Headshot (Focus on Identity/Face)" },
-            { inlineData: { mimeType: bodyshot.mimeType, data: bodyshot.data } },
-            { text: "Reference 2: Bodyshot (Focus on Somatotype/Body Structure)" }
-          ]
+          parts: promptParts
         }
       ],
       config: {
         responseMimeType: "application/json",
         responseSchema: schema,
-        temperature: 0.2
+        temperature: 0.75
       }
     });
 
@@ -289,6 +296,59 @@ Generate prompts with everyday, casual scenarios and modest clothing:
 - Keep body descriptions anatomical and professional
 `;
 
+  // === DISTRIBUTION LOGIC ===
+  const HEADSHOT_LIMIT = 35;
+  const HALF_BODY_LIMIT = 65; // 35 + 30
+  const THREE_QUARTER_LIMIT = 85; // 65 + 20
+  // Full body is the rest (15)
+
+  const MANDATORY_HEADSHOT_SEQUENCE = [
+    "Headshot (Left 1/4 View)",
+    "Headshot (Front View)",
+    "Headshot (Right 1/4 View)",
+    "Headshot (Left Profile View)",
+    "Headshot (Right Profile View)",
+    "Headshot (Look Up)",
+    "Headshot (Look Down)"
+  ];
+
+  const batchPlan: string[] = [];
+
+  for (let i = 0; i < params.count; i++) {
+    const globalIndex = params.startCount + i; // 0-based index globally
+    let shotType = "Random";
+    let angle = "Random";
+    let expression = "Neutral or Smiling"; // Default 90%
+
+    // 1. Determine Shot Type & Angle
+    if (globalIndex < HEADSHOT_LIMIT) {
+      if (globalIndex < 7) {
+        // Mandatory Sequence
+        shotType = MANDATORY_HEADSHOT_SEQUENCE[globalIndex];
+        angle = "Fixed by Shot Type";
+      } else {
+        shotType = "Headshot";
+        angle = "Varied";
+      }
+    } else if (globalIndex < HALF_BODY_LIMIT) {
+      shotType = "Half Body (Waist Up)";
+    } else if (globalIndex < THREE_QUARTER_LIMIT) {
+      shotType = "Three Quarter Body (Knees Up)";
+    } else {
+      shotType = "Full Body (Head to Toe)";
+    }
+
+    // 2. Determine Expression (10% Varied/Unique check)
+    // Simple deterministic way: every 10th prompt (index ending in 9) gets varied?
+    // Or randomized? User said "90% Neutral/Smiling, 10% Varied".
+    // Let's use a modulus to be deterministic and evenly distributed.
+    if ((globalIndex + 1) % 10 === 0) {
+      expression = "Varied / Unique / Emotional";
+    }
+
+    batchPlan.push(`Item ${i + 1} (Global #${globalIndex + 1}): Shot=[${shotType}], Expression=[${expression}]`);
+  }
+
   const context = `
     ${VACUUM_COMPILER_DIRECTIVE}
     
@@ -304,6 +364,10 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     TASK: Generate ${params.count} distinct image prompts.
     START INDEX: ${params.startCount + 1}
     TOTAL TARGET: ${params.totalTarget}
+
+    === BATCH DISTRIBUTION PLAN (STRICTLY FOLLOW) ===
+    You must generate the prompts efficiently following this exact plan for this batch:
+    ${batchPlan.join("\n")}
     
     PREVIOUSLY GENERATED (AVOID REPEATING THESE EXACT SCENARIOS):
     ${params.previousSettings?.join("\n") || "None"}

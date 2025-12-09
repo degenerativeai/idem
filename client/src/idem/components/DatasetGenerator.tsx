@@ -151,8 +151,8 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
     };
 
     const handleAnalyzeProfile = async () => {
-        if (!effectiveHeadshot || !effectiveBodyshot) {
-            setAnalysisError("Missing reference images.");
+        if (!effectiveHeadshot) {
+            setAnalysisError("Missing reference image (Headshot required).");
             return;
         }
         const apiKey = sessionStorage.getItem('gemini_api_key');
@@ -163,20 +163,9 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         setIsAnalyzing(true);
         setAnalysisError(null);
 
-        // Capture manual inputs to preserve them
-        const manualName = identity?.identity_profile?.name;
-        const manualAge = identity?.identity_profile?.age_estimate;
-
         try {
             const result = await analyzeSubjectImages(effectiveHeadshot, effectiveBodyshot);
 
-            // Restore manual inputs if they exist (preserving user overrides)
-            if (manualName && manualName.trim().length > 0) {
-                result.identity_profile.name = manualName;
-            }
-            if (manualAge && manualAge.trim().length > 0) {
-                result.identity_profile.age_estimate = manualAge;
-            }
 
             setIdentity(result);
             onAnalysisComplete(result);
@@ -806,7 +795,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                             </div>
                             <button
                                 onClick={handleAnalyzeProfile}
-                                disabled={isAnalyzing || (!effectiveHeadshot && !effectiveBodyshot)}
+                                disabled={isAnalyzing || !effectiveHeadshot}
                                 data-testid="button-analyze-profile"
                                 onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
                                 style={{
