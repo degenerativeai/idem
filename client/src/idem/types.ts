@@ -7,6 +7,7 @@ export type ImageProvider = 'google' | 'wavespeed';
 export interface PromptItem {
     id: string;
     text: string;
+    prompt?: string;
     tags: string[];
     isCopied?: boolean;
     generationMeta?: {

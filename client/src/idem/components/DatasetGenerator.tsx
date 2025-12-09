@@ -566,95 +566,173 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
             alignItems: 'start',
             paddingTop: '1rem'
         }}>
+            {/* Sidebar Column (Span 4) */}
             <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                <div>
-                    <label style={labelStyle}>Provider</label>
-                    <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle} data-testid="select-provider">
-                        <option value="google" style={{ background: '#1e1030', color: '#e9d5ff' }}>Google Gemini</option>
-                        <option value="wavespeed" style={{ background: '#1e1030', color: '#e9d5ff' }}>Wavespeed.ai</option>
-                    </select>
-                </div>
-                <div>
-                    <label style={labelStyle}>Quality</label>
-                    <select value={resolution} onChange={(e) => setResolution(e.target.value as any)} style={selectStyle} data-testid="select-resolution">
-                        <option value="2k" style={{ background: '#1e1030', color: '#e9d5ff' }}>2K (Standard)</option>
-                        <option value="4k" style={{ background: '#1e1030', color: '#e9d5ff' }}>4K (High Res)</option>
-                    </select>
-                </div>
-            </div>
-            {provider === 'wavespeed' && (
-                <div>
-                    <label style={labelStyle}>API Key</label>
-                    <input type="password" value={wavespeedApiKey} onChange={(e) => setWavespeedApiKey(e.target.value)} placeholder="Wavespeed Key" style={inputStyle} data-testid="input-wavespeed-key" />
-                </div>
-            )}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
-                <div>
-                    <label style={labelStyle}>Aspect Ratio</label>
-                    <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as ImageAspect)} style={selectStyle} data-testid="select-aspect-ratio">
-                        <option value="1:1" style={{ background: '#1e1030', color: '#e9d5ff' }}>1:1 (Square)</option>
-                        <option value="4:3" style={{ background: '#1e1030', color: '#e9d5ff' }}>4:3</option>
-                        <option value="3:4" style={{ background: '#1e1030', color: '#e9d5ff' }}>3:4</option>
-                        <option value="16:9" style={{ background: '#1e1030', color: '#e9d5ff' }}>16:9</option>
-                        <option value="9:16" style={{ background: '#1e1030', color: '#e9d5ff' }}>9:16</option>
-                    </select>
-                </div>
-                <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
-                        <span>Batch Size</span>
-                        <span style={{ color: 'white' }}>{apiBatchSize}</span>
+                {/* Mode Selection */}
+                <div style={panelStyle}>
+                    <label style={labelStyle}>Generation Mode</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <button
+                            onClick={() => setMode('manual')}
+                            style={{
+                                ...buttonBaseStyle,
+                                padding: '1rem',
+                                background: mode === 'manual' ? '#a855f7' : 'rgba(0,0,0,0.3)',
+                                border: mode === 'manual' ? '1px solid #c084fc' : '1px solid transparent',
+                                color: 'white',
+                                flexDirection: 'column',
+                                gap: '0.5rem'
+                            }}>
+                            <IconEdit style={{ width: '24px', opacity: mode === 'manual' ? 1 : 0.5 }} />
+                            <span>Manual Creation</span>
+                        </button>
+                        <button
+                            onClick={() => setMode('api')}
+                            style={{
+                                ...buttonBaseStyle,
+                                padding: '1rem',
+                                background: mode === 'api' ? '#ea580c' : 'rgba(0,0,0,0.3)',
+                                border: mode === 'api' ? '1px solid #fb923c' : '1px solid transparent',
+                                color: 'white',
+                                flexDirection: 'column',
+                                gap: '0.5rem'
+                            }}>
+                            <IconSparkles style={{ width: '24px', opacity: mode === 'api' ? 1 : 0.5 }} />
+                            <span>Batch Generation</span>
+                        </button>
                     </div>
-                    <input type="range" min="10" max="100" step="10" value={apiBatchSize} onChange={(e) => setApiBatchSize(Number(e.target.value))} style={{ width: '100%' }} data-testid="slider-batch-size" />
-                </div>
-            </div>
-            <button
-                onClick={handleBatchGeneration}
-                disabled={isBatchProcessing || !identity}
-                data-testid="button-submit-api"
-                onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                style={{ ...buttonBaseStyle, width: '100%', padding: '1rem', background: isBatchProcessing || !identity ? '#374151' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)', color: isBatchProcessing || !identity ? '#9ca3af' : 'black', cursor: isBatchProcessing || !identity ? 'default' : 'pointer', marginTop: '0.5rem' }}>
-                {isBatchProcessing ? 'Processing Batch...' : <><IconSparkles style={{ width: '16px', color: 'black' }} /> Submit Prompts to API</>}
-            </button>
-            {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
-        </div>
-    )
-}
 
-{
-    (savedIdentities.length > 0 || savedDatasets.length > 0) && (
-        <div style={panelStyle}>
-            <div style={{ display: 'flex', gap: '0.75rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
-                <span style={{ fontSize: '0.75rem', color: '#4ade80' }}>Saved Data Available</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                <div>
-                    <label style={labelStyle}>Identities ({savedIdentities.length})</label>
-                    <div style={{ maxHeight: '120px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        {savedIdentities.map(profile => (
-                            <div key={profile.id} onClick={() => handleLoadIdentity(profile.id)} data-testid={`card-identity-${profile.id}`}
-                                style={{ padding: '0.5rem', background: savedIdentityId === profile.id ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0.3)', borderRadius: '6px', cursor: 'pointer', border: savedIdentityId === profile.id ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid transparent' }}>
-                                <div style={{ fontSize: '0.75rem', color: 'white' }}>{(profile.identityProfile as any)?.name || 'Unknown'}</div>
-                            </div>
-                        ))}
+                    {/* Persistent Mode Descriptions */}
+                    <div style={{ minHeight: '3rem', fontSize: '0.75rem', color: '#9ca3af', background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '0.5rem', marginTop: '0.25rem' }}>
+                        {mode === 'manual' ? (
+                            "Generate text prompts one by one. Best for refining the identity and testing different scenarios before committing to images."
+                        ) : (
+                            "Automatically generate prompts and send them to the image provider API for bulk processing. Best for large-scale dataset creation."
+                        )}
                     </div>
                 </div>
-                <div>
-                    <label style={labelStyle}>Datasets ({savedDatasets.length})</label>
-                    <div style={{ maxHeight: '120px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        {savedDatasets.map(dataset => (
-                            <div key={dataset.id} onClick={() => handleLoadDataset(dataset.id)} data-testid={`card-dataset-${dataset.id}`}
-                                style={{ padding: '0.5rem', background: savedDatasetId === dataset.id ? 'rgba(168, 85, 247, 0.2)' : 'rgba(0,0,0,0.3)', borderRadius: '6px', cursor: 'pointer', border: savedDatasetId === dataset.id ? '1px solid rgba(168, 85, 247, 0.5)' : '1px solid transparent' }}>
-                                <div style={{ fontSize: '0.75rem', color: 'white' }}>{dataset.name}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-            {saveError && <p style={{ color: '#ef4444', fontSize: '0.7rem' }}>{saveError}</p>}
-        </div>
-    )
-}
 
+                {/* Manual Mode Controls */}
+                {mode === 'manual' && (
+                    <div style={panelStyle} className="animate-fade-in-up">
+                        <div style={{ marginTop: '0.5rem' }}>
+                            <label style={labelStyle}>Wardrobe Style</label>
+                            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <button onClick={() => setSafetyMode('sfw')} data-testid="button-safety-sfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'sfw' ? '#3b82f6' : 'transparent', color: safetyMode === 'sfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
+                                    <IconShirt style={{ width: '14px', color: safetyMode === 'sfw' ? 'white' : '#a855f7' }} /> Everyday
+                                </button>
+                                <button onClick={() => setSafetyMode('nsfw')} data-testid="button-safety-nsfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'nsfw' ? '#ef4444' : 'transparent', color: safetyMode === 'nsfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
+                                    <IconFlame style={{ width: '14px', color: safetyMode === 'nsfw' ? 'white' : '#ef4444' }} /> Racy
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem', marginTop: '1rem' }}>
+                            <span>Target Count</span>
+                            <span style={{ color: 'white' }}>{targetTotal} Prompts</span>
+                        </div>
+                        <input type="range" min="10" max="100" step="10" value={targetTotal} onChange={(e) => setTargetTotal(Number(e.target.value))} style={{ width: '100%', marginBottom: '1rem' }} data-testid="slider-target-total" />
+                        <button
+                            onClick={handleGeneratePrompts}
+                            disabled={isGeneratingPrompts || !identity}
+                            data-testid="button-generate-prompts"
+                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                            style={{ ...buttonBaseStyle, width: '100%', padding: '1rem', background: isGeneratingPrompts || !identity ? '#374151' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)', color: isGeneratingPrompts || !identity ? '#9ca3af' : 'white', cursor: isGeneratingPrompts || !identity ? 'default' : 'pointer' }}>
+                            {isGeneratingPrompts ? 'Synthesizing...' : (datasetPrompts.length > 0 ? 'Restart Generation' : 'Start Generation')}
+                        </button>
+                        {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
+                    </div>
+                )}
+
+                {/* Batch Mode Controls */}
+                {mode === 'api' && (
+                    <div style={panelStyle} className="animate-fade-in-up">
+                        <div>
+                            <label style={labelStyle}>Provider</label>
+                            <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle} data-testid="select-provider">
+                                <option value="google" style={{ background: '#1e1030', color: '#e9d5ff' }}>Google Gemini</option>
+                                <option value="wavespeed" style={{ background: '#1e1030', color: '#e9d5ff' }}>Wavespeed.ai</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style={labelStyle}>Quality</label>
+                            <select value={resolution} onChange={(e) => setResolution(e.target.value as any)} style={selectStyle} data-testid="select-resolution">
+                                <option value="2k" style={{ background: '#1e1030', color: '#e9d5ff' }}>2K (Standard)</option>
+                                <option value="4k" style={{ background: '#1e1030', color: '#e9d5ff' }}>4K (High Res)</option>
+                            </select>
+                        </div>
+                        {provider === 'wavespeed' && (
+                            <div>
+                                <label style={labelStyle}>API Key</label>
+                                <input type="password" value={wavespeedApiKey} onChange={(e) => setWavespeedApiKey(e.target.value)} placeholder="Wavespeed Key" style={inputStyle} data-testid="input-wavespeed-key" />
+                            </div>
+                        )}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+                            <div>
+                                <label style={labelStyle}>Aspect Ratio</label>
+                                <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as ImageAspect)} style={selectStyle} data-testid="select-aspect-ratio">
+                                    <option value="1:1" style={{ background: '#1e1030', color: '#e9d5ff' }}>1:1 (Square)</option>
+                                    <option value="4:3" style={{ background: '#1e1030', color: '#e9d5ff' }}>4:3</option>
+                                    <option value="3:4" style={{ background: '#1e1030', color: '#e9d5ff' }}>3:4</option>
+                                    <option value="16:9" style={{ background: '#1e1030', color: '#e9d5ff' }}>16:9</option>
+                                    <option value="9:16" style={{ background: '#1e1030', color: '#e9d5ff' }}>9:16</option>
+                                </select>
+                            </div>
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
+                                    <span>Batch Size</span>
+                                    <span style={{ color: 'white' }}>{apiBatchSize}</span>
+                                </div>
+                                <input type="range" min="10" max="100" step="10" value={apiBatchSize} onChange={(e) => setApiBatchSize(Number(e.target.value))} style={{ width: '100%' }} data-testid="slider-batch-size" />
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleBatchGeneration}
+                            disabled={isBatchProcessing || !identity}
+                            data-testid="button-submit-api"
+                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                            style={{ ...buttonBaseStyle, width: '100%', padding: '1rem', background: isBatchProcessing || !identity ? '#374151' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)', color: isBatchProcessing || !identity ? '#9ca3af' : 'black', cursor: isBatchProcessing || !identity ? 'default' : 'pointer', marginTop: '0.5rem' }}>
+                            {isBatchProcessing ? 'Processing Batch...' : <><IconSparkles style={{ width: '16px', color: 'black' }} /> Submit Prompts to API</>}
+                        </button>
+                        {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
+                    </div>
+                )}
+
+                {/* Saved Data Panel */}
+                {(savedIdentities.length > 0 || savedDatasets.length > 0) && (
+                    <div style={panelStyle}>
+                        <div style={{ display: 'flex', gap: '0.75rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#4ade80' }}>Saved Data Available</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                            <div>
+                                <label style={labelStyle}>Identities ({savedIdentities.length})</label>
+                                <div style={{ maxHeight: '120px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    {savedIdentities.map(profile => (
+                                        <div key={profile.id} onClick={() => handleLoadIdentity(profile.id)} data-testid={`card-identity-${profile.id}`}
+                                            style={{ padding: '0.5rem', background: savedIdentityId === profile.id ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0.3)', borderRadius: '6px', cursor: 'pointer', border: savedIdentityId === profile.id ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid transparent' }}>
+                                            <div style={{ fontSize: '0.75rem', color: 'white' }}>{(profile.identityProfile as any)?.name || 'Unknown'}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Datasets ({savedDatasets.length})</label>
+                                <div style={{ maxHeight: '120px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    {savedDatasets.map(dataset => (
+                                        <div key={dataset.id} onClick={() => handleLoadDataset(dataset.id)} data-testid={`card-dataset-${dataset.id}`}
+                                            style={{ padding: '0.5rem', background: savedDatasetId === dataset.id ? 'rgba(168, 85, 247, 0.2)' : 'rgba(0,0,0,0.3)', borderRadius: '6px', cursor: 'pointer', border: savedDatasetId === dataset.id ? '1px solid rgba(168, 85, 247, 0.5)' : '1px solid transparent' }}>
+                                            <div style={{ fontSize: '0.75rem', color: 'white' }}>{dataset.name}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        {saveError && <p style={{ color: '#ef4444', fontSize: '0.7rem' }}>{saveError}</p>}
+                    </div>
+                )}
+
+                {/* Context References Panel (Identity) */}
                 <div style={panelStyle}>
                     <div style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem', borderRadius: '0.5rem', background: 'rgba(30, 58, 138, 0.2)', border: '1px solid rgba(30, 58, 138, 0.5)' }}>
                         <IconUser style={{ width: '20px', height: '20px', color: '#60a5fa', flexShrink: 0 }} />
@@ -702,6 +780,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     {analysisError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.5rem' }}>{analysisError}</p>}
                 </div>
 
+                {/* Identity Details */}
                 <div style={panelStyle} className="animate-fade-in">
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div>
@@ -721,163 +800,135 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <label style={labelStyle}>Realism Stack</label>
                         <textarea readOnly value={identity?.identity_profile?.realism_stack || identity?.identity_profile?.facial_description || ''} placeholder="Waiting..." style={{ ...inputStyle, resize: 'none', height: '100px', color: (identity?.identity_profile?.realism_stack) ? 'white' : '#64748b', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflow: 'hidden' }} data-testid="textarea-realism-stack" />
                     </div>
+                </div>
 
-                    <div style={{ marginTop: '0.5rem' }}>
-                        <label style={labelStyle}>Wardrobe Style</label>
-                        <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            <button onClick={() => setSafetyMode('sfw')} data-testid="button-safety-sfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'sfw' ? '#3b82f6' : 'transparent', color: safetyMode === 'sfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
-                                <IconShirt style={{ width: '14px', color: safetyMode === 'sfw' ? 'white' : '#a855f7' }} /> Everyday
-                            </button>
-                            <button onClick={() => setSafetyMode('nsfw')} data-testid="button-safety-nsfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'nsfw' ? '#ef4444' : 'transparent', color: safetyMode === 'nsfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
-                                <IconFlame style={{ width: '14px', color: safetyMode === 'nsfw' ? 'white' : '#ef4444' }} /> Racy
-                            </button>
-                        </div>
+
+
+
+            </div>
+
+            {/* Main Content Column (Span 8) */}
+            <div style={{ gridColumn: 'span 8', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid #1f2937', borderRadius: '1.5rem', padding: '1.5rem', minHeight: '600px', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}>
+                <div ref={topOfListRef} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Dataset</h2>
+                        <span style={{ fontSize: '1rem', color: '#6b7280' }}>{datasetPrompts.length > 0 ? `${Math.min(currentPage * ITEMS_PER_PAGE, datasetPrompts.length)} / ${datasetPrompts.length}` : ''}</span>
                     </div>
+                    {datasetPrompts.length > 0 && (
+                        <button
+                            onClick={() => { const blob = new Blob([JSON.stringify(datasetPrompts, null, 2)], { type: 'application/json' }); saveAs(blob, 'prompts.json'); }}
+                            data-testid="button-download-json"
+                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                            style={{ ...buttonBaseStyle, padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'none' }}>
+                            <IconDownload style={{ width: '14px' }} /> JSON
+                        </button>
+                    )}
                 </div>
 
-{
-    mode === 'manual' && (
-        <div style={panelStyle} className="animate-fade-in-up">
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
-                <span>Target Count</span>
-                <span style={{ color: 'white' }}>{targetTotal} Prompts</span>
-            </div>
-            <input type="range" min="10" max="100" step="10" value={targetTotal} onChange={(e) => setTargetTotal(Number(e.target.value))} style={{ width: '100%', marginBottom: '1rem' }} data-testid="slider-target-total" />
-            <button
-                onClick={handleGeneratePrompts}
-                disabled={isGeneratingPrompts || !identity}
-                data-testid="button-generate-prompts"
-                onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                style={{ ...buttonBaseStyle, width: '100%', padding: '1rem', background: isGeneratingPrompts || !identity ? '#374151' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)', color: isGeneratingPrompts || !identity ? '#9ca3af' : 'white', cursor: isGeneratingPrompts || !identity ? 'default' : 'pointer' }}>
-                {isGeneratingPrompts ? 'Synthesizing...' : (datasetPrompts.length > 0 ? 'Restart Generation' : 'Start Generation')}
-            </button>
-            {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem' }}>{promptError}</p>}
-        </div>
-    )
-}
-            </div >
-
-    <div style={{ gridColumn: 'span 8', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid #1f2937', borderRadius: '1.5rem', padding: '1.5rem', minHeight: '600px', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}>
-        <div ref={topOfListRef} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Dataset</h2>
-                <span style={{ fontSize: '1rem', color: '#6b7280' }}>{datasetPrompts.length > 0 ? `${Math.min(currentPage * ITEMS_PER_PAGE, datasetPrompts.length)} / ${datasetPrompts.length}` : ''}</span>
-            </div>
-            {datasetPrompts.length > 0 && (
-                <button
-                    onClick={() => { const blob = new Blob([JSON.stringify(datasetPrompts, null, 2)], { type: 'application/json' }); saveAs(blob, 'prompts.json'); }}
-                    data-testid="button-download-json"
-                    onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                    style={{ ...buttonBaseStyle, padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'none' }}>
-                    <IconDownload style={{ width: '14px' }} /> JSON
-                </button>
-            )}
-        </div>
-
-        {datasetPrompts.length === 0 ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
-                <IconEdit style={{ width: '48px', height: '48px', color: '#9ca3af', marginBottom: '1rem' }} />
-                <p>No prompts generated yet</p>
-            </div>
-        ) : (
-            <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '1rem', paddingRight: '0.5rem' }}>
-                    {datasetPrompts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((item, idx) => (
-                        <div key={item.id || idx} style={{ width: '100%' }}>
-                            <PromptCard index={(currentPage - 1) * ITEMS_PER_PAGE + idx} prompt={item} onUpdate={handleUpdatePrompt} onToggleCopy={handleToggleCopy} isCopied={!!item.isCopied} totalInPage={datasetPrompts.length} />
+                {datasetPrompts.length === 0 ? (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
+                        <IconEdit style={{ width: '48px', height: '48px', color: '#9ca3af', marginBottom: '1rem' }} />
+                        <p>No prompts generated yet</p>
+                    </div>
+                ) : (
+                    <>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '1rem', paddingRight: '0.5rem' }}>
+                            {datasetPrompts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((item, idx) => (
+                                <div key={item.id || idx} style={{ width: '100%' }}>
+                                    <PromptCard index={(currentPage - 1) * ITEMS_PER_PAGE + idx} prompt={item} onUpdate={handleUpdatePrompt} onToggleCopy={handleToggleCopy} isCopied={!!item.isCopied} totalInPage={datasetPrompts.length} />
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
 
-                {mode === 'manual' && (
-                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                        {datasetPrompts.length > 0 && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '0.5rem' }}>
-                                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} data-testid="button-prev-page" style={{ padding: '0.5rem', background: 'transparent', border: 'none', color: currentPage === 1 ? '#4b5563' : 'white', cursor: currentPage === 1 ? 'default' : 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                                    &lt; PREV
-                                </button>
-                                <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>
-                                    Page <span style={{ color: 'white' }}>{currentPage}</span>
-                                </span>
-                                <button onClick={() => setCurrentPage(p => p + 1)} disabled={(currentPage * ITEMS_PER_PAGE) >= datasetPrompts.length} data-testid="button-next-page" style={{ padding: '0.5rem', background: 'transparent', border: 'none', color: (currentPage * ITEMS_PER_PAGE) >= datasetPrompts.length ? '#4b5563' : 'white', cursor: (currentPage * ITEMS_PER_PAGE) >= datasetPrompts.length ? 'default' : 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                                    NEXT &gt;
-                                </button>
+                        {mode === 'manual' && (
+                            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                                {datasetPrompts.length > 0 && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '0.5rem' }}>
+                                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} data-testid="button-prev-page" style={{ padding: '0.5rem', background: 'transparent', border: 'none', color: currentPage === 1 ? '#4b5563' : 'white', cursor: currentPage === 1 ? 'default' : 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                            &lt; PREV
+                                        </button>
+                                        <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>
+                                            Page <span style={{ color: 'white' }}>{currentPage}</span>
+                                        </span>
+                                        <button onClick={() => setCurrentPage(p => p + 1)} disabled={(currentPage * ITEMS_PER_PAGE) >= datasetPrompts.length} data-testid="button-next-page" style={{ padding: '0.5rem', background: 'transparent', border: 'none', color: (currentPage * ITEMS_PER_PAGE) >= datasetPrompts.length ? '#4b5563' : 'white', cursor: (currentPage * ITEMS_PER_PAGE) >= datasetPrompts.length ? 'default' : 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                            NEXT &gt;
+                                        </button>
+                                    </div>
+                                )}
+
+                                {(currentPage * ITEMS_PER_PAGE) >= datasetPrompts.length && datasetPrompts.length < targetTotal && (
+                                    <div>
+                                        <button
+                                            onClick={handleGenerateNextBatch}
+                                            disabled={isGeneratingPrompts}
+                                            data-testid="button-generate-next"
+                                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                                            style={{ ...buttonBaseStyle, border: '1px solid #a855f7', background: 'rgba(168, 85, 247, 0.1)', color: '#e9d5ff', cursor: isGeneratingPrompts ? 'wait' : 'pointer' }}>
+                                            {isGeneratingPrompts ? 'Synthesizing...' : <><IconSparkles style={{ width: '16px' }} /> Generate Next {Math.min(ITEMS_PER_PAGE, targetTotal - datasetPrompts.length)}</>}
+                                        </button>
+                                    </div>
+                                )}
+                                {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.25rem', borderRadius: '0.25rem' }}>{promptError}</p>}
                             </div>
                         )}
+                    </>
+                )}
 
-                        {(currentPage * ITEMS_PER_PAGE) >= datasetPrompts.length && datasetPrompts.length < targetTotal && (
-                            <div>
-                                <button
-                                    onClick={handleGenerateNextBatch}
-                                    disabled={isGeneratingPrompts}
-                                    data-testid="button-generate-next"
-                                    onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                                    style={{ ...buttonBaseStyle, border: '1px solid #a855f7', background: 'rgba(168, 85, 247, 0.1)', color: '#e9d5ff', cursor: isGeneratingPrompts ? 'wait' : 'pointer' }}>
-                                    {isGeneratingPrompts ? 'Synthesizing...' : <><IconSparkles style={{ width: '16px' }} /> Generate Next {Math.min(ITEMS_PER_PAGE, targetTotal - datasetPrompts.length)}</>}
-                                </button>
+                {isBatchProcessing && (
+                    <div style={{ position: 'absolute', inset: 0, background: '#0a0a0a', zIndex: 50 }}>
+                        <div style={{ position: 'sticky', top: '0', paddingTop: '30vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '1.5rem', width: '100%' }}>
+                            <div style={{ width: '64px', height: '64px', borderRadius: '50%', border: '2px solid #1f2937', borderTopColor: '#eab308', animation: 'spin 1s linear infinite' }} className="animate-spin" />
+                            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                            <div style={{ textAlign: 'center' }}>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                                    {batchProgress.total > 0 ? 'Processing Batch' : 'Generating Prompts'}
+                                </h3>
+                                {batchProgress.total > 0 ? (
+                                    <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Processing {batchProgress.current}/{batchProgress.total} Images</p>
+                                ) : (
+                                    <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Synthesizing dataset prompts...</p>
+                                )}
                             </div>
-                        )}
-                        {promptError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.25rem', borderRadius: '0.25rem' }}>{promptError}</p>}
+                            <p style={{ fontSize: '0.75rem', color: '#6b7280', maxWidth: '300px', textAlign: 'center' }}>
+                                Images are being buffered in memory. Download available upon completion.
+                            </p>
+                        </div>
                     </div>
                 )}
-            </>
-        )}
 
-        {isBatchProcessing && (
-            <div style={{ position: 'absolute', inset: 0, background: '#0a0a0a', zIndex: 50 }}>
-                <div style={{ position: 'sticky', top: '0', paddingTop: '30vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '1.5rem', width: '100%' }}>
-                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', border: '2px solid #1f2937', borderTopColor: '#eab308', animation: 'spin 1s linear infinite' }} className="animate-spin" />
-                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-                    <div style={{ textAlign: 'center' }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                            {batchProgress.total > 0 ? 'Processing Batch' : 'Generating Prompts'}
-                        </h3>
-                        {batchProgress.total > 0 ? (
-                            <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Processing {batchProgress.current}/{batchProgress.total} Images</p>
-                        ) : (
-                            <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Synthesizing dataset prompts...</p>
-                        )}
+                {isBatchComplete && batchZipBlob && !isBatchProcessing && (
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.9)', zIndex: 50, backdropFilter: 'blur(8px)' }}>
+                        <div style={{ position: 'sticky', top: '0', paddingTop: '30vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '1.5rem', width: '100%' }}>
+                            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(34, 197, 94, 0.4)' }}>
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem' }}>Ready for Download</h3>
+                                <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>Your dataset has been generated successfully.</p>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '280px' }}>
+                                <button
+                                    onClick={() => { if (batchZipBlob) saveAs(batchZipBlob, `dataset_${identity?.identity_profile?.name || 'export'}.zip`); }}
+                                    data-testid="button-download-zip"
+                                    onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                                    style={{ ...buttonBaseStyle, padding: '0.75rem', background: 'white', color: 'black' }}>
+                                    <IconDownload style={{ width: '16px' }} /> Download Zip
+                                </button>
+                                <button
+                                    onClick={() => { setIsBatchComplete(false); setBatchZipBlob(null); setDatasetPrompts([]); }}
+                                    data-testid="button-start-new"
+                                    onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                                    style={{ ...buttonBaseStyle, padding: '0.75rem', border: '1px solid #374151', background: 'transparent', color: '#9ca3af', boxShadow: 'none' }}>
+                                    Start New Dataset
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <p style={{ fontSize: '0.75rem', color: '#6b7280', maxWidth: '300px', textAlign: 'center' }}>
-                        Images are being buffered in memory. Download available upon completion.
-                    </p>
-                </div>
+                )}
             </div>
-        )}
-
-        {isBatchComplete && batchZipBlob && !isBatchProcessing && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.9)', zIndex: 50, backdropFilter: 'blur(8px)' }}>
-                <div style={{ position: 'sticky', top: '0', paddingTop: '30vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '1.5rem', width: '100%' }}>
-                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(34, 197, 94, 0.4)' }}>
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem' }}>Ready for Download</h3>
-                        <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>Your dataset has been generated successfully.</p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '280px' }}>
-                        <button
-                            onClick={() => { if (batchZipBlob) saveAs(batchZipBlob, `dataset_${identity?.identity_profile?.name || 'export'}.zip`); }}
-                            data-testid="button-download-zip"
-                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                            style={{ ...buttonBaseStyle, padding: '0.75rem', background: 'white', color: 'black' }}>
-                            <IconDownload style={{ width: '16px' }} /> Download Zip
-                        </button>
-                        <button
-                            onClick={() => { setIsBatchComplete(false); setBatchZipBlob(null); setDatasetPrompts([]); }}
-                            data-testid="button-start-new"
-                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                            style={{ ...buttonBaseStyle, padding: '0.75rem', border: '1px solid #374151', background: 'transparent', color: '#9ca3af', boxShadow: 'none' }}>
-                            Start New Dataset
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
-    </div>
-        </div >
+        </div>
     );
 };
 
