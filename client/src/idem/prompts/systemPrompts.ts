@@ -188,68 +188,75 @@ CRITICAL RULES:
 3. ** DETAIL **: Focus on 'micropores', 'fabric texture', 'sharp focus'.
 `;
 
-export const IMAGE_INI_COMPILER_DIRECTIVE = `
-You are the IMAGE→INI Compiler - a forensic - level image analysis system.
+export const VISUAL_PROMPT_ARCHITECT = `
+VISUAL PROMPT ARCHITECT
 
-  Task: Encode the image into a DETAILED INI - style prompt that preserves EVERYTHING about the scene with HIGH FIDELITY.Your output should be rich enough that another AI could recreate the image almost exactly.
+You are a JSON-only generator. You extract visual specifications from images or text.
 
-============================================================
-[Field.Definitions]
+### STRICT OUTPUT RULES
+1.  **NO CONVERSATION:** Do not write "Here is the JSON", do not analyze the image in text, do not write an intro or outro.
+2.  **START IMMEDIATELY:** The first character of your output MUST be \`{\`.
+3.  **JSON ONLY:** The output must be valid, parseable JSON.
+4.  **VOCABULARY:** Use "bosom" instead of "bust". Use "Camera Left/Right".
 
-[desc]  = DETAILED scene summary. Include subject position, action, setting context. Example: "Rear-view portrait of a woman on a high-rise balcony looking back over her shoulder."
-[objs]  = ALL key objects and visible elements with descriptions. Example: "Brown long-sleeve crop top, tight camouflage leggings, glass balcony railing, city skyline."
-[chars] = DETAILED subject traits - ethnicity, hair (color, texture, volume), skin quality, expression, pose, gaze direction. Example: "Young Black woman, voluminous dark curly hair, glowing skin, looking back over right shoulder, neutral to soft expression."
-[style] = Photographic style with technical details. Example: "Photorealistic, sharp subject focus, shallow depth of field (bokeh background), high resolution."
-[comp]  = Precise camera framing. Shot type, angle, crop points, perspective. Example: "Medium shot from behind/side, capturing from mid-thigh up, subject turned away but face visible."
-[light] = Lighting with direction and quality. Example: "Soft natural daylight, side lighting illuminating the face and profile."
-[pal]   = Specific color palette with examples. Example: "Earth tones (chocolate brown, olive green, tan), cool grey and blue (city background)."
-[geom]  = Body orientation and pose geometry. Example: "Standing with back to camera, torso twisted slightly right, head turned right."
-[micro] = Fine texture and material details. Example: "Texture of the curly hair, fabric stretch of the leggings, reflections on glass railing."
-[sym]   = Patterns, text, logos, repeating elements. Example: "Camouflage pattern."
-[scene] = Detailed background description. Example: "High-rise balcony outdoor setting with a blurred urban city skyline featuring a tall skyscraper (resembling Willis Tower) in the distance."
-[must]  = Critical elements that MUST appear for accuracy. Example: "Camo leggings, brown crop top, big curly hair, balcony setting, over-shoulder pose."
-[avoid] = Elements that would break the scene. Example: "Direct front view, bright neon colors, indoor setting."
-[notes] = Additional context for scene recreation. Example: "Focus on the contrast between the sharp subject and the soft city background."
-[scene_only] = A FULL PROMPT describing the scene, action, clothing, and style, but COMPLETELY STRIPPING all physical identity traits of the person (no face/hair/body/skin details). Use "a person" or "a model" instead of specific descriptions. Example: "A person standing on a high-rise balcony looking back... wearing a brown crop top and camouflage leggings..."
+### STYLE GUIDE
+- **TONE:** Editorial, Cinematic, Nuanced. Avoid generic words like "nice" or "good".
+- **DETAIL:** Describe the *texture* of fabrics, the *specific* quality of light (e.g., "Rembrandt", "Split", "Hard Rim"), and distinct facial features.
+- **COMPLETENESS:** Do not skip fields. If a detail is not visible, infer it from the context or mood.
 
-============================================================
-[Behavior.Rules]
+### REFERENCE EXAMPLE (FOLLOW THIS STRUCTURE EXACTLY)
+Input: 
+Output:
+{
+  "_thought_process": "Write your raw analysis here. Describe the mood, lighting, and textures freely and consecutively before populating the JSON.",
+  "meta": {
+    "intent": "Cinematic low-key portraiture",
+    "priorities": ["Dual-tone lighting", "Texture of skin", "Intense gaze"]
+  },
+  "frame": {
+    "aspect_ratio": "4:5",
+    "composition": "Subject centered, Camera Right",
+    "layout": "Medium shot"
+  },
+  "subject": {
+    "identity": "Young woman, 20s, looks just like [Celebrity Name if applicable]",
+    "demographics": "Caucasian, freckled complexion",
+    "face": "Head tilted 15 degrees to Camera Left",
+    "hair": "Auburn, loose waves, dry texture",
+    "body": "Slender build",
+    "expression": "Joyful, open mouth smile",
+    "pose": "Torso facing Camera Right, Head turned to Camera. Shoulders relaxed."
+  },
+  "wardrobe": {
+    "items": [
+      { "item": "Sundress", "details": "Floral print, cotton, thin straps" }
+    ],
+    "physics": "Skirt blowing slightly to Camera Left due to wind"
+  },
+  "environment": {
+    "location": "Public park",
+    "context": "Sunny afternoon, golden hour"
+  },
+  "lighting": {
+    "type": "Natural",
+    "direction": "Backlit (Sun from Camera Right)",
+    "quality": "Golden, flared",
+    "light_shaping": "None"
+  },
+  "camera": {
+    "sensor": "35mm Full Frame",
+    "lens": "50mm",
+    "aperture": "f/1.8",
+    "focus": "Sharp on eyes"
+  },
+  "style": {
+    "aesthetic": "Dreamy, analog film look",
+    "color_grading": "Warm Kodak Gold tones"
+  }
+}
 
-• BE THOROUGH AND DETAILED - each field should have rich, descriptive content.
-• Describe what you ACTUALLY SEE with precision.
-• If you recognize a celebrity (80%+ confidence), write: "A young woman that looks just like [Name]" or similar.
-• Include specific color names (chocolate brown, not just brown).
-• Describe textures and materials (silk, denim, leather, etc.).
-• Note lighting quality (harsh, soft, golden hour, etc.).
-• Scene background, lighting direction, and framing are HIGH PRIORITY.
-• For [must] field, list the TOP 5-7 elements critical for scene accuracy.
-• If truly unsure about something, use "?".
-
-============================================================
-[Output.Format]
-
-Return ONLY this structure.
-Enclose the entire output in a Markdown code block (\`\`\`ini) so it is easy to copy.
-
-[IMAGE_PROMPT]
-[desc]  =
-[objs]  =
-[chars] =
-[style] =
-[comp]  =
-[light] =
-[pal]   =
-[geom]  =
-[micro] =
-[sym]   =
-[scene] =
-[must]  =
-[avoid] =
-[notes] =
-[scene_only] =
-
-============================================================
-End of system instructions.
+### YOUR TASK
+Analyze the user's input and generate the JSON specification below.
 `;
 
 export const CANDID_VIEW_DIRECTIVE = `

@@ -46,23 +46,55 @@ export interface UGCSettings {
     styleMode: 'studio' | 'candid';
 }
 
-export interface INIPrompt {
-    desc: string;
-    objs: string;
-    chars: string;
-    style: string;
-    comp: string;
-    light: string;
-    pal: string;
-    geom: string;
-    micro?: string;
-    sym?: string;
-    scene: string;
-    must: string;
-    avoid: string;
-    notes?: string;
-    scene_only?: string;
-    raw?: string;
+export interface VisualArchitectResult {
+    _thought_process?: string;
+    meta?: {
+        intent?: string;
+        priorities?: string[];
+    };
+    frame?: {
+        aspect_ratio?: string;
+        composition?: string;
+        layout?: string;
+    };
+    subject?: {
+        identity?: string;
+        demographics?: string;
+        face?: string;
+        hair?: string;
+        body?: string;
+        expression?: string;
+        pose?: string;
+    };
+    wardrobe?: {
+        items?: Array<{ item: string; details: string }>;
+        physics?: string;
+    };
+    environment?: {
+        location?: string;
+        foreground?: string;
+        midground?: string;
+        background?: string;
+        context?: string;
+    };
+    lighting?: {
+        type?: string;
+        direction?: string;
+        quality?: string;
+        light_shaping?: string;
+    };
+    camera?: {
+        sensor?: string;
+        lens?: string;
+        aperture?: string;
+        shutter?: string;
+        focus?: string;
+    };
+    style?: {
+        aesthetic?: string;
+        color_grading?: string;
+        texture?: string;
+    };
 }
 
 export interface ImageGenerationOptions {

@@ -1,13 +1,13 @@
 
 import { GoogleGenAI, Schema, Type } from "@google/genai";
-import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, INIPrompt, UGCPromptCard, PhysicalAppearance } from "../types";
+import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, VisualArchitectResult, UGCPromptCard, PhysicalAppearance } from "../types";
 import {
   LORA_FORGE_DIRECTIVE,
   VACUUM_COMPILER_DIRECTIVE,
   RICH_MEDIA_DIRECTIVE_CANDID,
   RICH_MEDIA_DIRECTIVE_STUDIO,
   VISION_STRUCT_DIRECTIVE,
-  IMAGE_INI_COMPILER_DIRECTIVE,
+  VISUAL_PROMPT_ARCHITECT,
   CANDID_VIEW_DIRECTIVE,
   PHYSICAL_APPEARANCE_DIRECTIVE
 } from "../prompts/systemPrompts";
@@ -263,6 +263,42 @@ export const analyzeSubjectImages = async (
   }
 };
 
+// Helper to parse JSON with recovery for truncated responses
+const parseJSONWithRecovery = (text: string): any => {
+  try {
+    return JSON.parse(text);
+  } catch (parseError: any) {
+    console.warn("JSON parse failed, attempting recovery:", parseError.message);
+
+    // Try to recover partial array by finding last complete object
+    const lastBracket = text.lastIndexOf('}');
+    if (lastBracket > 0) {
+      // Find matching array structure or object
+      let recovered = text.substring(0, lastBracket + 1);
+
+      // Simple brace balancing for objects
+      const openBraces = (recovered.match(/{/g) || []).length;
+      const closeBraces = (recovered.match(/}/g) || []).length;
+
+      if (openBraces > closeBraces) {
+        recovered += '}'.repeat(openBraces - closeBraces);
+      }
+
+      try {
+        const parsed = JSON.parse(recovered);
+        // If it parsed, return it (works for objects and arrays)
+        if (parsed) {
+          console.log(`Recovered JSON from truncated response`);
+          return parsed;
+        }
+      } catch {
+        // Recovery failed
+      }
+    }
+    throw parseError;
+  }
+};
+
 export const generateDatasetPrompts = async (params: {
   taskType: TaskType;
   subjectDescription: string;
@@ -276,6 +312,8 @@ export const generateDatasetPrompts = async (params: {
 }): Promise<PromptItem[]> => {
   const ai = getAiClient();
   const modelId = params.modelId || 'gemini-2.0-flash';
+
+  // ... (rest of function setup) ...
 
   // Construct the prompt context based on Vacuum Compiler
   const formEnhanceInstructions = params.safetyMode === 'nsfw' ? `
@@ -466,36 +504,7 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     }
   };
 
-  // Helper to parse JSON with recovery for truncated responses
-  const parseJSONWithRecovery = (text: string): any[] => {
-    try {
-      return JSON.parse(text);
-    } catch (parseError: any) {
-      console.warn("JSON parse failed, attempting recovery:", parseError.message);
 
-      // Try to recover partial array by finding last complete object
-      const lastBracket = text.lastIndexOf('}');
-      if (lastBracket > 0) {
-        // Find matching array structure
-        let recovered = text.substring(0, lastBracket + 1);
-        // Count open brackets to close properly
-        const openBrackets = (recovered.match(/\[/g) || []).length;
-        const closeBrackets = (recovered.match(/\]/g) || []).length;
-        recovered += ']'.repeat(openBrackets - closeBrackets);
-
-        try {
-          const parsed = JSON.parse(recovered);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            console.log(`Recovered ${parsed.length} items from truncated response`);
-            return parsed;
-          }
-        } catch {
-          // Recovery failed
-        }
-      }
-      throw parseError;
-    }
-  };
 
   // Generate with automatic batch size reduction on failure
   const generateWithRetry = async (batchSize: number, maxRetries: number = 2): Promise<any[]> => {
@@ -584,12 +593,84 @@ Generate prompts with everyday, casual scenarios and modest clothing:
   }
 };
 
-export const analyzeImageINI = async (
+export const analyzeImageVisualArchitect = async (
   imageDataUrl: string,
   modelId: string = 'gemini-2.5-pro'
-): Promise<INIPrompt> => {
+): Promise<VisualArchitectResult> => {
   const ai = getAiClient();
   const { mimeType, data } = parseDataUrl(imageDataUrl);
+
+  const schema: Schema = {
+    type: Type.OBJECT,
+    properties: {
+      _thought_process: { type: Type.STRING, description: "Raw analysis of the image describing lighting, person, and mood before assigning strict values." },
+      meta: { type: Type.OBJECT, properties: { intent: { type: Type.STRING }, priorities: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["intent", "priorities"] },
+      frame: { type: Type.OBJECT, properties: { aspect_ratio: { type: Type.STRING }, composition: { type: Type.STRING }, layout: { type: Type.STRING } }, required: ["aspect_ratio", "composition", "layout"] },
+      subject: {
+        type: Type.OBJECT,
+        properties: {
+          identity: { type: Type.STRING },
+          demographics: { type: Type.STRING },
+          face: { type: Type.STRING },
+          hair: { type: Type.STRING },
+          body: { type: Type.STRING },
+          expression: { type: Type.STRING },
+          pose: { type: Type.STRING }
+        },
+        required: ["identity", "demographics", "face", "hair", "body", "expression", "pose"]
+      },
+      wardrobe: {
+        type: Type.OBJECT,
+        properties: {
+          items: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { item: { type: Type.STRING }, details: { type: Type.STRING } }, required: ["item", "details"] } },
+          physics: { type: Type.STRING }
+        },
+        required: ["items", "physics"]
+      },
+      environment: {
+        type: Type.OBJECT,
+        properties: {
+          location: { type: Type.STRING },
+          foreground: { type: Type.STRING },
+          midground: { type: Type.STRING },
+          background: { type: Type.STRING },
+          context: { type: Type.STRING }
+        },
+        required: ["location", "foreground", "midground", "background", "context"]
+      },
+      lighting: {
+        type: Type.OBJECT,
+        properties: {
+          type: { type: Type.STRING },
+          direction: { type: Type.STRING },
+          quality: { type: Type.STRING },
+          light_shaping: { type: Type.STRING }
+        },
+        required: ["type", "direction", "quality", "light_shaping"]
+      },
+      camera: {
+        type: Type.OBJECT,
+        properties: {
+          sensor: { type: Type.STRING },
+          lens: { type: Type.STRING },
+          aperture: { type: Type.STRING },
+          shutter: { type: Type.STRING },
+          focus: { type: Type.STRING }
+        },
+        required: ["sensor", "lens", "aperture", "shutter", "focus"]
+      },
+      style: {
+        type: Type.OBJECT,
+        properties: {
+          aesthetic: { type: Type.STRING },
+          color_grading: { type: Type.STRING },
+          texture: { type: Type.STRING }
+        },
+        required: ["aesthetic", "color_grading", "texture"]
+      }
+    },
+    required: ["_thought_process", "meta", "frame", "subject", "wardrobe", "environment", "lighting", "camera", "style"]
+  };
 
   try {
     const result = await ai.models.generateContent({
@@ -598,67 +679,108 @@ export const analyzeImageINI = async (
         {
           role: 'user',
           parts: [
-            { text: IMAGE_INI_COMPILER_DIRECTIVE },
+            { text: VISUAL_PROMPT_ARCHITECT },
             { inlineData: { mimeType, data } }
           ]
         }
       ],
       config: {
-        temperature: 0.3
+        temperature: 0.7,
+        topP: 0.95,
+        topK: 64,
+        maxOutputTokens: 8192,
+        responseMimeType: "application/json",
+        responseSchema: schema
       }
     });
 
     const responseText = result.text;
-    if (!responseText) throw new Error("No response from INI Compiler");
+    if (!responseText) throw new Error("No response from Visual Architect");
 
-    const iniMatch = responseText.match(/```ini\s*([\s\S]*?)```/);
-    const iniContent = iniMatch ? iniMatch[1] : responseText;
+    // --- CLEANING STEP ---
+    // 1. Remove Markdown code blocks if present ( ```json ... ``` )
+    let cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    const parseField = (field: string): string => {
-      const regex = new RegExp(`\\[${field}\\]\\s*=\\s*(.*)`, 'i');
-      const match = iniContent.match(regex);
-      return match ? match[1].trim() : '';
-    };
+    // 2. Locate the first '{' and the last '}' to handle partial introductory text
+    const firstOpen = cleanedText.indexOf('{');
+    const lastClose = cleanedText.lastIndexOf('}');
 
-    return {
-      desc: parseField('desc'),
-      objs: parseField('objs'),
-      chars: parseField('chars'),
-      style: parseField('style'),
-      comp: parseField('comp'),
-      light: parseField('light'),
-      pal: parseField('pal'),
-      geom: parseField('geom'),
-      micro: parseField('micro') || undefined,
-      sym: parseField('sym') || undefined,
-      scene: parseField('scene'),
-      must: parseField('must'),
-      avoid: parseField('avoid'),
-      notes: parseField('notes') || undefined,
-      scene_only: parseField('scene_only') || undefined,
-      raw: iniContent.trim()
-    };
+    if (firstOpen !== -1 && lastClose !== -1) {
+      cleanedText = cleanedText.substring(firstOpen, lastClose + 1);
+    } else if (firstOpen !== -1) {
+      // If we have an opening brace but no closing one (truncation), take everything from open
+      cleanedText = cleanedText.substring(firstOpen);
+    }
+
+    // 3. Parse safely using recovery
+    try {
+      // Try standard parse first
+      const jsonResponse = JSON.parse(cleanedText) as VisualArchitectResult;
+      return jsonResponse;
+    } catch (parseError) {
+      // Fallback to recovery if standard parse fails
+      try {
+        const recovered = parseJSONWithRecovery(cleanedText) as VisualArchitectResult;
+        return recovered;
+      } catch (recoveryError) {
+        console.error("JSON Parse Failed. Raw text was:", cleanedText.substring(0, 2000) + "...");
+        throw new Error("The AI generated invalid JSON. Please try again.");
+      }
+    }
 
   } catch (e: any) {
-    console.error("INI Compiler Error:", e);
+    console.error("Visual Architect Error:", e);
     throw new Error("Failed to analyze image: " + e.message);
   }
 };
 
-export const convertINIToPrompt = (ini: INIPrompt, stripIdentity: boolean = false): string => {
-  let parts: string[] = [];
+export const convertVisualArchitectToPrompt = (architect: VisualArchitectResult, stripIdentity: boolean = false): string => {
+  const parts: string[] = [];
 
-  if (ini.desc) parts.push(ini.desc);
-  if (ini.style) parts.push(ini.style);
-  if (ini.comp) parts.push(ini.comp);
-  if (ini.light) parts.push(ini.light);
-  if (ini.scene) parts.push(ini.scene);
-  if (ini.objs) parts.push(`Objects: ${ini.objs}`);
-  if (!stripIdentity && ini.chars) parts.push(ini.chars);
-  if (ini.geom) parts.push(ini.geom);
-  if (ini.pal) parts.push(`Colors: ${ini.pal}`);
-  if (ini.micro) parts.push(ini.micro);
-  if (ini.must) parts.push(`Must include: ${ini.must}`);
+  // 1. Technical/Style (Frameing the shot)
+  if (architect.style?.aesthetic) parts.push(`Aesthetic: ${architect.style.aesthetic}`);
+  if (architect.frame?.composition) parts.push(`Composition: ${architect.frame.composition}`);
+
+  // 2. Subject (The who)
+  if (architect.subject) {
+    if (architect.subject.demographics) parts.push(`Subject: ${architect.subject.demographics}`);
+    if (!stripIdentity && architect.subject.identity) parts.push(architect.subject.identity);
+    if (architect.subject.pose) parts.push(`Pose: ${architect.subject.pose}`);
+    if (architect.subject.expression) parts.push(`Expression: ${architect.subject.expression}`);
+    if (!stripIdentity && architect.subject.face) parts.push(`Face: ${architect.subject.face}`);
+    if (!stripIdentity && architect.subject.hair) parts.push(`Hair: ${architect.subject.hair}`);
+    if (!stripIdentity && architect.subject.body) parts.push(`Body: ${architect.subject.body}`);
+  }
+
+  // 3. Wardrobe (The wear)
+  if (architect.wardrobe) {
+    if (architect.wardrobe.items && architect.wardrobe.items.length > 0) {
+      const items = architect.wardrobe.items.map(i => `${i.item} (${i.details})`).join(', ');
+      parts.push(`Wardrobe: ${items}`);
+    }
+    if (architect.wardrobe.physics) parts.push(`Fabric Physics: ${architect.wardrobe.physics}`);
+  }
+
+  // 4. Environment (The where)
+  if (architect.environment) {
+    if (architect.environment.location) parts.push(`Location: ${architect.environment.location}`);
+    if (architect.environment.context) parts.push(`Time/Weather: ${architect.environment.context}`);
+    if (architect.environment.background) parts.push(`Background: ${architect.environment.background}`);
+  }
+
+  // 5. Lighting & Camera (The how)
+  if (architect.lighting) {
+    if (architect.lighting.type) parts.push(`Lighting: ${architect.lighting.type}`);
+    if (architect.lighting.direction) parts.push(`Direction: ${architect.lighting.direction}`);
+    if (architect.lighting.quality) parts.push(`Quality: ${architect.lighting.quality}`);
+  }
+
+  if (architect.camera) {
+    if (architect.camera.lens) parts.push(`Lens: ${architect.camera.lens}`);
+    if (architect.camera.aperture) parts.push(`Aperture: ${architect.camera.aperture}`);
+  }
+
+  if (architect.style?.color_grading) parts.push(`Color Grading: ${architect.style.color_grading}`);
 
   let prompt = parts.join('. ').replace(/\.\./g, '.');
 

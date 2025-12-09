@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { INIPrompt, ImageAspect, ImageProvider } from '../types';
-import { analyzeImageINI, convertINIToPrompt, stripIdentityDescriptions } from '../services/geminiService';
+import { VisualArchitectResult, ImageAspect, ImageProvider } from '../types';
+import { analyzeImageVisualArchitect, convertVisualArchitectToPrompt, stripIdentityDescriptions } from '../services/geminiService';
 
 interface CloneImageProps {
     identityImages?: { headshot: string | null; bodyshot: string | null };
@@ -10,12 +10,11 @@ interface CloneImageProps {
 const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
     const [targetImage, setTargetImage] = useState<string | null>(null);
 
-    const [iniResult, setIniResult] = useState<INIPrompt | null>(null);
+    const [architectResult, setArchitectResult] = useState<VisualArchitectResult | null>(null);
     const [finalPrompt, setFinalPrompt] = useState<string>('');
-    const [sceneOnlyPrompt, setSceneOnlyPrompt] = useState<string>('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [copiedType, setCopiedType] = useState<'full' | 'scene' | null>(null);
+    const [copiedType, setCopiedType] = useState<'full' | null>(null);
 
     const [provider, setProvider] = useState<ImageProvider>('google');
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('source');
@@ -28,54 +27,6 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             setCopiedType('full');
             setTimeout(() => setCopiedType(null), 2000);
         }
-    };
-
-    const handleCopySceneOnly = async () => {
-        if (sceneOnlyPrompt) {
-            await navigator.clipboard.writeText(sceneOnlyPrompt);
-            setCopiedType('scene');
-            setTimeout(() => setCopiedType(null), 2000);
-        }
-    };
-
-    const buildSceneOnlyPrompt = (ini: INIPrompt): string => {
-        // START NEW LOGIC: Use the dedicated [scene_only] field if the AI generated it
-        if (ini.scene_only && ini.scene_only.length > 50) {
-            return ini.scene_only;
-        }
-        // FALLBACK LOGIC: Old regex-based stripping (kept for safety/revert)
-        const lines: string[] = ['[IMAGE_PROMPT]'];
-
-        if (ini.desc) {
-            const stripped = stripIdentityDescriptions(ini.desc);
-            if (stripped) lines.push(`[desc]  = ${stripped}`);
-        }
-        if (ini.objs) {
-            const stripped = stripIdentityDescriptions(ini.objs);
-            if (stripped) lines.push(`[objs]  = ${stripped}`);
-        }
-        if (ini.style) lines.push(`[style] = ${ini.style}`);
-        if (ini.comp) lines.push(`[comp]  = ${ini.comp}`);
-        if (ini.light) lines.push(`[light] = ${ini.light}`);
-        if (ini.pal) lines.push(`[pal]   = ${ini.pal}`);
-        if (ini.geom) lines.push(`[geom]  = ${ini.geom}`);
-        if (ini.micro) lines.push(`[micro] = ${ini.micro}`);
-        if (ini.sym) lines.push(`[sym]   = ${ini.sym}`);
-        if (ini.scene) {
-            const stripped = stripIdentityDescriptions(ini.scene);
-            if (stripped) lines.push(`[scene] = ${stripped}`);
-        }
-        if (ini.must) {
-            const stripped = stripIdentityDescriptions(ini.must);
-            if (stripped) lines.push(`[must]  = ${stripped}`);
-        }
-        if (ini.avoid) lines.push(`[avoid] = ${ini.avoid}`);
-        if (ini.notes) {
-            const stripped = stripIdentityDescriptions(ini.notes);
-            if (stripped) lines.push(`[notes] = ${stripped}`);
-        }
-
-        return lines.join('\n');
     };
 
     const fileToBase64 = (file: File): Promise<string> => {
@@ -93,9 +44,8 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
         try {
             const base64 = await fileToBase64(file);
             setTargetImage(base64);
-            setIniResult(null);
+            setArchitectResult(null);
             setFinalPrompt('');
-            setSceneOnlyPrompt('');
             setGeneratedImage(null);
             setError(null);
         } catch (err) {
@@ -114,14 +64,11 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
         setError(null);
 
         try {
-            const ini = await analyzeImageINI(targetImage);
-            setIniResult(ini);
+            const result = await analyzeImageVisualArchitect(targetImage);
+            setArchitectResult(result);
 
-            const fullPrompt = convertINIToPrompt(ini, false);
+            const fullPrompt = convertVisualArchitectToPrompt(result, false);
             setFinalPrompt(fullPrompt);
-
-            const scenePrompt = buildSceneOnlyPrompt(ini);
-            setSceneOnlyPrompt(scenePrompt);
         } catch (e: any) {
             console.error(e);
             setError(e.message || "Failed to analyze image");
@@ -388,7 +335,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                         <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#e5e7eb', margin: 0 }}>
                             Output
                         </h2>
-                        {iniResult && (
+                        {architectResult && (
                             <span style={{ fontSize: '0.85rem', color: '#9ca3af' }}>
                                 Prompt Ready
                             </span>
@@ -444,7 +391,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                     display: 'flex',
                     flexDirection: 'column'
                 }}>
-                    {!iniResult && !generatedImage && !isGenerating ? (
+                    {!architectResult && !generatedImage && !isGenerating ? (
                         <div style={{
                             flex: 1,
                             display: 'flex',
@@ -480,7 +427,8 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                         </div>
                     ) : (
                         <>
-                            {iniResult && (
+
+                            {architectResult && (
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <div style={{
                                         background: copiedType ? 'rgba(34, 197, 94, 0.05)' : 'rgba(0,0,0,0.4)',
@@ -499,13 +447,38 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    INI Prompt
+                                                    Visual Profile
                                                 </span>
                                                 <span style={{ fontSize: '0.65rem', color: '#6b7280', fontFamily: 'monospace' }}>
                                                     gemini-2.5-pro
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <button
+                                                    onClick={() => {
+                                                        if (architectResult) {
+                                                            navigator.clipboard.writeText(JSON.stringify(architectResult, null, 2));
+                                                            setCopiedType('json');
+                                                            setTimeout(() => setCopiedType(null), 2000);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        padding: '0.4rem 0.7rem',
+                                                        borderRadius: '6px',
+                                                        border: copiedType === 'json' ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)',
+                                                        background: copiedType === 'json' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.05)',
+                                                        color: copiedType === 'json' ? '#60a5fa' : '#9ca3af',
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: '500',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.4rem',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {copiedType === 'json' ? 'JSON Copied!' : 'Copy JSON'}
+                                                </button>
                                                 <button
                                                     data-testid="button-copy-clone-full"
                                                     onClick={handleCopyFull}
@@ -536,127 +509,95 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                                         </svg>
                                                     )}
-                                                    {copiedType === 'full' ? 'Copied!' : 'Full Prompt'}
-                                                </button>
-                                                <button
-                                                    data-testid="button-copy-clone-scene"
-                                                    onClick={handleCopySceneOnly}
-                                                    style={{
-                                                        padding: copiedType === 'scene' ? '0.5rem 1rem' : '0.4rem 0.75rem',
-                                                        borderRadius: '6px',
-                                                        border: copiedType === 'scene' ? '2px solid #22c55e' : 'none',
-                                                        background: copiedType === 'scene' ? 'rgba(34, 197, 94, 0.4)' : 'rgba(34, 197, 94, 0.1)',
-                                                        color: copiedType === 'scene' ? '#bbf7d0' : '#22c55e',
-                                                        fontSize: copiedType === 'scene' ? '0.75rem' : '0.65rem',
-                                                        fontWeight: copiedType === 'scene' ? '700' : '500',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.4rem',
-                                                        transition: 'all 0.2s',
-                                                        transform: copiedType === 'scene' ? 'scale(1.05)' : 'scale(1)',
-                                                        boxShadow: copiedType === 'scene' ? '0 0 12px rgba(34, 197, 94, 0.5)' : 'none'
-                                                    }}
-                                                >
-                                                    {copiedType === 'scene' ? (
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                                            <polyline points="20 6 9 17 4 12" />
-                                                        </svg>
-                                                    ) : (
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                                                            <circle cx="8" cy="8" r="2" />
-                                                            <path d="M21 15l-5-5L5 21" />
-                                                        </svg>
-                                                    )}
-                                                    {copiedType === 'scene' ? 'Copied!' : 'Scene Only'}
+                                                    {copiedType === 'full' ? 'Copied!' : 'Copy Prompt'}
                                                 </button>
                                             </div>
                                         </div>
 
                                         <div style={{ padding: '1rem', display: 'grid', gap: '0.75rem' }}>
-                                            {iniResult.desc && (
-                                                <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[desc]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.desc}</p>
-                                                </div>
-                                            )}
+                                            {/* META & FRAME */}
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                {architectResult.meta?.intent && (
+                                                    <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Intent</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{architectResult.meta.intent}</p>
+                                                    </div>
+                                                )}
+                                                {architectResult.frame?.composition && (
+                                                    <div style={{ background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.15)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#4ade80', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Composition</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#d1d5db', lineHeight: '1.4' }}>{architectResult.frame.composition}</p>
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                            {iniResult.chars && (
+                                            {/* SUBJECT */}
+                                            {architectResult.subject && (
                                                 <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[chars]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.chars}</p>
+                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Subject</span>
+                                                    <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                                        {architectResult.subject.identity && <p style={{ margin: 0, fontSize: '0.8rem', color: '#e5e7eb' }}><strong style={{ color: '#60a5fa' }}>Identity:</strong> {architectResult.subject.identity}</p>}
+                                                        {architectResult.subject.pose && <p style={{ margin: 0, fontSize: '0.8rem', color: '#e5e7eb' }}><strong style={{ color: '#60a5fa' }}>Pose:</strong> {architectResult.subject.pose}</p>}
+                                                        {architectResult.subject.expression && <p style={{ margin: 0, fontSize: '0.8rem', color: '#e5e7eb' }}><strong style={{ color: '#60a5fa' }}>Expression:</strong> {architectResult.subject.expression}</p>}
+                                                    </div>
                                                 </div>
                                             )}
 
+                                            {/* WARDROBE */}
+                                            {architectResult.wardrobe?.items && architectResult.wardrobe.items.length > 0 && (
+                                                <div style={{ background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236, 72, 153, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
+                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#ec4899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Wardrobe</span>
+                                                    <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1rem', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>
+                                                        {architectResult.wardrobe.items.map((item, idx) => (
+                                                            <li key={idx}><strong style={{ color: '#f472b6' }}>{item.item}:</strong> {item.details}</li>
+                                                        ))}
+                                                    </ul>
+                                                    {architectResult.wardrobe.physics && (
+                                                        <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#fbcfe8', fontStyle: 'italic' }}>Physics: {architectResult.wardrobe.physics}</p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* ENVIRONMENT & LIGHTING */}
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                {iniResult.comp && (
+                                                {architectResult.environment && (
                                                     <div style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#eab308', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[comp]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.comp}</p>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#eab308', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Environment</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>
+                                                            {architectResult.environment.location}. {architectResult.environment.context}
+                                                        </p>
                                                     </div>
                                                 )}
-
-                                                {iniResult.light && (
+                                                {architectResult.lighting && (
                                                     <div style={{ background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[light]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.light}</p>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lighting</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>
+                                                            {architectResult.lighting.type} ({architectResult.lighting.quality})
+                                                        </p>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {iniResult.scene && (
-                                                <div style={{ background: 'rgba(20, 184, 166, 0.1)', border: '1px solid rgba(20, 184, 166, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#14b8a6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[scene]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.scene}</p>
-                                                </div>
-                                            )}
-
+                                            {/* STYLE & CAMERA */}
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                {iniResult.style && (
-                                                    <div style={{ background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236, 72, 153, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#ec4899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[style]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.style}</p>
-                                                    </div>
-                                                )}
-
-                                                {iniResult.pal && (
+                                                {architectResult.style && (
                                                     <div style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[pal]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>{iniResult.pal}</p>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Style</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>
+                                                            {architectResult.style.aesthetic}
+                                                        </p>
                                                     </div>
                                                 )}
-                                            </div>
-
-                                            {iniResult.must && (
-                                                <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[must]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#e5e7eb', lineHeight: '1.4' }}>{iniResult.must}</p>
-                                                </div>
-                                            )}
-
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                {iniResult.objs && (
+                                                {architectResult.camera && (
                                                     <div style={{ background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[objs]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.objs}</p>
-                                                    </div>
-                                                )}
-
-                                                {iniResult.geom && (
-                                                    <div style={{ background: 'rgba(107, 114, 128, 0.1)', border: '1px solid rgba(107, 114, 128, 0.25)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[geom]</span>
-                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.geom}</p>
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Camera</span>
+                                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#d1d5db', lineHeight: '1.4' }}>
+                                                            {architectResult.camera.lens}, {architectResult.camera.aperture}
+                                                        </p>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {iniResult.avoid && (
-                                                <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', padding: '0.75rem' }}>
-                                                    <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.05em' }}>[avoid]</span>
-                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4' }}>{iniResult.avoid}</p>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
 
