@@ -7,7 +7,7 @@ import { generateImage } from '../services/imageGenerationService';
 import { apiService } from '../services/apiService';
 import type { IdentityProfile, Dataset } from '@shared/schema';
 import {
-    IconSparkles, IconUser, IconEdit, IconDownload, IconFlame, IconShirt
+    IconSparkles, IconUser, IconEdit, IconDownload, IconFlame, IconShirt, IconTrash
 } from './Icons';
 import { PromptCard } from './PromptCard';
 
@@ -16,7 +16,6 @@ interface DatasetGeneratorProps {
     inputImages: { source: string | null; headshot: string | null; bodyshot: string | null };
     onAnalysisComplete: (result: any) => void;
 }
-
 type GeneratorMode = 'manual' | 'api';
 
 const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inputImages, onAnalysisComplete }) => {
@@ -163,8 +162,22 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         }
         setIsAnalyzing(true);
         setAnalysisError(null);
+
+        // Capture manual inputs to preserve them
+        const manualName = identity?.identity_profile?.name;
+        const manualAge = identity?.identity_profile?.age_estimate;
+
         try {
             const result = await analyzeSubjectImages(effectiveHeadshot, effectiveBodyshot);
+
+            // Restore manual inputs if they exist (preserving user overrides)
+            if (manualName && manualName.trim().length > 0) {
+                result.identity_profile.name = manualName;
+            }
+            if (manualAge && manualAge.trim().length > 0) {
+                result.identity_profile.age_estimate = manualAge;
+            }
+
             setIdentity(result);
             onAnalysisComplete(result);
         } catch (e: any) {
@@ -564,12 +577,12 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
             margin: '0 auto',
             width: '100%',
             alignItems: 'start',
-            paddingTop: '1rem'
+            paddingTop: '0.5rem'
         }}>
             {/* Sidebar Column (Span 4) */}
-            <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {/* Mode Selection */}
-                <div style={panelStyle}>
+                <div style={{ ...panelStyle, padding: '0.75rem 1rem 0.75rem 1rem', gap: '0.5rem' }}>
                     <label style={labelStyle}>Generation Mode</label>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                         <button
@@ -607,19 +620,19 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                 </div>
 
                 {/* Mode Descriptions (Outside Panel) */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', padding: '0 1.5rem', marginTop: '-1.5rem', marginBottom: '1.5rem' }}>
-                    <p style={{ fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4', textAlign: 'center', padding: '0 0.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', padding: '0 0.5rem', marginTop: '-0.25rem', marginBottom: '-0.25rem' }}>
+                    <p style={{ fontSize: '0.65rem', color: '#9ca3af', lineHeight: '1.3', textAlign: 'center', padding: '0 0.25rem' }}>
                         Generate text prompts one by one. Best for refining the identity and testing different scenarios.
                     </p>
-                    <p style={{ fontSize: '0.7rem', color: '#9ca3af', lineHeight: '1.4', textAlign: 'center', padding: '0 0.25rem' }}>
+                    <p style={{ fontSize: '0.65rem', color: '#9ca3af', lineHeight: '1.3', textAlign: 'center', padding: '0 0.25rem' }}>
                         Automatically generate prompts and send them to the image provider API for bulk processing.
                     </p>
                 </div>
 
                 {/* Manual Mode Controls */}
                 {mode === 'manual' && (
-                    <div style={panelStyle} className="animate-fade-in-up">
-                        <div style={{ marginTop: '0.5rem' }}>
+                    <div style={{ ...panelStyle, padding: '1rem', gap: '0.75rem' }} className="animate-fade-in-up">
+                        <div style={{ marginTop: '0rem' }}>
                             <label style={labelStyle}>Wardrobe Style</label>
                             <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
                                 <button onClick={() => setSafetyMode('sfw')} data-testid="button-safety-sfw" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'sfw' ? '#3b82f6' : 'transparent', color: safetyMode === 'sfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
@@ -650,7 +663,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
 
                 {/* Batch Mode Controls */}
                 {mode === 'api' && (
-                    <div style={panelStyle} className="animate-fade-in-up">
+                    <div style={{ ...panelStyle, padding: '1rem', gap: '0.75rem' }} className="animate-fade-in-up">
                         <div>
                             <label style={labelStyle}>Provider</label>
                             <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle} data-testid="select-provider">
@@ -736,78 +749,84 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     </div>
                 )}
 
-                {/* Context References Panel (Identity) */}
-                <div style={panelStyle}>
-                    <div style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem', borderRadius: '0.5rem', background: 'rgba(30, 58, 138, 0.2)', border: '1px solid rgba(30, 58, 138, 0.5)' }}>
-                        <IconUser style={{ width: '20px', height: '20px', color: '#60a5fa', flexShrink: 0 }} />
-                        <div>
-                            <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#bfdbfe', textTransform: 'uppercase' }}>Context References</p>
-                            <p style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.25rem' }}>Core identity data.</p>
-                        </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                {/* Identity Layout: Portrait + Side Stack */}
+                <div style={{ ...panelStyle, padding: '0.6rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: '0.75rem' }}>
+                        {/* Column 1: Headshot */}
                         <div>
                             <label style={labelStyle}>Headshot</label>
-                            <div style={{ aspectRatio: '1', borderRadius: '0.75rem', overflow: 'hidden', border: effectiveHeadshot ? '2px solid #a855f7' : '2px dashed #4b5563', background: 'rgba(0,0,0,0.2)', position: 'relative', cursor: 'pointer' }} onClick={() => document.getElementById('head-upload')?.click()}>
+                            <div style={{ aspectRatio: '3 / 4', borderRadius: '0.5rem', overflow: 'hidden', border: effectiveHeadshot ? '2px solid #a855f7' : '2px dashed #4b5563', background: 'rgba(0,0,0,0.2)', position: 'relative', cursor: 'pointer' }} onClick={() => document.getElementById('head-upload')?.click()}>
                                 {effectiveHeadshot ? (
                                     <img src={effectiveHeadshot} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Headshot" />
                                 ) : (
                                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: '0.65rem', flexDirection: 'column' }}>
-                                        <span>Click to Upload</span>
+                                        <span>Upload</span>
                                     </div>
                                 )}
                                 <input type="file" id="head-upload" hidden accept="image/*" onChange={(e) => handleImageUpload(e, 'head')} data-testid="input-headshot" />
                             </div>
                         </div>
+
+                        {/* Column 2: Full Body */}
                         <div>
                             <label style={labelStyle}>Full Body</label>
-                            <div style={{ aspectRatio: '1', borderRadius: '0.75rem', overflow: 'hidden', border: effectiveBodyshot ? '2px solid #a855f7' : '2px dashed #4b5563', background: 'rgba(0,0,0,0.2)', position: 'relative', cursor: 'pointer' }} onClick={() => document.getElementById('body-upload')?.click()}>
+                            <div style={{ aspectRatio: '3 / 4', borderRadius: '0.5rem', overflow: 'hidden', border: effectiveBodyshot ? '2px solid #a855f7' : '2px dashed #4b5563', background: 'rgba(0,0,0,0.2)', position: 'relative', cursor: 'pointer' }} onClick={() => document.getElementById('body-upload')?.click()}>
                                 {effectiveBodyshot ? (
                                     <img src={effectiveBodyshot} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Body" />
                                 ) : (
                                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: '0.65rem', flexDirection: 'column' }}>
-                                        <span>Click to Upload</span>
+                                        <span>Upload</span>
                                     </div>
                                 )}
                                 <input type="file" id="body-upload" hidden accept="image/*" onChange={(e) => handleImageUpload(e, 'body')} data-testid="input-bodyshot" />
                             </div>
                         </div>
+
+                        {/* Column 3: Inputs & Actions */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <div>
+                                <label style={{ ...labelStyle, textAlign: 'right', paddingRight: '0.75rem' }}>Name</label>
+                                <input
+                                    value={identity?.identity_profile?.name || ''}
+                                    onChange={(e) => setIdentity({ ...identity, identity_profile: { ...identity.identity_profile, name: e.target.value } })}
+                                    placeholder="Name"
+                                    style={{ ...inputStyle, textAlign: 'right' }}
+                                    data-testid="input-identity-name"
+                                />
+                            </div>
+                            <div>
+                                <label style={{ ...labelStyle, textAlign: 'right', paddingRight: '0.75rem' }}>Age</label>
+                                <input
+                                    value={identity?.identity_profile?.age_estimate || ''}
+                                    onChange={(e) => setIdentity({ ...identity, identity_profile: { ...identity.identity_profile, age_estimate: e.target.value } })}
+                                    placeholder="Age"
+                                    style={{ ...inputStyle, textAlign: 'right' }}
+                                    data-testid="input-identity-age"
+                                />
+                            </div>
+                            <button
+                                onClick={handleAnalyzeProfile}
+                                disabled={isAnalyzing || (!effectiveHeadshot && !effectiveBodyshot)}
+                                data-testid="button-analyze-profile"
+                                onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                                style={{
+                                    ...buttonBaseStyle,
+                                    padding: '0.5rem',
+                                    width: '100%',
+                                    marginTop: '0.25rem',
+                                    height: '36px',
+                                    whiteSpace: 'nowrap',
+                                    background: isAnalyzing ? '#374151' : 'linear-gradient(to right, #374151, #1f2937)',
+                                    color: isAnalyzing ? '#9ca3af' : 'white',
+                                    cursor: isAnalyzing ? 'wait' : 'pointer',
+                                    border: '1px solid rgba(255,255,255,0.1)'
+                                }}>
+                                {isAnalyzing ? 'Creating...' : 'Create Profile'}
+                            </button>
+                        </div>
                     </div>
-                    <button
-                        onClick={handleAnalyzeProfile}
-                        disabled={isAnalyzing || (!effectiveHeadshot && !effectiveBodyshot)}
-                        data-testid="button-analyze-profile"
-                        onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                        style={{ ...buttonBaseStyle, width: '100%', marginTop: '0.5rem', background: isAnalyzing ? '#374151' : 'linear-gradient(to right, #374151, #1f2937)', color: isAnalyzing ? '#9ca3af' : 'white', cursor: isAnalyzing ? 'wait' : 'pointer' }}>
-                        {isAnalyzing ? 'Analyzing...' : <><IconSparkles style={{ width: '14px', color: '#facc15' }} /> Analyze Profile</>}
-                    </button>
                     {analysisError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.5rem' }}>{analysisError}</p>}
                 </div>
-
-                {/* Identity Details */}
-                <div style={panelStyle} className="animate-fade-in">
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <label style={labelStyle}>Name</label>
-                            <input readOnly value={identity?.identity_profile?.name || ''} placeholder="Waiting..." style={{ ...inputStyle, color: identity?.identity_profile?.name ? 'white' : '#64748b' }} data-testid="input-identity-name" />
-                        </div>
-                        <div>
-                            <label style={labelStyle}>Age</label>
-                            <input readOnly value={identity?.identity_profile?.age_estimate || ''} placeholder="--" style={{ ...inputStyle, color: identity?.identity_profile?.age_estimate ? 'white' : '#64748b' }} data-testid="input-identity-age" />
-                        </div>
-                    </div>
-                    <div>
-                        <label style={labelStyle}>Archetype</label>
-                        <input readOnly value={identity?.identity_profile?.archetype_anchor || ''} placeholder="Waiting..." style={{ ...inputStyle, color: identity?.identity_profile?.archetype_anchor ? 'white' : '#64748b' }} data-testid="input-identity-archetype" />
-                    </div>
-                    <div>
-                        <label style={labelStyle}>Realism Stack</label>
-                        <textarea readOnly value={identity?.identity_profile?.realism_stack || identity?.identity_profile?.facial_description || ''} placeholder="Waiting..." style={{ ...inputStyle, resize: 'none', height: '100px', color: (identity?.identity_profile?.realism_stack) ? 'white' : '#64748b', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflow: 'hidden' }} data-testid="textarea-realism-stack" />
-                    </div>
-                </div>
-
-
-
 
             </div>
 
@@ -819,20 +838,30 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <span style={{ fontSize: '1rem', color: '#6b7280' }}>{datasetPrompts.length > 0 ? `${Math.min(currentPage * ITEMS_PER_PAGE, datasetPrompts.length)} / ${datasetPrompts.length}` : ''}</span>
                     </div>
                     {datasetPrompts.length > 0 && (
-                        <button
-                            onClick={() => { const blob = new Blob([JSON.stringify(datasetPrompts, null, 2)], { type: 'application/json' }); saveAs(blob, 'prompts.json'); }}
-                            data-testid="button-download-json"
-                            onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
-                            style={{ ...buttonBaseStyle, padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'none' }}>
-                            <IconDownload style={{ width: '14px' }} /> JSON
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button
+                                onClick={() => { setDatasetPrompts([]); setApiBatchSize(10); setCurrentPage(1); }}
+                                data-testid="button-reset-prompts"
+                                onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                                style={{ ...buttonBaseStyle, padding: '0.6rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#f87171', boxShadow: 'none' }}>
+                                <IconTrash style={{ width: '14px' }} /> Reset Prompts
+                            </button>
+                            <button
+                                onClick={() => { const blob = new Blob([JSON.stringify(datasetPrompts, null, 2)], { type: 'application/json' }); saveAs(blob, 'prompts.json'); }}
+                                data-testid="button-download-json"
+                                onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp}
+                                style={{ ...buttonBaseStyle, padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'none' }}>
+                                <IconDownload style={{ width: '14px' }} /> Export JSON
+                            </button>
+                        </div>
                     )}
                 </div>
 
                 {datasetPrompts.length === 0 ? (
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5, marginTop: '-3rem' }}>
                         <IconEdit style={{ width: '48px', height: '48px', color: '#9ca3af', marginBottom: '1rem' }} />
-                        <p>No prompts generated yet</p>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem' }}>Ready to Generate</h3>
+                        <p style={{ color: '#9ca3af', fontSize: '0.85rem', maxWidth: '300px', textAlign: 'center' }}>Configure your settings on the left to begin building your dataset.</p>
                     </div>
                 ) : (
                     <>
@@ -878,23 +907,29 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     </>
                 )}
 
-                {isBatchProcessing && (
-                    <div style={{ position: 'absolute', inset: 0, background: '#0a0a0a', zIndex: 50 }}>
-                        <div style={{ position: 'sticky', top: '0', paddingTop: '30vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '1.5rem', width: '100%' }}>
+                {(isBatchProcessing || isGeneratingPrompts) && (
+                    <div style={{ position: 'absolute', inset: 0, background: '#0a0a0a', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', width: '100%' }}>
                             <div style={{ width: '64px', height: '64px', borderRadius: '50%', border: '2px solid #1f2937', borderTopColor: '#eab308', animation: 'spin 1s linear infinite' }} className="animate-spin" />
                             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                             <div style={{ textAlign: 'center' }}>
                                 <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                                    {batchProgress.total > 0 ? 'Processing Batch' : 'Generating Prompts'}
+                                    {isBatchProcessing
+                                        ? (batchProgress.total > 0 ? 'Processing Batch' : 'Generating Prompts')
+                                        : 'Synthesizing Prompts'}
                                 </h3>
-                                {batchProgress.total > 0 ? (
-                                    <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Processing {batchProgress.current}/{batchProgress.total} Images</p>
+                                {isBatchProcessing ? (
+                                    batchProgress.total > 0 ? (
+                                        <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Processing {batchProgress.current}/{batchProgress.total} Images</p>
+                                    ) : (
+                                        <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Synthesizing dataset prompts...</p>
+                                    )
                                 ) : (
-                                    <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Synthesizing dataset prompts...</p>
+                                    <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Creating creative variations...</p>
                                 )}
                             </div>
                             <p style={{ fontSize: '0.75rem', color: '#6b7280', maxWidth: '300px', textAlign: 'center' }}>
-                                Images are being buffered in memory. Download available upon completion.
+                                {isBatchProcessing ? 'Images are being buffered in memory. Download available upon completion.' : 'Generating high-quality prompts based on your identity profile.'}
                             </p>
                         </div>
                     </div>
