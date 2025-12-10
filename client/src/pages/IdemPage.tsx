@@ -76,7 +76,7 @@ const IdemPage: React.FC = () => {
                         const labels = {
                             vision: 'Create Identity',
                             dataset: 'Dataset Creator',
-                            clone: 'Clone Image',
+                            clone: 'Image Cloning & Character Swap',
                             generator: 'Social Media'
                         };
                         const tabColors = {

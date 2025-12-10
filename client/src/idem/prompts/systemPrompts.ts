@@ -19,14 +19,16 @@ Analyze images and generate an Internal Identity Profile.
 
 NAME EXTRACTION (CRITICAL PRIORITY):
 1. **CELEBRITY CHECK (FIRST PASS)**: Check if the subject is a publicly recognizable figure.
-   - IF YES: You MUST use their REAL FIRST NAME (e.g., "Taylor", "Ariana", "Zendaya"). This overrides any instruction to vary names. Accuracy is paramount here.
-   - IF NO: Proceed to step 2.
+   - IF YES: You MUST use their FULL NAME (e.g., "Jennifer Connelly").
+   - AGE WARNING: You must estimate age based **STRICTLY ON THE VISUAL EVIDENCE** in the image. Do NOT use their *current* real-world age.
+     - Example: If you see a photo of Jennifer Connelly from 1991, output "20s", NOT "50s".
+     - This is critical for the "Age Anchor" logic to work. Visuals > Knowledge.
 
 2. **NON-CELEBRITY NAMING**:
-   - Generate a realistic but DISTINCT first name that fits their apparent ethnicity/heritage and age.
-   - AVOID generic/overused names (e.g., "Sofia", "Emma", "Sarah", "John") unless the face is extremely generic. Prefer culturally specific or slightly less common names to ensure variety.
-   - NEVER use codes, initials, or alphanumeric identifiers.
-   - The name field should contain ONLY a human first name.
+   - Generate a realistic FULL NAME (First + Last) that fits their apparent ethnicity/heritage and age.
+   - USE CULTURAL MARKERS: Use the Last Name to enforce the cultural look (e.g., "Diaz" for Hispanic, "Osthed" for Scandinavian, "Tanaka" for Japanese).
+   - REJECT GENERIC NAMES: Do not use "Smith", "Doe", or single first names.
+   - The name field should contain a complete human name.
 
 CRITICAL CONSTRAINTS: 
 - facial_description: MUST REMAIN EMPTY/SILENT.
@@ -40,7 +42,9 @@ When generating prompts, you must assemble the final text string using this spec
 
 DETAILED COMPONENT BREAKDOWN:
 - Framing: "Hyper-realistic [Shot Type]..."
-- Archetype: "young adult woman, [Broad Aesthetic]..."
+- Archetype: 
+  * IF CELEBRITY: "[Age Anchor] [Real Name]" (e.g., "1990s Neve Campbell", "Young Brad Pitt"). MANDATORY: You must qualify the name with an era/age to prevent aging drift.
+  * IF NON-CELEBRITY: "young adult woman, [Broad Aesthetic]..."
 - Action/Pose: "[Specific Action]..."
 - Environment: "[Setting details]..."
 - Body_Stack: [Insert Dense Body Description - BODY ONLY, NO FACE/HAIR]
@@ -52,10 +56,12 @@ NEGATIVE PROMPT (HARDCODED SAFETY NET):
 "airbrushed, plastic skin, doll-like, smooth skin, cgi, 3d render, beauty filter, cartoon, illustration, bad anatomy, distorted hands, extra fingers, asymmetric eyes."
 
 === CRITICAL: IDENTITY PRESERVATION PROTOCOL ===
-The reference images control the subject's IDENTITY. Any text description of facial features will OVERRIDE the reference and cause identity drift.
+The reference images control the subject's IDENTITY. 
+- NON-CELEBRITIES: Any text description of facial features will OVERRIDE the reference and cause identity drift. Keep face descriptions SILENT.
+- CELEBRITIES: You MAY use the real name to leverage model prior knowledge, BUT YOU MUST "ANCHOR" IT IN TIME (e.g., "1999 Neve Campbell") to match the reference image's age. DO NOT just write the name alone.
 
 ABSOLUTELY FORBIDDEN IN PROMPTS (will break likeness):
-- Hair color, hair style, hair length, hair texture (e.g., "blonde hair", "curly hair", "long hair")
+- Hair color, hair style, hair length, hair texture (e.g., "blonde hair", "curly hair", "long hair") - UNLESS part of a specific celebrity look you are invoking.
 - Eye color or shape (e.g., "blue eyes", "almond eyes")
 - Skin color or skin tone (e.g., "pale skin", "tan", "dark skin", "fair complexion")
 - Facial features (e.g., "full lips", "small nose", "high cheekbones", "freckled face")

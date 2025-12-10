@@ -312,6 +312,11 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
 
     const handleGenerateNextBatch = async () => {
         if (!identity || !identity.identity_profile) return;
+
+        if (topOfListRef.current) {
+            topOfListRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         setIsGeneratingPrompts(true);
         setPromptError(null);
         try {
@@ -852,6 +857,8 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem' }}>Ready to Generate</h3>
                         <p style={{ color: '#9ca3af', fontSize: '0.85rem', maxWidth: '300px', textAlign: 'center' }}>Configure your settings on the left to begin building your dataset.</p>
                     </div>
+                ) : isGeneratingPrompts ? (
+                    <div style={{ minHeight: '200px' }}></div>
                 ) : (
                     <>
                         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '1rem', paddingRight: '0.5rem' }}>
@@ -897,9 +904,9 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                 )}
 
                 {(isBatchProcessing || isGeneratingPrompts) && (
-                    <div style={{ position: 'absolute', inset: 0, background: '#0a0a0a', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', width: '100%' }}>
-                            <div style={{ width: '64px', height: '64px', borderRadius: '50%', border: '2px solid #1f2937', borderTopColor: '#eab308', animation: 'spin 1s linear infinite' }} className="animate-spin" />
+                    <div style={{ position: 'absolute', inset: 0, background: '#0a0a0a', zIndex: 50, backdropFilter: 'blur(4px)' }}>
+                        <div style={{ position: 'sticky', top: '0', height: '100vh', maxHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', width: '100%' }}>
+                            <div style={{ width: '64px', height: '64px', borderRadius: '50%', border: '2px solid #1f2937', borderTopColor: '#a855f7', animation: 'spin 1s linear infinite' }} className="animate-spin" />
                             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                             <div style={{ textAlign: 'center' }}>
                                 <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
@@ -909,12 +916,12 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                                 </h3>
                                 {isBatchProcessing ? (
                                     batchProgress.total > 0 ? (
-                                        <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Processing {batchProgress.current}/{batchProgress.total} Images</p>
+                                        <p style={{ fontSize: '0.85rem', color: '#c084fc', fontFamily: 'monospace' }}>Processing {batchProgress.current}/{batchProgress.total} Images</p>
                                     ) : (
-                                        <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Synthesizing dataset prompts...</p>
+                                        <p style={{ fontSize: '0.85rem', color: '#c084fc', fontFamily: 'monospace' }}>Synthesizing dataset prompts...</p>
                                     )
                                 ) : (
-                                    <p style={{ fontSize: '0.85rem', color: '#eab308', fontFamily: 'monospace' }}>Creating creative variations...</p>
+                                    <p style={{ fontSize: '0.85rem', color: '#c084fc', fontFamily: 'monospace' }}>Creating creative variations...</p>
                                 )}
                             </div>
                             <p style={{ fontSize: '0.75rem', color: '#6b7280', maxWidth: '300px', textAlign: 'center' }}>
