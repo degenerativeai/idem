@@ -344,7 +344,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="3" y="3" width="18" height="18" rx="2" />
                             </svg>
-                            Visual Profiler
+                            Clone Image
                         </button>
                         <button
                             onClick={() => setMode('swap')}
@@ -369,7 +369,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                 <circle cx="12" cy="7" r="4" />
                             </svg>
-                            Identity Graft
+                            Scan Identity
                         </button>
                     </div>
 
@@ -459,7 +459,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                         </div>
                         <div>
                             <p style={{ fontSize: '0.85rem', fontWeight: '600', color: '#e5e7eb', margin: 0 }}>
-                                {mode === 'clone' ? 'Visual Profiling' : 'Identity Grafting'}
+                                {mode === 'clone' ? 'Clone Image' : 'Scan Identity'}
                             </p>
                             <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: 0 }}>
                                 {mode === 'clone'
