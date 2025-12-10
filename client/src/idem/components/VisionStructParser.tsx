@@ -6,6 +6,7 @@ import { HEADSHOT_PROMPT, FULL_BODY_PROMPT } from '../prompts/workflowPrompts';
 import { IconSparkles, IconUser, IconTrash } from './Icons';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { SKIN_TEXTURE_BASE64 } from '../constants/skinTexture';
 
 const ASPECTS: ImageAspect[] = ['1:1', '16:9', '9:16', '4:3', '3:4'];
 
@@ -159,14 +160,16 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         return null;
     };
 
-    const generateBatch = async (prompt: string, currentBatchSize: number): Promise<string[]> => {
+    const generateBatch = async (prompt: string, currentBatchSize: number, extraReferences: string[] = []): Promise<string[]> => {
         const currentKey = getApiKey();
         if (!currentKey) throw new Error(`Missing API Key for ${provider === 'google' ? 'Google Gemini' : 'Wavespeed'}`);
+
+        const references = sourceImage ? [sourceImage, ...extraReferences] : [...extraReferences];
 
         const promises = Array(currentBatchSize).fill(0).map(() =>
             generateImage({
                 provider, apiKey: currentKey, prompt,
-                aspectRatio, resolution, referenceImages: sourceImage ? [sourceImage] : []
+                aspectRatio, resolution, referenceImages: references
             })
         );
         const results = await Promise.all(promises);
@@ -195,7 +198,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
             setScanState('synthesizing');
 
             const [headshots, bodyshots] = await Promise.all([
-                generateBatch(HEADSHOT_PROMPT, batchSize),
+                generateBatch(HEADSHOT_PROMPT, batchSize, [SKIN_TEXTURE_BASE64]),
                 generateBatch(FULL_BODY_PROMPT, batchSize)
             ]);
 
@@ -239,7 +242,7 @@ const VisionStructParser: React.FC<VisionStructParserProps> = ({ onImagesComplet
         setIsProcessing(true);
         setError(null);
         try {
-            const headshots = await generateBatch(HEADSHOT_PROMPT, batchSize);
+            const headshots = await generateBatch(HEADSHOT_PROMPT, batchSize, [SKIN_TEXTURE_BASE64]);
             setGeneratedHeadshots(headshots);
             if (headshots.length === 1) setSelectedHeadshot(headshots[0]);
             else setSelectedHeadshot(headshots[0]);

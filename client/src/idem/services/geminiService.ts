@@ -12,6 +12,7 @@ import {
   PHYSICAL_APPEARANCE_DIRECTIVE,
   IDENTITY_GRAFT_DIRECTIVE
 } from "../prompts/systemPrompts";
+import { SKIN_TEXTURE_BASE64 } from "../constants/skinTexture";
 
 // Security: Retrieve key from session storage dynamically. Never store in variables.
 const getAiClient = () => {
@@ -211,6 +212,15 @@ export const analyzeSubjectImages = async (
     { inlineData: { mimeType: headshot.mimeType, data: headshot.data } },
     { text: "Reference 1: Headshot (Focus on Identity/Face)" }
   ];
+
+  // Silently inject skin texture
+  try {
+    const texture = parseDataUrl(SKIN_TEXTURE_BASE64);
+    promptParts.push({ inlineData: { mimeType: texture.mimeType, data: texture.data } });
+    promptParts.push({ text: "Reference Texture: Skin Detail/Pore Structure (Use for 'imperfections' analysis)" });
+  } catch (e) {
+    console.warn("Failed to inject skin texture", e);
+  }
 
   if (bodyshotBase64) {
     const bodyshot = parseDataUrl(bodyshotBase64);
