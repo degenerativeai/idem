@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { VisualArchitectResult, ImageAspect } from '../types';
+import { VisualArchitectResult } from '../types';
 import { analyzeImageVisualArchitect, convertVisualArchitectToPrompt, performIdentityGraft } from '../services/geminiService';
 
 interface CloneImageProps {
@@ -16,7 +16,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
     const [error, setError] = useState<string | null>(null);
     // Original position of copiedType: const [copiedType, setCopiedType] = useState<'full' | 'json' | null>(null);
 
-    const [aspectRatio, setAspectRatio] = useState<ImageAspect>('source');
+
 
     // New State for Dual Mode
     const [mode, setMode] = useState<'clone' | 'swap'>('clone');
@@ -105,8 +105,6 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
         setArchitectResult(null);
         setFinalPrompt('');
         setError(null);
-        setTargetImage(null);
-        setReferenceImage(null);
     };
 
     const handleMainAction = async () => {
@@ -185,9 +183,10 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             <div style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ width: '6px', height: '6px', background: mode === 'clone' ? '#22c55e' : '#3b82f6', borderRadius: '50%' }} />
-                        <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: mode === 'clone' ? '#22c55e' : '#3b82f6' }}>
-                            {mode === 'clone' ? 'Visual Profiler' : 'Identity Graft'}
+                        <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            <span style={{ color: '#22c55e' }}>Image Cloning</span>
+                            <span style={{ color: '#4b5563', margin: '0 0.5rem' }}>&</span>
+                            <span style={{ color: '#3b82f6' }}>Character Swap</span>
                         </h2>
                     </div>
                 </div>
@@ -225,6 +224,27 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                             {targetImage ? (
                                 <>
                                     <img src={targetImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Target" />
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setTargetImage(null); }}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '0.5rem', right: '0.5rem',
+                                            background: 'rgba(0,0,0,0.6)',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            borderRadius: '6px',
+                                            padding: '0.4rem',
+                                            cursor: 'pointer',
+                                            color: '#f87171',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            zIndex: 10
+                                        }}
+                                        title="Clear Image"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
                                     <div style={{
                                         position: 'absolute',
                                         bottom: 0, left: 0, right: 0,
@@ -255,28 +275,53 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
 
                         {/* Right: Reference Image (Ghosted Logic) */}
                         <div
-                            onClick={() => mode === 'swap' && document.getElementById('ref-upload')?.click()}
+                            onClick={() => {
+                                if (mode === 'swap' && targetImage) {
+                                    document.getElementById('ref-upload')?.click();
+                                }
+                            }}
                             style={{
                                 aspectRatio: '3/4',
                                 width: '100%',
                                 borderRadius: '12px',
                                 overflow: 'hidden',
-                                border: referenceImage ? '2px solid #3b82f6' : (mode === 'swap' ? '2px dashed #4b5563' : '2px dashed #2d3139'),
+                                border: referenceImage ? '2px solid #3b82f6' : '2px dashed #4b5563',
                                 background: 'rgba(0,0,0,0.3)',
-                                cursor: mode === 'swap' ? 'pointer' : 'default',
+                                cursor: (mode === 'swap' && targetImage) ? 'pointer' : 'default',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 position: 'relative',
-                                opacity: mode === 'clone' ? 0.3 : 1,
-                                filter: mode === 'clone' ? 'grayscale(100%)' : 'none',
-                                pointerEvents: mode === 'clone' ? 'none' : 'auto',
+                                opacity: (mode === 'clone' || (mode === 'swap' && !targetImage)) ? 0.3 : 1,
+                                filter: (mode === 'clone' || (mode === 'swap' && !targetImage)) ? 'grayscale(100%)' : 'none',
+                                pointerEvents: (mode === 'clone' || (mode === 'swap' && !targetImage)) ? 'none' : 'auto',
                                 transition: 'all 0.3s ease-in-out'
                             }}
                         >
                             {referenceImage ? (
                                 <>
                                     <img src={referenceImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Reference" />
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setReferenceImage(null); }}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '0.5rem', right: '0.5rem',
+                                            background: 'rgba(0,0,0,0.6)',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            borderRadius: '6px',
+                                            padding: '0.4rem',
+                                            cursor: 'pointer',
+                                            color: '#f87171',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            zIndex: 10
+                                        }}
+                                        title="Clear Image"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
                                     <div style={{
                                         position: 'absolute',
                                         bottom: 0, left: 0, right: 0,
@@ -293,8 +338,14 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                         <circle cx="12" cy="7" r="4" />
                                     </svg>
-                                    <p style={{ margin: 0, fontSize: '0.75rem', color: mode === 'swap' ? '#e5e7eb' : '#4b5563', fontWeight: '500' }}>Drop reference image here</p>
-                                    <p style={{ margin: 0, fontSize: '0.65rem', color: mode === 'swap' ? '#9ca3af' : '#4b5563' }}>{mode === 'swap' ? 'or click to browse' : '(Disabled in Clone Mode)'}</p>
+                                    <p style={{ margin: 0, fontSize: '0.75rem', color: mode === 'swap' ? '#e5e7eb' : '#4b5563', fontWeight: '500' }}>
+                                        {mode === 'swap' && !targetImage ? 'Upload Source First' : 'Drop reference image here'}
+                                    </p>
+                                    <p style={{ margin: 0, fontSize: '0.65rem', color: mode === 'swap' ? '#9ca3af' : '#4b5563' }}>
+                                        {mode === 'swap'
+                                            ? (!targetImage ? 'Unlock Character Swap' : 'or click to browse')
+                                            : '(Disabled in Clone Mode)'}
+                                    </p>
                                 </div>
                             )}
                             <input
@@ -411,7 +462,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                             <circle cx="11" cy="11" r="8" />
                                             <path d="M21 21l-4.35-4.35" />
                                         </svg>
-                                        Create Clone
+                                        Begin Cloning
                                     </>
                                 ) : (
                                     <>
@@ -430,45 +481,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                     </button>
                 </div>
 
-                <div style={panelStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '8px',
-                            background: mode === 'clone' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(59, 130, 246, 0.2)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.3s'
-                        }}>
-                            {mode === 'clone' ? (
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                                    <circle cx="8" cy="8" r="2" />
-                                    <path d="M21 15l-5-5L5 21" />
-                                </svg>
-                            ) : (
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
-                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                </svg>
-                            )}
-                        </div>
-                        <div>
-                            <p style={{ fontSize: '0.85rem', fontWeight: '600', color: '#e5e7eb', margin: 0 }}>
-                                {mode === 'clone' ? 'Clone Image' : 'Scan Identity'}
-                            </p>
-                            <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: 0 }}>
-                                {mode === 'clone'
-                                    ? 'Extract style & composition from source.'
-                                    : 'Transfer identity while locking scene.'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+
 
                 {error && (
                     <div style={{
@@ -497,47 +510,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                         )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{
-                            fontSize: '0.65rem',
-                            textTransform: 'uppercase',
-                            fontWeight: 'bold',
-                            color: '#94a3b8',
-                            letterSpacing: '0.05em'
-                        }}>
-                            Aspect Ratio
-                        </span>
-                        <select
-                            data-testid="select-clone-aspect-ratio"
-                            value={aspectRatio}
-                            onChange={(e) => setAspectRatio(e.target.value as ImageAspect)}
-                            style={{
-                                padding: '0.5rem 1rem',
-                                borderRadius: '8px',
-                                background: '#1a1d23',
-                                border: '1px solid rgba(34, 197, 94, 0.3)',
-                                color: '#e5e7eb',
-                                fontSize: '0.8rem',
-                                cursor: 'pointer',
-                                fontWeight: '500',
-                                outline: 'none',
-                                appearance: 'none',
-                                WebkitAppearance: 'none',
-                                MozAppearance: 'none',
-                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2322c55e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                                backgroundRepeat: 'no-repeat',
-                                backgroundPosition: 'right 0.75rem center',
-                                paddingRight: '2.5rem'
-                            }}
-                        >
-                            <option value="source" style={{ background: '#1a1d23', color: '#e5e7eb' }}>Keep Source</option>
-                            <option value="1:1" style={{ background: '#1a1d23', color: '#e5e7eb' }}>1:1</option>
-                            <option value="16:9" style={{ background: '#1a1d23', color: '#e5e7eb' }}>16:9</option>
-                            <option value="9:16" style={{ background: '#1a1d23', color: '#e5e7eb' }}>9:16</option>
-                            <option value="4:3" style={{ background: '#1a1d23', color: '#e5e7eb' }}>4:3</option>
-                            <option value="3:4" style={{ background: '#1a1d23', color: '#e5e7eb' }}>3:4</option>
-                        </select>
-                    </div>
+
                 </div>
 
                 <div style={{
@@ -560,24 +533,32 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                             <div style={{
                                 width: '64px',
                                 height: '64px',
-                                background: 'rgba(34, 197, 94, 0.1)',
+                                background: mode === 'clone' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(59, 130, 246, 0.1)',
                                 borderRadius: '16px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                marginBottom: '1.5rem'
+                                marginBottom: '1.5rem',
+                                transition: 'all 0.3s'
                             }}>
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                                    <circle cx="8" cy="8" r="2" />
-                                    <path d="M21 15l-5-5L5 21" />
-                                </svg>
+                                {mode === 'clone' ? (
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                                        <circle cx="8" cy="8" r="2" />
+                                        <path d="M21 15l-5-5L5 21" />
+                                    </svg>
+                                ) : (
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
+                                )}
                             </div>
                             <p style={{ fontSize: '1rem', fontWeight: '500', color: '#9ca3af', marginBottom: '0.5rem' }}>
-                                Ready to Clone
+                                {mode === 'clone' ? 'Ready to Clone' : 'Ready to Scan'}
                             </p>
                             <p style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-                                Upload an image and click Analyze to extract its prompt.
+                                {mode === 'clone' ? 'Upload an image and click Analyze to extract its prompt.' : 'Upload source and reference images to create character swap prompt.'}
                             </p>
                         </div>
                     ) : (
@@ -801,7 +782,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 
