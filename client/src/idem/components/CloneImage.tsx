@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { VisualArchitectResult, ImageAspect, ImageProvider } from '../types';
-import { analyzeImageVisualArchitect, convertVisualArchitectToPrompt, stripIdentityDescriptions } from '../services/geminiService';
+import { VisualArchitectResult, ImageAspect } from '../types';
+import { analyzeImageVisualArchitect, convertVisualArchitectToPrompt } from '../services/geminiService';
 
 interface CloneImageProps {
     identityImages?: { headshot: string | null; bodyshot: string | null };
@@ -16,10 +16,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
     const [error, setError] = useState<string | null>(null);
     const [copiedType, setCopiedType] = useState<'full' | null>(null);
 
-    const [provider, setProvider] = useState<ImageProvider>('google');
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('source');
-    const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-    const [isGenerating, setIsGenerating] = useState(false);
 
     const handleCopyFull = async () => {
         if (finalPrompt) {
@@ -46,7 +43,6 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             setTargetImage(base64);
             setArchitectResult(null);
             setFinalPrompt('');
-            setGeneratedImage(null);
             setError(null);
         } catch (err) {
             console.error("Upload failed", err);
@@ -77,73 +73,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
         }
     };
 
-    const handleGenerateImage = async () => {
-        if (!finalPrompt) {
-            setError("No prompt available. Analyze an image first.");
-            return;
-        }
 
-        setIsGenerating(true);
-        setError(null);
-
-        try {
-            const apiKey = sessionStorage.getItem('gemini_api_key');
-            if (!apiKey) throw new Error("API key not found");
-
-            const referenceImages: string[] = [];
-            if (targetImage) {
-                referenceImages.push(targetImage);
-            }
-
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
-
-            const parts: any[] = [{ text: finalPrompt }];
-            referenceImages.forEach(img => {
-                const mimeMatch = img.match(/^data:([^;]+);base64,/);
-                const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-                const b64 = img.includes('base64,') ? img.split('base64,')[1] : img;
-                parts.push({ inlineData: { mimeType, data: b64 } });
-            });
-
-            const payload = {
-                contents: [{ parts }],
-                generationConfig: {
-                    responseModalities: ["TEXT", "IMAGE"]
-                }
-            };
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`Generation failed: ${errText}`);
-            }
-
-            const data = await response.json();
-            const cand = data.candidates?.[0];
-
-            if (cand?.content?.parts) {
-                for (const part of cand.content.parts) {
-                    if (part.inlineData?.data) {
-                        setGeneratedImage(`data:image/png;base64,${part.inlineData.data}`);
-                        return;
-                    }
-                }
-            }
-
-            throw new Error("No image in response");
-
-        } catch (e: any) {
-            console.error(e);
-            setError(e.message || "Failed to generate image");
-        } finally {
-            setIsGenerating(false);
-        }
-    };
 
     const panelStyle: React.CSSProperties = {
         background: 'rgba(24, 26, 31, 0.6)',
@@ -391,7 +321,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                     display: 'flex',
                     flexDirection: 'column'
                 }}>
-                    {!architectResult && !generatedImage && !isGenerating ? (
+                    {!architectResult ? (
                         <div style={{
                             flex: 1,
                             display: 'flex',
@@ -599,95 +529,6 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                             </div>
 
                                         </div>
-                                    </div>
-
-                                    <button
-                                        data-testid="button-generate-clone"
-                                        onClick={handleGenerateImage}
-                                        disabled={isGenerating || !finalPrompt}
-                                        style={{
-                                            marginTop: '1rem',
-                                            padding: '0.75rem 1.5rem',
-                                            borderRadius: '8px',
-                                            border: 'none',
-                                            background: isGenerating ? '#374151' : '#22c55e',
-                                            color: isGenerating ? '#9ca3af' : 'white',
-                                            fontSize: '0.8rem',
-                                            fontWeight: 'bold',
-                                            textTransform: 'uppercase',
-                                            cursor: isGenerating || !finalPrompt ? 'not-allowed' : 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem'
-                                        }}
-                                    >
-                                        {isGenerating ? 'Generating...' : 'Generate Clone'}
-                                    </button>
-                                </div>
-                            )}
-
-                            {isGenerating && (
-                                <div style={{
-                                    flex: 1,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <div style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        border: '3px solid rgba(34, 197, 94, 0.2)',
-                                        borderTopColor: '#22c55e',
-                                        borderRadius: '50%',
-                                        animation: 'spin 1s linear infinite'
-                                    }} />
-                                </div>
-                            )}
-
-                            {generatedImage && (
-                                <div style={{ flex: 1 }}>
-                                    <label style={labelStyle}>Cloned Result</label>
-                                    <div style={{
-                                        borderRadius: '12px',
-                                        overflow: 'hidden',
-                                        border: '1px solid rgba(34, 197, 94, 0.3)'
-                                    }}>
-                                        <img
-                                            src={generatedImage}
-                                            alt="Generated clone"
-                                            style={{ width: '100%', display: 'block' }}
-                                            data-testid="img-clone-result"
-                                        />
-                                    </div>
-                                    <div style={{
-                                        display: 'flex',
-                                        gap: '0.75rem',
-                                        marginTop: '1rem',
-                                        justifyContent: 'flex-end'
-                                    }}>
-                                        <a
-                                            href={generatedImage}
-                                            download="cloned-image.png"
-                                            data-testid="button-download-clone"
-                                            style={{
-                                                padding: '0.5rem 1rem',
-                                                borderRadius: '8px',
-                                                background: 'rgba(34, 197, 94, 0.15)',
-                                                color: '#86efac',
-                                                fontSize: '0.8rem',
-                                                textDecoration: 'none',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem'
-                                            }}
-                                        >
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                                <polyline points="7 10 12 15 17 10" />
-                                                <line x1="12" y1="15" x2="12" y2="3" />
-                                            </svg>
-                                            Download
-                                        </a>
                                     </div>
                                 </div>
                             )}
