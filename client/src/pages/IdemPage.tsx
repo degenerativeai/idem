@@ -66,7 +66,7 @@ const IdemPage: React.FC = () => {
                 width: '100%'
             }}>
                 <div className="flex-center gap-md" style={{ gap: '0.35rem', display: 'flex', alignItems: 'center' }}>
-                    <IdemLogo width={24} height={24} />
+                    <IdemLogo width={32} height={32} />
                     <h1 style={{ fontSize: '1.5rem', margin: 0, fontFamily: '"Archivo Black", sans-serif', lineHeight: 1 }}>IDEM</h1>
                 </div>
 
