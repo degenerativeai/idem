@@ -11,33 +11,35 @@ const ImageGenerator: React.FC = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
+    const [mode, setMode] = useState<'social' | 'studio'>('social');
 
     const handleGeneratePrompts = async () => {
         if (!textPrompt.trim()) {
             setError("Please describe the type of content you want to create.");
             return;
         }
-        
+
         const apiKey = sessionStorage.getItem("gemini_api_key");
         if (!apiKey) {
             setError("Please enter your Gemini API key in Tab 1 first.");
             return;
         }
-        
+
         setIsGenerating(true);
         setError(null);
         setGeneratedPrompts([]);
         setCopiedIds(new Set());
-        
+
         try {
             const prompts = await generateUGCPrompts({
                 contentDescription: textPrompt,
                 count: promptCount,
-                aspectRatio: aspectRatio
+                aspectRatio: aspectRatio,
+                mode: mode
             });
-            
+
             setGeneratedPrompts(prompts);
-            
+
         } catch (e: any) {
             console.error(e);
             setError(e.message || "Failed to generate prompts");
@@ -61,8 +63,14 @@ const ImageGenerator: React.FC = () => {
             width: '100%',
             paddingTop: '1rem'
         }}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Header - Centered over Left Panel */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                width: '280px',
+                justifyContent: 'center'
+            }}>
                 <div style={{ width: '6px', height: '6px', background: '#eab308', borderRadius: '50%' }} />
                 <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#eab308' }}>Social Media / UGC</h2>
             </div>
@@ -97,13 +105,14 @@ const ImageGenerator: React.FC = () => {
                             textTransform: 'uppercase',
                             fontWeight: 'bold',
                             color: '#94a3b8',
-                            letterSpacing: '0.1em'
+                            letterSpacing: '0.1em',
+                            paddingLeft: '0.75rem' // Aligned with textarea text
                         }}>Describe Your Content</label>
                         <textarea
                             data-testid="input-social-prompt"
                             value={textPrompt}
                             onChange={(e) => setTextPrompt(e.target.value)}
-                            placeholder="Day in the life content, outfit posts, coffee shop aesthetic, gym selfies..."
+                            placeholder={mode === 'social' ? "Day in the life content, outfit posts, coffee shop aesthetic, gym selfies..." : "Cinematic fashion editorial, dramatic lighting, high-end product shot, vogue style..."}
                             style={{
                                 width: '100%',
                                 minHeight: '120px',
@@ -144,9 +153,9 @@ const ImageGenerator: React.FC = () => {
                                         outline: 'none'
                                     }}
                                 />
-                                <span style={{ 
-                                    fontSize: '0.9rem', 
-                                    fontWeight: 'bold', 
+                                <span style={{
+                                    fontSize: '0.9rem',
+                                    fontWeight: 'bold',
                                     color: '#fde047',
                                     minWidth: '1.5rem',
                                     textAlign: 'right'
@@ -231,6 +240,50 @@ const ImageGenerator: React.FC = () => {
                         )}
                     </button>
 
+                    {/* Mode Toggle - Under Button */}
+                    <div style={{
+                        display: 'flex',
+                        background: 'rgba(0,0,0,0.3)',
+                        borderRadius: '8px',
+                        padding: '4px',
+                        marginTop: '0.25rem'
+                    }}>
+                        <button
+                            onClick={() => setMode('social')}
+                            style={{
+                                flex: 1,
+                                border: 'none',
+                                background: mode === 'social' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                color: mode === 'social' ? '#eab308' : '#6b7280',
+                                padding: '0.5rem',
+                                borderRadius: '6px',
+                                fontSize: '0.7rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Social / UGC
+                        </button>
+                        <button
+                            onClick={() => setMode('studio')}
+                            style={{
+                                flex: 1,
+                                border: 'none',
+                                background: mode === 'studio' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                color: mode === 'studio' ? '#eab308' : '#6b7280',
+                                padding: '0.5rem',
+                                borderRadius: '6px',
+                                fontSize: '0.7rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Studio Images
+                        </button>
+                    </div>
+
                     {/* Error Message */}
                     {error && (
                         <div style={{
@@ -255,7 +308,9 @@ const ImageGenerator: React.FC = () => {
                         color: '#a5b4fc',
                         lineHeight: '1.4'
                     }}>
-                        Prompts describe scenes, poses, and vibes. Use your reference images in the image generator of your choice to fill in the character's appearance.
+                        {mode === 'social'
+                            ? "Generates authentic, candid, smartphone-style prompts."
+                            : "Generates high-fidelity, professional studio-style prompts."}
                     </div>
                 </div>
 
@@ -315,7 +370,7 @@ const ImageGenerator: React.FC = () => {
                                 </svg>
                             </div>
                             <p style={{ fontSize: '0.85rem', fontWeight: '500', color: '#9ca3af', marginBottom: '0.25rem' }}>
-                                Ready to Create UGC Prompts
+                                Ready to Create {mode === 'social' ? 'UGC' : 'Studio'} Prompts
                             </p>
                             <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
                                 Describe your content and click Generate
@@ -341,16 +396,16 @@ const ImageGenerator: React.FC = () => {
                             <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>Creating {promptCount} prompts...</p>
                         </div>
                     ) : (
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                             gap: '1rem'
                         }}>
                             {generatedPrompts.map((prompt, index) => {
                                 const isCopied = copiedIds.has(prompt.id);
-                                
+
                                 return (
-                                    <div 
+                                    <div
                                         key={prompt.id}
                                         data-testid={`prompt-card-${index}`}
                                         style={{
@@ -364,7 +419,7 @@ const ImageGenerator: React.FC = () => {
                                         }}
                                     >
                                         {isCopied && <div style={{ position: 'absolute', inset: 0, background: 'rgba(34, 197, 94, 0.05)', pointerEvents: 'none', borderRadius: '12px' }} />}
-                                        
+
                                         {/* Card Header */}
                                         <div style={{
                                             display: 'flex',
@@ -379,13 +434,15 @@ const ImageGenerator: React.FC = () => {
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     gap: '0.4rem',
-                                                    background: 'rgba(99, 102, 241, 0.1)',
-                                                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                                                    background: mode === 'social' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                                                    border: mode === 'social' ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(234, 179, 8, 0.2)',
                                                     borderRadius: '5px',
                                                     padding: '0.2rem 0.4rem'
                                                 }}>
-                                                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#818cf8', fontFamily: 'monospace' }}>UGC</span>
-                                                    <span style={{ width: '1px', height: '10px', background: 'rgba(99, 102, 241, 0.3)' }} />
+                                                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: mode === 'social' ? '#818cf8' : '#facc15', fontFamily: 'monospace' }}>
+                                                        {mode === 'social' ? 'UGC' : 'STUDIO'}
+                                                    </span>
+                                                    <span style={{ width: '1px', height: '10px', background: 'rgba(255,255,255, 0.3)' }} />
                                                     <span style={{ fontSize: '0.65rem', color: '#a5b4fc', fontFamily: 'monospace' }}>{index + 1}/{generatedPrompts.length}</span>
                                                 </div>
                                             </div>
@@ -425,7 +482,7 @@ const ImageGenerator: React.FC = () => {
                                                 )}
                                             </button>
                                         </div>
-                                        
+
                                         {/* Card Content */}
                                         <div style={{ padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                                             {/* Scenario - Main highlight */}
@@ -441,7 +498,7 @@ const ImageGenerator: React.FC = () => {
                                                 </div>
                                                 <p style={{ fontSize: '0.8rem', color: '#e5e7eb', margin: 0, lineHeight: '1.3' }}>{prompt.scenario}</p>
                                             </div>
-                                            
+
                                             {/* Details Grid */}
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
                                                 {/* Setting */}
@@ -452,7 +509,7 @@ const ImageGenerator: React.FC = () => {
                                                     </div>
                                                     <p style={{ fontSize: '0.7rem', color: '#d1d5db', margin: 0, lineHeight: '1.25' }}>{prompt.setting}</p>
                                                 </div>
-                                                
+
                                                 {/* Outfit */}
                                                 <div style={{ background: 'rgba(244, 63, 94, 0.1)', borderRadius: '5px', padding: '0.5rem 0.6rem', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
@@ -461,7 +518,7 @@ const ImageGenerator: React.FC = () => {
                                                     </div>
                                                     <p style={{ fontSize: '0.7rem', color: '#d1d5db', margin: 0, lineHeight: '1.25' }}>{prompt.outfit}</p>
                                                 </div>
-                                                
+
                                                 {/* Pose */}
                                                 <div style={{ background: 'rgba(168, 85, 247, 0.1)', borderRadius: '5px', padding: '0.5rem 0.6rem', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
@@ -470,7 +527,7 @@ const ImageGenerator: React.FC = () => {
                                                     </div>
                                                     <p style={{ fontSize: '0.7rem', color: '#d1d5db', margin: 0, lineHeight: '1.25' }}>{prompt.pose}</p>
                                                 </div>
-                                                
+
                                                 {/* Expression - NEW */}
                                                 <div style={{ background: 'rgba(236, 72, 153, 0.1)', borderRadius: '5px', padding: '0.5rem 0.6rem', border: '1px solid rgba(236, 72, 153, 0.2)' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
@@ -479,7 +536,7 @@ const ImageGenerator: React.FC = () => {
                                                     </div>
                                                     <p style={{ fontSize: '0.7rem', color: '#d1d5db', margin: 0, lineHeight: '1.25' }}>{prompt.expression}</p>
                                                 </div>
-                                                
+
                                                 {/* Lighting */}
                                                 <div style={{ background: 'rgba(245, 158, 11, 0.1)', borderRadius: '5px', padding: '0.5rem 0.6rem', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
@@ -488,7 +545,7 @@ const ImageGenerator: React.FC = () => {
                                                     </div>
                                                     <p style={{ fontSize: '0.7rem', color: '#d1d5db', margin: 0, lineHeight: '1.25' }}>{prompt.lighting}</p>
                                                 </div>
-                                                
+
                                                 {/* Camera */}
                                                 <div style={{ background: 'rgba(6, 182, 212, 0.1)', borderRadius: '5px', padding: '0.5rem 0.6rem', border: '1px solid rgba(6, 182, 212, 0.2)' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
@@ -498,12 +555,12 @@ const ImageGenerator: React.FC = () => {
                                                     <p style={{ fontSize: '0.7rem', color: '#d1d5db', margin: 0, lineHeight: '1.25' }}>{prompt.camera}</p>
                                                 </div>
                                             </div>
-                                            
+
                                             {/* Imperfections - Full width */}
                                             <div style={{ background: 'rgba(20, 184, 166, 0.1)', borderRadius: '5px', padding: '0.5rem 0.6rem', border: '1px solid rgba(20, 184, 166, 0.2)' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
                                                     <div style={{ width: '2px', height: '8px', background: '#2dd4bf', borderRadius: '1px' }} />
-                                                    <span style={{ fontSize: '0.5rem', color: '#5eead4', fontWeight: '700', textTransform: 'uppercase' }}>Imperfections</span>
+                                                    <span style={{ fontSize: '0.5rem', color: '#5eead4', fontWeight: '700', textTransform: 'uppercase' }}>{mode === 'social' ? 'Imperfections' : 'Texture & Details'}</span>
                                                 </div>
                                                 <p style={{ fontSize: '0.7rem', color: '#d1d5db', margin: 0, lineHeight: '1.25' }}>{prompt.imperfections}</p>
                                             </div>

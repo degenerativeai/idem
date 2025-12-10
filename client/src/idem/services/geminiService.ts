@@ -1040,16 +1040,20 @@ export const generateUGCPrompts = async (params: {
   count: number;
   aspectRatio: string;
   modelId?: string;
+  mode: 'social' | 'studio';
 }): Promise<UGCPromptCard[]> => {
   const ai = getAiClient();
   const modelId = params.modelId || 'gemini-2.0-flash';
 
+  const directive = params.mode === 'studio' ? RICH_MEDIA_DIRECTIVE_STUDIO : RICH_MEDIA_DIRECTIVE_CANDID;
+  const authenticityTerms = params.mode === 'social' ? UGC_PHOTO_AUTHENTICITY_TERMS : '';
+
   const userPrompt = `
-${CANDID_VIEW_DIRECTIVE}
+${directive}
 
-${UGC_PHOTO_AUTHENTICITY_TERMS}
+${authenticityTerms}
 
-TASK: Generate ${params.count} unique UGC (User Generated Content) image prompts for social media.
+TASK: Generate ${params.count} unique ${params.mode === 'social' ? 'UGC (User Generated Content)' : 'High-End Studio'} image prompts.
 
 CONTENT REQUEST FROM USER:
 "${params.contentDescription}"
@@ -1057,36 +1061,26 @@ CONTENT REQUEST FROM USER:
 ASPECT RATIO: ${params.aspectRatio}
 
 CRITICAL - PROMPT FORMAT:
-The fullPrompt should describe the SCENE, ACTION, and VIBE - NOT the person's physical appearance.
+You must output a JSON array where each object matches the schema below.
+${params.mode === 'social'
+      ? 'The fullPrompt should describe the SCENE, ACTION, and VIBE - NOT the person\'s physical appearance (unless specific styling/makeup is relevant).'
+      : 'The fullPrompt should describe a HIGH-FIDELITY, CINEMATIC composition. Focus on Lighting, Camera Gear, and Professional Styling.'}
 The image generator will use reference images to fill in the subject's physical identity.
 
-Each fullPrompt should read like: "A young woman is taking a mirror selfie in a messy bedroom, wearing an oversized band t-shirt and cotton shorts, relaxed half-smile expression. Visible skin pores and texture, flyaway hair strands. Slight phone tilt, bathroom vanity lighting with crushed shadows. Shot on iPhone, amateur framing."
-
 DO NOT INCLUDE in fullPrompt:
-- Hair color, eye color, skin tone, body type, facial features
-- Any physical description of the person's appearance
-- Age-specific descriptors beyond "young woman"
+- Hair color, eye color, skin tone, body type, facial features (unless referring to makeup/styling in Studio mode)
+- Any physical description of the person's appearance that contradicts the reference identity.
 
 MUST INCLUDE in fullPrompt:
-- Action/pose (taking selfie, lounging, walking, etc.)
+- Action/pose
 - Clothing/outfit description
-- Facial expression (smiling, focused, candid laugh, etc.)
+- Facial expression
 - Scene/setting with specific details
-- Physical imperfections for realism (visible pores, skin texture, flyaways)
-- Camera angle that looks unposed and candid
-- Lighting that's NOT perfect (mixed lighting, harsh flash, natural but uneven)
-- 1-2 photography authenticity terms from the list above
+- Camera angle
+- Lighting
+- ${params.mode === 'social' ? 'Physical imperfections for realism' : 'Technical details (lens, aperture, etc.)'}
 
-REQUIREMENTS:
-1. Each prompt should be a UNIQUE scenario based on the user's content request
-2. Prompts must feel authentic, like a real person took them with their phone
-3. Include specific imperfections (motion blur, uneven lighting, candid expressions)
-4. Vary the settings, outfits, poses, and lighting across prompts
-5. Use the Candid-View-I aesthetic (amateur smartphone look, NOT professional studio)
-6. ONLY the subject appears in frame - NO other people visible
-7. Subject is always referred to as "a young woman" - no age variation
-
-Generate ${params.count} prompts as a JSON array.
+GENERATE ${params.count} PROMPTS AS A JSON ARRAY.
 `;
 
   const schema: Schema = {
@@ -1096,39 +1090,39 @@ Generate ${params.count} prompts as a JSON array.
       properties: {
         scenario: {
           type: Type.STRING,
-          description: "Brief 1-2 sentence description of the candid moment being captured"
+          description: "Brief 1-2 sentence description of the moment"
         },
         setting: {
           type: Type.STRING,
-          description: "Specific location/environment with realistic details"
+          description: "Specific location/environment details"
         },
         outfit: {
           type: Type.STRING,
-          description: "Casual, realistic clothing appropriate for the scenario"
+          description: "Clothing details"
         },
         pose: {
           type: Type.STRING,
-          description: "Natural, unposed body position and action"
+          description: "Body position and action"
         },
         expression: {
           type: Type.STRING,
-          description: "Facial expression (candid smile, focused, mid-laugh, relaxed, etc.)"
+          description: "Facial expression"
         },
         lighting: {
           type: Type.STRING,
-          description: "Imperfect lighting (mixed color temp, harsh flash, window light with shadows, etc.)"
+          description: "Lighting conditions (e.g. 'Harsh Flash' or 'Rembrandt')"
         },
         camera: {
           type: Type.STRING,
-          description: "Camera style (iPhone 15 Pro, Pixel 8, etc.) with angle and framing notes"
+          description: "Camera style and angle"
         },
         imperfections: {
           type: Type.STRING,
-          description: "Specific UGC imperfections (visible pores, flyaway hair, motion blur, crushed shadows, etc.)"
+          description: params.mode === 'social' ? "UGC imperfections (blur, grain)" : "Texture details (skin texture, fabric weave)"
         },
         fullPrompt: {
           type: Type.STRING,
-          description: "Complete prompt describing: action/pose, clothing, expression, scene/setting, skin imperfections (pores, texture), camera angle, imperfect lighting, 1-2 photo authenticity terms. NO physical appearance (hair color, eye color, body type). Subject is 'a young woman'. Must look like authentic amateur UGC."
+          description: "Complete, dense generation prompt."
         }
       },
       required: ["scenario", "setting", "outfit", "pose", "expression", "lighting", "camera", "imperfections", "fullPrompt"]
@@ -1147,36 +1141,38 @@ Generate ${params.count} prompts as a JSON array.
     });
 
     const text = result.text;
-    if (!text) throw new Error("No response from Candid-View-I");
+    if (!text) throw new Error(`No response from ${params.mode} generator`);
 
     const rawItems = JSON.parse(text) as any[];
 
     return rawItems.map((item) => {
       let finalPrompt = item.fullPrompt || '';
 
-      // Ensure UGC elements are appended if missing
-      const hasUGCElements = /\b(iphone|smartphone|phone camera|amateur|candid|motion blur|flyaway|pores|texture)\b/i.test(finalPrompt);
-      if (!hasUGCElements && finalPrompt) {
-        const ugcSuffix = `. Shot on iPhone, amateur framing, natural smartphone lighting, visible skin pores, flyaway strands, authentic candid UGC aesthetic. Solo subject in frame.`;
-        finalPrompt = finalPrompt.replace(/\.?\s*$/, '') + ugcSuffix;
+      // Ensure UGC elements are appended if missing (only for Social)
+      if (params.mode === 'social') {
+        const hasUGCElements = /\b(iphone|smartphone|phone camera|amateur|candid|motion blur|flyaway|pores|texture)\b/i.test(finalPrompt);
+        if (!hasUGCElements && finalPrompt) {
+          const ugcSuffix = `. Shot on iPhone, amateur framing, natural smartphone lighting, visible skin pores, flyaway strands, authentic candid UGC aesthetic. Solo subject in frame.`;
+          finalPrompt = finalPrompt.replace(/\.?\s*$/, '') + ugcSuffix;
+        }
       }
 
       return {
         id: `ugc-${generateId()}`,
-        scenario: item.scenario || '',
-        setting: item.setting || '',
-        outfit: item.outfit || '',
-        pose: item.pose || '',
-        expression: item.expression || '',
-        lighting: item.lighting || '',
-        camera: item.camera || '',
-        imperfections: item.imperfections || '',
+        scenario: item.scenario || "Generated Scenario",
+        setting: item.setting || "n/a",
+        outfit: item.outfit || "n/a",
+        pose: item.pose || "n/a",
+        expression: item.expression || "n/a",
+        lighting: item.lighting || "n/a",
+        camera: item.camera || "n/a",
+        imperfections: item.imperfections || "n/a",
         fullPrompt: finalPrompt
       };
     });
 
   } catch (e: any) {
     console.error("UGC Prompt Generation Error:", e);
-    throw new Error("Failed to generate UGC prompts: " + e.message);
+    throw new Error(e.message || "Failed to generate prompts");
   }
 };
