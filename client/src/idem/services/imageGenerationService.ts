@@ -3,7 +3,7 @@ import { ImageGenerationOptions, ImageGenerationResult } from '../types';
 
 // Helper for timeouts
 const safeApiRequest = async (url: string, options: any) => {
-    const TIMEOUT_MS = 90000;
+    const TIMEOUT_MS = 180000;
     try {
         return await Promise.race([
             fetch(url, options),

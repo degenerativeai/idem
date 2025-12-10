@@ -166,15 +166,19 @@ const IdemPage: React.FC = () => {
                         onNavigateToDataset={() => setActiveTab('dataset')}
                     />
                 </div>
-                {activeTab === 'dataset' && (
+                <div style={{ display: activeTab === 'dataset' ? 'block' : 'none' }}>
                     <DatasetGenerator
                         inputIdentity={visionStruct}
                         inputImages={generatedImages}
                         onAnalysisComplete={setVisionStruct}
                     />
-                )}
-                {activeTab === 'clone' && <CloneImage identityImages={generatedImages} />}
-                {activeTab === 'generator' && <ImageGenerator />}
+                </div>
+                <div style={{ display: activeTab === 'clone' ? 'block' : 'none' }}>
+                    <CloneImage identityImages={generatedImages} />
+                </div>
+                <div style={{ display: activeTab === 'generator' ? 'block' : 'none' }}>
+                    <ImageGenerator />
+                </div>
             </main>
         </div >
     );
