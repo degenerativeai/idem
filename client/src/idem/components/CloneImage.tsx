@@ -77,8 +77,9 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
 
 
     const handleCopyFull = async () => {
-        if (finalPrompt) {
-            await navigator.clipboard.writeText(finalPrompt);
+        if (architectResult) {
+            const jsonOutput = JSON.stringify(architectResult, null, 2);
+            await navigator.clipboard.writeText(jsonOutput);
             setCopiedType('full');
             setTimeout(() => setCopiedType(null), 2000);
         }
@@ -135,9 +136,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
 
             console.log("Result received:", result ? "YES" : "NO");
             setArchitectResult(result);
-
-            const promptText = convertVisualArchitectToPrompt(result, false);
-            setFinalPrompt(promptText);
+            // setFinalPrompt is no longer needed as we copy the raw JSON
         } catch (e: any) {
             console.error("Main Action Failed:", e);
             setError(e.message || "Analysis failed");
@@ -145,8 +144,6 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             setIsAnalyzing(false);
         }
     };
-
-
 
     const panelStyle: React.CSSProperties = {
         background: 'rgba(24, 26, 31, 0.6)',
@@ -622,7 +619,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                                         </svg>
                                                     )}
-                                                    {copiedType === 'full' ? 'Copied!' : 'Copy Prompt'}
+                                                    {copiedType === 'full' ? 'Copied JSON!' : 'Copy JSON'}
                                                 </button>
                                                 <button
                                                     onClick={handleReset}

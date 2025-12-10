@@ -614,7 +614,6 @@ export const analyzeImageVisualArchitect = async (
   const schema: Schema = {
     type: Type.OBJECT,
     properties: {
-      _thought_process: { type: Type.STRING, description: "Raw analysis of the image describing lighting, person, and mood before assigning strict values." },
       meta: { type: Type.OBJECT, properties: { intent: { type: Type.STRING }, priorities: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["intent", "priorities"] },
       frame: { type: Type.OBJECT, properties: { aspect_ratio: { type: Type.STRING }, composition: { type: Type.STRING }, layout: { type: Type.STRING } }, required: ["aspect_ratio", "composition", "layout"] },
       subject: {
@@ -680,7 +679,7 @@ export const analyzeImageVisualArchitect = async (
         required: ["aesthetic", "color_grading", "texture"]
       }
     },
-    required: ["_thought_process", "meta", "frame", "subject", "wardrobe", "environment", "lighting", "camera", "style"]
+    required: ["meta", "frame", "subject", "wardrobe", "environment", "lighting", "camera", "style"]
   };
 
   try {
