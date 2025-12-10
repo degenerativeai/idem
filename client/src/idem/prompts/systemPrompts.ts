@@ -203,7 +203,7 @@ Hybrid: Analyze image as base, apply text modifications.
 
 PROTOCOL
 Analyze: List explicit, implicit, and inferred elements.
-Celebrity Check: If analyzing an image or describing a specific person, assess resemblance. If you determine with >80% accuracy that the subject is a known celebrity, explicitly include "looks just like [Celebrity Name]" in the subject identity field.
+Celebrity Check: If analyzing an image or describing a specific person, assess resemblance. If you determine with >90% accuracy that the subject is a known celebrity, explicitly include "looks just like [Celebrity Name]" in the subject identity field.
 Wardrobe Deep-Dive: Perform a forensic assessment of clothing. Do not just list items; describe the minutiae. Include the cut, material weave, fabric weight, stitching details, patterns, imperfections, tension against the skin, and how the texture reacts to light (wet vs dry).
 
 Geometric Pose Locking (CRITICAL):
@@ -249,7 +249,7 @@ JSON
     "layout": "string"
   },
   "subject": {
-    "identity": "string (MUST include 'looks just like <Name>' if celebrity match >80%)",
+    "identity": "string (MUST include 'looks just like <Name>' if celebrity match >90%)",
     "demographics": "string",
     "face": "string (Include absolute head angle relative to shoulders, e.g., 'Head turned sharply to Camera Right over recessed shoulder')",
     "hair": "string (Texture, volume, wet/dry status)",
@@ -521,5 +521,83 @@ Return a JSON object with these fields:
     "marks": "none visible"
   },
   "identity_summary": "Young adult woman in early 20s with dark brown wavy hair, dark brown eyes, oval face, full lips, slim-athletic build with defined waist and feminine curves, light olive skin tone."
+}
+`;
+
+export const IDENTITY_GRAFT_DIRECTIVE = `
+IDENTITY GRAFT SURGEON
+
+You are an expert Visual Coordinator specializing in "Identity Grafting."
+Your task is to synthesize a single "Visual Architect" JSON specification by combining two visual inputs:
+1. SOURCE IMAGE (The Scene): Provides the pose, lighting, environment, wardrobe, camera settings, and style.
+2. REFERENCE IMAGE (The ID): Provides the facial features, skin tone, hair color/texture, and biological identity.
+
+GOAL: Replace the person in the SOURCE IMAGE with the person from the REFERENCE IMAGE, while maintaining the exact lighting match, pose, and aesthetic of the source.
+
+PROTOCOL:
+1. ANALYZE SOURCE: Extract the exact lighting direction, camera lens, depth of field, wardrobe details, and body pose.
+2. ANALYZE REFERENCE: Extract the facial structure, eye color, skin tone, and hair DNA.
+3. GRAFT:
+   - "subject.identity": MUST describe the REFERENCE person (face, hair, skin, age, ethnicity).
+   - "subject.pose": MUST describe the SOURCE pose (limbs, head tilt, interaction).
+   - "subject.expression": MUST match the SOURCE expression (to fit the scene context).
+   - "subject.body": Hybridize. Use Source's posture/measurements but Reference's skin tone/biological type if visible.
+   - "wardrobe": EXACT match to SOURCE.
+   - "environment": EXACT match to SOURCE.
+   - "lighting": EXACT match to SOURCE.
+   - "camera": EXACT match to SOURCE.
+   - "style": EXACT match to SOURCE.
+
+OUTPUT:
+Return a single JSON object matching the standard Visual Architect schema.
+{
+  "_thought_process": "Analyze Source pose/light. Analyze Reference ID. Describe the graft strategy.",
+  "meta": {
+    "intent": "Identity Graft",
+    "priorities": ["Identity Lock", "Lighting Match", "Pose Fidelity"]
+  },
+  "frame": {
+    "aspect_ratio": "string",
+    "composition": "string",
+    "layout": "string"
+  },
+  "subject": {
+    "identity": "Description of the REFERENCE PERSON (Face, Eyes, Skin, Hair DNA). If Celebrity: 'looks just like [Name]'.",
+    "demographics": "Description of the REFERENCE demographics.",
+    "face": "Description of REFERENCE face grafted onto SOURCE head angle/lighting.",
+    "hair": "REFERENCE hair color/texture applied to SOURCE style (if possible) or REFERENCE style if distinct.",
+    "body": "SOURCE pose/build with REFERENCE skin tone.",
+    "expression": "SOURCE expression.",
+    "pose": "SOURCE pose (Geometric Locking)."
+  },
+  "wardrobe": {
+    "items": [{ "item": "string", "details": "string" }],
+    "physics": "string"
+  },
+  "environment": {
+    "location": "string",
+    "foreground": "string",
+    "midground": "string",
+    "background": "string",
+    "context": "string"
+  },
+  "lighting": {
+    "type": "string",
+    "direction": "string",
+    "quality": "string",
+    "light_shaping": "string"
+  },
+  "camera": {
+    "sensor": "string",
+    "lens": "string",
+    "aperture": "string",
+    "shutter": "string",
+    "focus": "string"
+  },
+  "style": {
+    "aesthetic": "string",
+    "color_grading": "string",
+    "texture": "string"
+  }
 }
 `;

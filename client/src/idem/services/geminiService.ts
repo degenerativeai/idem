@@ -9,7 +9,8 @@ import {
   VISION_STRUCT_DIRECTIVE,
   VISUAL_PROMPT_ARCHITECT,
   CANDID_VIEW_DIRECTIVE,
-  PHYSICAL_APPEARANCE_DIRECTIVE
+  PHYSICAL_APPEARANCE_DIRECTIVE,
+  IDENTITY_GRAFT_DIRECTIVE
 } from "../prompts/systemPrompts";
 
 // Security: Retrieve key from session storage dynamically. Never store in variables.
@@ -733,6 +734,144 @@ export const analyzeImageVisualArchitect = async (
     throw new Error("Failed to analyze image: " + e.message);
   }
 };
+
+export const performIdentityGraft = async (
+  sourceImageBase64: string,
+  referenceImageBase64: string,
+  modelId: string = 'gemini-2.0-flash'
+): Promise<VisualArchitectResult> => {
+  const ai = getAiClient();
+  const source = parseDataUrl(sourceImageBase64);
+  const reference = parseDataUrl(referenceImageBase64);
+
+  const schema: Schema = {
+    type: Type.OBJECT,
+    properties: {
+      _thought_process: { type: Type.STRING },
+      meta: { type: Type.OBJECT, properties: { intent: { type: Type.STRING }, priorities: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["intent", "priorities"] },
+      frame: { type: Type.OBJECT, properties: { aspect_ratio: { type: Type.STRING }, composition: { type: Type.STRING }, layout: { type: Type.STRING } }, required: ["aspect_ratio", "composition", "layout"] },
+      subject: {
+        type: Type.OBJECT,
+        properties: {
+          identity: { type: Type.STRING },
+          demographics: { type: Type.STRING },
+          face: { type: Type.STRING },
+          hair: { type: Type.STRING },
+          body: { type: Type.STRING },
+          expression: { type: Type.STRING },
+          pose: { type: Type.STRING }
+        },
+        required: ["identity", "demographics", "face", "hair", "body", "expression", "pose"]
+      },
+      wardrobe: {
+        type: Type.OBJECT,
+        properties: {
+          items: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { item: { type: Type.STRING }, details: { type: Type.STRING } }, required: ["item", "details"] } },
+          physics: { type: Type.STRING }
+        },
+        required: ["items", "physics"]
+      },
+      environment: {
+        type: Type.OBJECT,
+        properties: {
+          location: { type: Type.STRING },
+          foreground: { type: Type.STRING },
+          midground: { type: Type.STRING },
+          background: { type: Type.STRING },
+          context: { type: Type.STRING }
+        },
+        required: ["location", "foreground", "midground", "background", "context"]
+      },
+      lighting: {
+        type: Type.OBJECT,
+        properties: {
+          type: { type: Type.STRING },
+          direction: { type: Type.STRING },
+          quality: { type: Type.STRING },
+          light_shaping: { type: Type.STRING }
+        },
+        required: ["type", "direction", "quality", "light_shaping"]
+      },
+      camera: {
+        type: Type.OBJECT,
+        properties: {
+          sensor: { type: Type.STRING },
+          lens: { type: Type.STRING },
+          aperture: { type: Type.STRING },
+          shutter: { type: Type.STRING },
+          focus: { type: Type.STRING }
+        },
+        required: ["sensor", "lens", "aperture", "shutter", "focus"]
+      },
+      style: {
+        type: Type.OBJECT,
+        properties: {
+          aesthetic: { type: Type.STRING },
+          color_grading: { type: Type.STRING },
+          texture: { type: Type.STRING }
+        },
+        required: ["aesthetic", "color_grading", "texture"]
+      }
+    },
+    required: ["_thought_process", "meta", "frame", "subject", "wardrobe", "environment", "lighting", "camera", "style"]
+  };
+
+  try {
+    const result = await ai.models.generateContent({
+      model: modelId,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: IDENTITY_GRAFT_DIRECTIVE },
+            { inlineData: { mimeType: source.mimeType, data: source.data } },
+            { text: "SOURCE IMAGE (THE SCENE/POSE)" },
+            { inlineData: { mimeType: reference.mimeType, data: reference.data } },
+            { text: "REFERENCE IMAGE (THE IDENTITY)" }
+          ]
+        }
+      ],
+      config: {
+        temperature: 0.7,
+        topP: 0.95,
+        topK: 64,
+        maxOutputTokens: 8192,
+        responseMimeType: "application/json",
+        responseSchema: schema
+      }
+    });
+
+    const responseText = result.text;
+    if (!responseText) throw new Error("No response from Identity Graft Surgeon");
+
+    // Reuse the same cleaning logic as Visual Architect
+    let cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const firstOpen = cleanedText.indexOf('{');
+    const lastClose = cleanedText.lastIndexOf('}');
+
+    if (firstOpen !== -1 && lastClose !== -1) {
+      cleanedText = cleanedText.substring(firstOpen, lastClose + 1);
+    } else if (firstOpen !== -1) {
+      cleanedText = cleanedText.substring(firstOpen);
+    }
+
+    try {
+      return JSON.parse(cleanedText) as VisualArchitectResult;
+    } catch (parseError) {
+      try {
+        return parseJSONWithRecovery(cleanedText) as VisualArchitectResult;
+      } catch (recoveryError) {
+        console.error("Graft JSON Parse Failed. Raw text was:", cleanedText.substring(0, 2000) + "...");
+        throw new Error("The AI generated invalid JSON for the graft. Please try again.");
+      }
+    }
+
+  } catch (e: any) {
+    console.error("Identity Graft Error:", e);
+    throw new Error("Failed to perform identity graft: " + e.message);
+  }
+};
+
 
 export const convertVisualArchitectToPrompt = (architect: VisualArchitectResult, stripIdentity: boolean = false): string => {
   const parts: string[] = [];

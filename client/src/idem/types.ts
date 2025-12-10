@@ -46,6 +46,7 @@ export interface UGCSettings {
     styleMode: 'studio' | 'candid';
 }
 
+// Core Interface
 export interface VisualArchitectResult {
     _thought_process?: string;
     meta?: {

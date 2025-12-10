@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { VisualArchitectResult, ImageAspect } from '../types';
-import { analyzeImageVisualArchitect, convertVisualArchitectToPrompt } from '../services/geminiService';
+import { analyzeImageVisualArchitect, convertVisualArchitectToPrompt, performIdentityGraft } from '../services/geminiService';
 
 interface CloneImageProps {
     identityImages?: { headshot: string | null; bodyshot: string | null };
@@ -14,17 +14,45 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
     const [finalPrompt, setFinalPrompt] = useState<string>('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [copiedType, setCopiedType] = useState<'full' | null>(null);
+    // Original position of copiedType: const [copiedType, setCopiedType] = useState<'full' | 'json' | null>(null);
 
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('source');
 
-    const handleCopyFull = async () => {
-        if (finalPrompt) {
-            await navigator.clipboard.writeText(finalPrompt);
-            setCopiedType('full');
-            setTimeout(() => setCopiedType(null), 2000);
+    // New State for Dual Mode
+    const [mode, setMode] = useState<'clone' | 'swap'>('clone');
+    const [referenceImage, setReferenceImage] = useState<string | null>(null);
+    const [copiedType, setCopiedType] = useState<'json' | 'full' | null>(null);
+    const [loadingPhraseIndex, setLoadingPhraseIndex] = useState(0);
+
+    const CLONE_PHRASES = [
+        "Analyzing Visual DNA...",
+        "Extracting Composition & Lighting...",
+        "Synthesizing Prompt Structure...",
+        "Finalizing Output..."
+    ];
+
+    const SWAP_PHRASES = [
+        "Scanning Identity Features...",
+        "Mapping Facial Geometry...",
+        "Locking Source Scene...",
+        "Grafting Identity...",
+        "Merging Textures...",
+        "Finalizing Output..."
+    ];
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isAnalyzing) {
+            setLoadingPhraseIndex(0);
+            const duration = mode === 'clone' ? 4000 : 3000;
+            const phrases = mode === 'clone' ? CLONE_PHRASES : SWAP_PHRASES;
+
+            interval = setInterval(() => {
+                setLoadingPhraseIndex(prev => (prev + 1) % phrases.length);
+            }, duration);
         }
-    };
+        return () => clearInterval(interval);
+    }, [isAnalyzing, mode]);
 
     const fileToBase64 = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
@@ -34,6 +62,29 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             reader.onerror = error => reject(error);
         });
     };
+
+    const handleReferenceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const base64 = await fileToBase64(file);
+            setReferenceImage(base64);
+        } catch (err) {
+            console.error("Ref Upload failed", err);
+        }
+    };
+
+
+
+    const handleCopyFull = async () => {
+        if (finalPrompt) {
+            await navigator.clipboard.writeText(finalPrompt);
+            setCopiedType('full');
+            setTimeout(() => setCopiedType(null), 2000);
+        }
+    };
+
+
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -50,24 +101,48 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
         }
     };
 
-    const handleAnalyzeImage = async () => {
+    const handleReset = () => {
+        setArchitectResult(null);
+        setFinalPrompt('');
+        setError(null);
+        setTargetImage(null);
+        setReferenceImage(null);
+    };
+
+    const handleMainAction = async () => {
+        console.log("Triggering Main Action. Mode:", mode);
         if (!targetImage) {
+            console.log("No target image");
             setError("Please upload an image first");
             return;
         }
 
         setIsAnalyzing(true);
         setError(null);
+        setArchitectResult(null);
 
         try {
-            const result = await analyzeImageVisualArchitect(targetImage);
+            let result;
+            if (mode === 'clone') {
+                console.log("Running Clone Analysis...");
+                result = await analyzeImageVisualArchitect(targetImage);
+            } else {
+                console.log("Running Identity Graft...");
+                // Swap Mode
+                if (!referenceImage) {
+                    throw new Error("Reference image required");
+                }
+                result = await performIdentityGraft(targetImage, referenceImage);
+            }
+
+            console.log("Result received:", result ? "YES" : "NO");
             setArchitectResult(result);
 
-            const fullPrompt = convertVisualArchitectToPrompt(result, false);
-            setFinalPrompt(fullPrompt);
+            const promptText = convertVisualArchitectToPrompt(result, false);
+            setFinalPrompt(promptText);
         } catch (e: any) {
-            console.error(e);
-            setError(e.message || "Failed to analyze image");
+            console.error("Main Action Failed:", e);
+            setError(e.message || "Analysis failed");
         } finally {
             setIsAnalyzing(false);
         }
@@ -107,78 +182,209 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             alignItems: 'start',
             paddingTop: '1rem'
         }}>
-            <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%' }} />
-                    <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#22c55e' }}>Clone Image</h2>
+            <div style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ width: '6px', height: '6px', background: mode === 'clone' ? '#22c55e' : '#3b82f6', borderRadius: '50%' }} />
+                        <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: mode === 'clone' ? '#22c55e' : '#3b82f6' }}>
+                            {mode === 'clone' ? 'Visual Profiler' : 'Identity Graft'}
+                        </h2>
+                    </div>
                 </div>
 
                 <div style={panelStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label style={labelStyle}>Upload Image to Clone</label>
+                        <label style={labelStyle}>Source & Reference</label>
                     </div>
 
-                    <div
-                        data-testid="upload-clone-image"
-                        onClick={() => document.getElementById('clone-upload')?.click()}
-                        style={{
-                            aspectRatio: '4/3',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            border: targetImage ? '2px solid #22c55e' : '2px dashed #4b5563',
-                            background: 'rgba(0,0,0,0.3)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative'
-                        }}
-                    >
-                        {targetImage ? (
-                            <img src={targetImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Target" />
-                        ) : (
-                            <div style={{ textAlign: 'center', color: '#6b7280', padding: '1.5rem' }}>
-                                <div style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    margin: '0 auto 1rem',
-                                    background: 'rgba(34, 197, 94, 0.2)',
-                                    borderRadius: '12px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '0.5rem',
+                        width: '100%'
+                    }}>
+                        {/* Left: Source Image */}
+                        <div
+                            data-testid="upload-clone-image"
+                            onClick={() => document.getElementById('clone-upload')?.click()}
+                            style={{
+                                aspectRatio: '3/4',
+                                width: '100%',
+                                borderRadius: '12px',
+                                overflow: 'hidden',
+                                border: targetImage ? '2px solid #22c55e' : '2px dashed #4b5563',
+                                background: 'rgba(0,0,0,0.3)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {targetImage ? (
+                                <>
+                                    <img src={targetImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Target" />
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: 0, left: 0, right: 0,
+                                        background: 'rgba(0,0,0,0.7)',
+                                        padding: '0.5rem',
+                                        backdropFilter: 'blur(4px)'
+                                    }}>
+                                        <p style={{ margin: 0, fontSize: '0.65rem', color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>SOURCE</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <div style={{ textAlign: 'center', color: '#6b7280', padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" style={{ marginBottom: '0.25rem' }}>
                                         <path d="M12 5v14M5 12h14" />
                                     </svg>
+                                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#e5e7eb', fontWeight: '500' }}>Drop your image to clone here</p>
+                                    <p style={{ margin: 0, fontSize: '0.65rem', color: '#9ca3af' }}>or click to browse</p>
                                 </div>
-                                <p style={{ fontSize: '0.9rem', fontWeight: '500', color: '#e5e7eb', marginBottom: '0.25rem' }}>
-                                    Upload Image to Clone
-                                </p>
-                                <p style={{ fontSize: '0.7rem', color: '#6b7280' }}>
-                                    Analyze and recreate any image
-                                </p>
-                            </div>
-                        )}
-                        <input
-                            type="file"
-                            id="clone-upload"
-                            hidden
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                        />
+                            )}
+                            <input
+                                type="file"
+                                id="clone-upload"
+                                hidden
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                            />
+                        </div>
+
+                        {/* Right: Reference Image (Ghosted Logic) */}
+                        <div
+                            onClick={() => mode === 'swap' && document.getElementById('ref-upload')?.click()}
+                            style={{
+                                aspectRatio: '3/4',
+                                width: '100%',
+                                borderRadius: '12px',
+                                overflow: 'hidden',
+                                border: referenceImage ? '2px solid #3b82f6' : (mode === 'swap' ? '2px dashed #4b5563' : '2px dashed #2d3139'),
+                                background: 'rgba(0,0,0,0.3)',
+                                cursor: mode === 'swap' ? 'pointer' : 'default',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative',
+                                opacity: mode === 'clone' ? 0.3 : 1,
+                                filter: mode === 'clone' ? 'grayscale(100%)' : 'none',
+                                pointerEvents: mode === 'clone' ? 'none' : 'auto',
+                                transition: 'all 0.3s ease-in-out'
+                            }}
+                        >
+                            {referenceImage ? (
+                                <>
+                                    <img src={referenceImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Reference" />
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: 0, left: 0, right: 0,
+                                        background: 'rgba(0,0,0,0.7)',
+                                        padding: '0.5rem',
+                                        backdropFilter: 'blur(4px)'
+                                    }}>
+                                        <p style={{ margin: 0, fontSize: '0.65rem', color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>REFERENCE</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <div style={{ textAlign: 'center', color: '#6b7280', padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={mode === 'swap' ? "#3b82f6" : "#4b5563"} strokeWidth="2" style={{ marginBottom: '0.25rem' }}>
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
+                                    <p style={{ margin: 0, fontSize: '0.75rem', color: mode === 'swap' ? '#e5e7eb' : '#4b5563', fontWeight: '500' }}>Drop reference image here</p>
+                                    <p style={{ margin: 0, fontSize: '0.65rem', color: mode === 'swap' ? '#9ca3af' : '#4b5563' }}>{mode === 'swap' ? 'or click to browse' : '(Disabled in Clone Mode)'}</p>
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                id="ref-upload"
+                                hidden
+                                accept="image/*"
+                                onChange={handleReferenceUpload}
+                            />
+                        </div>
+                    </div>
+
+                    <p style={{ fontSize: '0.7rem', color: '#6b7280', textAlign: 'center', margin: 0, fontStyle: 'italic' }}>
+                        {mode === 'clone'
+                            ? "Analyze the source image's visual DNA."
+                            : "Inject the Reference Identity into the Source Scene."}
+                    </p>
+
+                    {/* New Full-Width Mode Toggle */}
+                    <div style={{
+                        display: 'flex',
+                        background: 'rgba(0,0,0,0.4)',
+                        padding: '0.25rem',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        marginTop: '0.5rem'
+                    }}>
+                        <button
+                            onClick={() => setMode('clone')}
+                            style={{
+                                flex: 1,
+                                padding: '0.5rem',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: mode === 'clone' ? 'rgba(34, 197, 94, 0.2)' : 'transparent',
+                                color: mode === 'clone' ? '#4ade80' : '#6b7280',
+                                fontSize: '0.75rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem'
+                            }}
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                            </svg>
+                            Visual Profiler
+                        </button>
+                        <button
+                            onClick={() => setMode('swap')}
+                            style={{
+                                flex: 1,
+                                padding: '0.5rem',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: mode === 'swap' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                                color: mode === 'swap' ? '#60a5fa' : '#6b7280',
+                                fontSize: '0.75rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem'
+                            }}
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            Identity Graft
+                        </button>
                     </div>
 
                     <button
-                        data-testid="button-analyze-clone"
-                        onClick={handleAnalyzeImage}
+                        data-testid="button-action-main"
+                        onClick={handleMainAction}
                         disabled={isAnalyzing || !targetImage}
                         style={{
                             width: '100%',
                             padding: '0.75rem',
                             borderRadius: '10px',
                             border: 'none',
-                            background: (isAnalyzing || !targetImage) ? '#374151' : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                            background: (isAnalyzing || !targetImage)
+                                ? '#374151'
+                                : (mode === 'swap' ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'),
                             color: 'white',
                             fontSize: '0.8rem',
                             fontWeight: 'bold',
@@ -189,29 +395,36 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '0.5rem',
-                            marginTop: '0.75rem',
-                            opacity: !targetImage ? 0.5 : 1
+                            marginTop: '0.25rem',
+                            transition: 'all 0.3s'
                         }}
                     >
                         {isAnalyzing ? (
                             <>
-                                <div style={{
-                                    width: '14px',
-                                    height: '14px',
-                                    border: '2px solid rgba(255,255,255,0.3)',
-                                    borderTopColor: 'white',
-                                    borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite'
-                                }} />
-                                Analyzing...
+                                Scanning...
                             </>
                         ) : (
                             <>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="11" cy="11" r="8" />
-                                    <path d="M21 21l-4.35-4.35" />
-                                </svg>
-                                Analyze Image
+                                {mode === 'clone' ? (
+                                    <>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <circle cx="11" cy="11" r="8" />
+                                            <path d="M21 21l-4.35-4.35" />
+                                        </svg>
+                                        Create Clone
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M16 3h5v5" />
+                                            <path d="M4 20L21 3" />
+                                            <path d="M21 16v5h-5" />
+                                            <path d="M15 15l-5 5" />
+                                            <path d="M4 4l5 5" />
+                                        </svg>
+                                        Swap Character
+                                    </>
+                                )}
                             </>
                         )}
                     </button>
@@ -223,23 +436,35 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                             width: '32px',
                             height: '32px',
                             borderRadius: '8px',
-                            background: 'rgba(34, 197, 94, 0.2)',
+                            background: mode === 'clone' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            transition: 'all 0.3s'
                         }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" />
-                                <circle cx="8" cy="8" r="2" />
-                                <path d="M21 15l-5-5L5 21" />
-                            </svg>
+                            {mode === 'clone' ? (
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <circle cx="8" cy="8" r="2" />
+                                    <path d="M21 15l-5-5L5 21" />
+                                </svg>
+                            ) : (
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                </svg>
+                            )}
                         </div>
                         <div>
                             <p style={{ fontSize: '0.85rem', fontWeight: '600', color: '#e5e7eb', margin: 0 }}>
-                                Image Cloning
+                                {mode === 'clone' ? 'Visual Profiling' : 'Identity Grafting'}
                             </p>
                             <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: 0 }}>
-                                Extract prompt from any image and recreate it
+                                {mode === 'clone'
+                                    ? 'Extract style & composition from source.'
+                                    : 'Transfer identity while locking scene.'}
                             </p>
                         </div>
                     </div>
@@ -259,7 +484,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                 )}
             </div>
 
-            <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ gridColumn: 'span 9', display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
                         <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#e5e7eb', margin: 0 }}>
@@ -385,61 +610,65 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <button
-                                                    onClick={() => {
-                                                        if (architectResult) {
-                                                            navigator.clipboard.writeText(JSON.stringify(architectResult, null, 2));
-                                                            setCopiedType('json');
-                                                            setTimeout(() => setCopiedType(null), 2000);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        padding: '0.4rem 0.7rem',
-                                                        borderRadius: '6px',
-                                                        border: copiedType === 'json' ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)',
-                                                        background: copiedType === 'json' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.05)',
-                                                        color: copiedType === 'json' ? '#60a5fa' : '#9ca3af',
-                                                        fontSize: '0.65rem',
-                                                        fontWeight: '500',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.4rem',
-                                                        transition: 'all 0.2s'
-                                                    }}
-                                                >
-                                                    {copiedType === 'json' ? 'JSON Copied!' : 'Copy JSON'}
-                                                </button>
-                                                <button
                                                     data-testid="button-copy-clone-full"
                                                     onClick={handleCopyFull}
+                                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                                                     style={{
-                                                        padding: copiedType === 'full' ? '0.5rem 1rem' : '0.4rem 0.75rem',
-                                                        borderRadius: '6px',
-                                                        border: copiedType === 'full' ? '2px solid #22c55e' : 'none',
-                                                        background: copiedType === 'full' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(255,255,255,0.05)',
-                                                        color: copiedType === 'full' ? '#4ade80' : '#9ca3af',
-                                                        fontSize: copiedType === 'full' ? '0.75rem' : '0.65rem',
-                                                        fontWeight: copiedType === 'full' ? '700' : '500',
+                                                        padding: '0.5rem 1rem',
+                                                        borderRadius: '8px',
+                                                        border: 'none',
+                                                        background: copiedType === 'full' ? '#22c55e' : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                                                        color: 'white',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 'bold',
                                                         cursor: 'pointer',
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        gap: '0.4rem',
-                                                        transition: 'all 0.2s',
-                                                        transform: copiedType === 'full' ? 'scale(1.05)' : 'scale(1)',
-                                                        boxShadow: copiedType === 'full' ? '0 0 12px rgba(34, 197, 94, 0.5)' : 'none'
+                                                        gap: '0.5rem',
+                                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                        boxShadow: '0 4px 6px -1px rgba(34, 197, 94, 0.3)',
+                                                        transform: copiedType === 'full' ? 'scale(1.05)' : 'scale(1)'
                                                     }}
                                                 >
                                                     {copiedType === 'full' ? (
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                                             <polyline points="20 6 9 17 4 12" />
                                                         </svg>
                                                     ) : (
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                             <rect x="9" y="9" width="13" height="13" rx="2" />
                                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                                         </svg>
                                                     )}
                                                     {copiedType === 'full' ? 'Copied!' : 'Copy Prompt'}
+                                                </button>
+                                                <button
+                                                    onClick={handleReset}
+                                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                                    style={{
+                                                        padding: '0.5rem 1rem',
+                                                        borderRadius: '8px',
+                                                        border: 'none',
+                                                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                                        color: 'white',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 'bold',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.5rem',
+                                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                        boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.3)',
+                                                        transform: 'scale(1)'
+                                                    }}
+                                                >
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M3 6h18" />
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                    </svg>
+                                                    Reset Prompt
                                                 </button>
                                             </div>
                                         </div>
@@ -535,6 +764,42 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                         </>
                     )}
                 </div>
+
+                {isAnalyzing && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        zIndex: 50,
+                        backdropFilter: 'blur(8px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '16px'
+                    }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+                            <div style={{
+                                width: '64px',
+                                height: '64px',
+                                borderRadius: '50%',
+                                border: '2px solid #1f2937',
+                                borderTopColor: mode === 'clone' ? '#22c55e' : '#3b82f6',
+                                animation: 'spin 1s linear infinite'
+                            }} />
+                            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+
+                            <div style={{ textAlign: 'center' }}>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                                    {mode === 'clone' ? 'CLONING IMAGE' : 'SWAPPING CHARACTER'}
+                                </h3>
+                                <p key={loadingPhraseIndex} style={{ fontSize: '0.85rem', color: mode === 'clone' ? '#4ade80' : '#60a5fa', fontFamily: 'monospace', animation: 'fadeIn 0.5s' }}>
+                                    {mode === 'clone' ? CLONE_PHRASES[loadingPhraseIndex] : SWAP_PHRASES[loadingPhraseIndex]}
+                                </p>
+                                <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
