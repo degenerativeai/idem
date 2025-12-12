@@ -136,6 +136,48 @@ const ImageGenerator: React.FC = () => {
                     border: '1px solid rgba(255,255,255,0.08)',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}>
+                    {/* Image Gen Toggle */}
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(0,0,0,0.2)',
+                        padding: '1rem',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        marginBottom: '0.5rem'
+                    }}>
+                        <label style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Generation Mode</label>
+                        <label style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '1rem', cursor: 'pointer', width: '100%' }}>
+                            <span style={{ fontSize: '0.7rem', color: !includeImage ? '#eab308' : '#6b7280', fontWeight: !includeImage ? 'bold' : 'normal', textAlign: 'right' }}>Prompts Only</span>
+                            <div
+                                onClick={() => setIncludeImage(!includeImage)}
+                                style={{
+                                    width: '36px',
+                                    height: '20px',
+                                    background: includeImage ? 'rgba(234, 179, 8, 0.2)' : 'rgba(255,255,255,0.1)',
+                                    borderRadius: '10px',
+                                    position: 'relative',
+                                    border: includeImage ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid rgba(255,255,255,0.2)',
+                                    transition: 'all 0.3s'
+                                }}
+                            >
+                                <div style={{
+                                    width: '14px',
+                                    height: '14px',
+                                    background: includeImage ? '#eab308' : '#9ca3af',
+                                    borderRadius: '50%',
+                                    position: 'absolute',
+                                    top: '2px',
+                                    left: includeImage ? '18px' : '2px',
+                                    transition: 'all 0.3s'
+                                }} />
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: includeImage ? '#eab308' : '#6b7280', fontWeight: includeImage ? 'bold' : 'normal', textAlign: 'left' }}>Generate Images</span>
+                        </label>
+                    </div>
+
                     {/* Describe Box */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <label style={{
@@ -167,46 +209,7 @@ const ImageGenerator: React.FC = () => {
                         />
                     </div>
 
-                    {/* Image Gen Toggle */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        background: 'rgba(0,0,0,0.2)',
-                        padding: '0.5rem 0.75rem',
-                        borderRadius: '10px',
-                        border: '1px solid rgba(255,255,255,0.05)'
-                    }}>
-                        <label style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Native Image Gen</label>
-                        <div style={{ display: 'flex', gap: '0.25rem', background: 'rgba(0,0,0,0.3)', padding: '2px', borderRadius: '6px' }}>
-                            <button
-                                onClick={() => setIncludeImage(false)}
-                                style={{
-                                    padding: '0.25rem 0.6rem',
-                                    fontSize: '0.6rem',
-                                    fontWeight: 'bold',
-                                    borderRadius: '4px',
-                                    border: 'none',
-                                    background: !includeImage ? '#eab308' : 'transparent',
-                                    color: !includeImage ? 'black' : '#6b7280',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}>OFF</button>
-                            <button
-                                onClick={() => setIncludeImage(true)}
-                                style={{
-                                    padding: '0.25rem 0.6rem',
-                                    fontSize: '0.6rem',
-                                    fontWeight: 'bold',
-                                    borderRadius: '4px',
-                                    border: 'none',
-                                    background: includeImage ? '#eab308' : 'transparent',
-                                    color: includeImage ? 'black' : '#6b7280',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}>ON</button>
-                        </div>
-                    </div>
+
 
                     {/* Image Controls (Conditional) */}
                     {includeImage && (
@@ -523,7 +526,7 @@ const ImageGenerator: React.FC = () => {
                                 borderRadius: '50%',
                                 animation: 'spin 1s linear infinite'
                             }} />
-                            <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>Creating {promptCount} prompts...</p>
+                            <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>Creating {includeImage ? batchSize : promptCount} {includeImage ? 'images' : 'prompts'}...</p>
                         </div>
                     ) : (
                         <div style={{
