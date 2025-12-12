@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Schema, Type } from "@google/genai";
+import { GoogleGenAI, Schema, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, VisualArchitectResult, UGCPromptCard, PhysicalAppearance } from "../types";
 import {
   LORA_FORGE_DIRECTIVE,
@@ -630,72 +630,68 @@ export const analyzeImageVisualArchitect = async (
   const schema: Schema = {
     type: Type.OBJECT,
     properties: {
-      meta: { type: Type.OBJECT, properties: { intent: { type: Type.STRING }, priorities: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["intent", "priorities"] },
-      frame: { type: Type.OBJECT, properties: { aspect_ratio: { type: Type.STRING }, composition: { type: Type.STRING }, layout: { type: Type.STRING } }, required: ["aspect_ratio", "composition", "layout"] },
-      subject: {
+      meta: {
+        type: Type.OBJECT,
+        properties: {
+          medium: { type: Type.STRING },
+          visual_fidelity: { type: Type.STRING }
+        },
+        required: ["medium", "visual_fidelity"]
+      },
+      atmosphere_and_context: {
+        type: Type.OBJECT,
+        properties: {
+          mood: { type: Type.STRING },
+          lighting_source: { type: Type.STRING },
+          shadow_play: { type: Type.STRING }
+        },
+        required: ["mood", "lighting_source", "shadow_play"]
+      },
+      subject_core: {
         type: Type.OBJECT,
         properties: {
           identity: { type: Type.STRING },
-          demographics: { type: Type.STRING },
-          face: { type: Type.STRING },
-          hair: { type: Type.STRING },
-          body: { type: Type.STRING },
-          expression: { type: Type.STRING },
-          pose: { type: Type.STRING }
+          styling: { type: Type.STRING }
         },
-        required: ["identity", "demographics", "face", "hair", "body", "expression", "pose"]
+        required: ["identity", "styling"]
       },
-      wardrobe: {
+      anatomical_details: {
         type: Type.OBJECT,
         properties: {
-          items: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { item: { type: Type.STRING }, details: { type: Type.STRING } }, required: ["item", "details"] } },
-          physics: { type: Type.STRING }
+          posture_and_spine: { type: Type.STRING },
+          limb_placement: { type: Type.STRING },
+          hands_and_fingers: { type: Type.STRING },
+          head_and_gaze: { type: Type.STRING },
+          facial_expression: { type: Type.STRING }
         },
-        required: ["items", "physics"]
+        required: ["posture_and_spine", "limb_placement", "hands_and_fingers", "head_and_gaze", "facial_expression"]
       },
-      environment: {
+      attire_mechanics: {
         type: Type.OBJECT,
         properties: {
-          location: { type: Type.STRING },
-          foreground: { type: Type.STRING },
-          midground: { type: Type.STRING },
-          background: { type: Type.STRING },
-          context: { type: Type.STRING }
+          garments: { type: Type.STRING },
+          fit_and_physics: { type: Type.STRING }
         },
-        required: ["location", "foreground", "midground", "background", "context"]
+        required: ["garments", "fit_and_physics"]
       },
-      lighting: {
+      environment_and_depth: {
         type: Type.OBJECT,
         properties: {
-          type: { type: Type.STRING },
-          direction: { type: Type.STRING },
-          quality: { type: Type.STRING },
-          light_shaping: { type: Type.STRING }
+          background_elements: { type: Type.STRING },
+          surface_interactions: { type: Type.STRING }
         },
-        required: ["type", "direction", "quality", "light_shaping"]
+        required: ["background_elements", "surface_interactions"]
       },
-      camera: {
+      image_texture: {
         type: Type.OBJECT,
         properties: {
-          sensor: { type: Type.STRING },
-          lens: { type: Type.STRING },
-          aperture: { type: Type.STRING },
-          shutter: { type: Type.STRING },
-          focus: { type: Type.STRING }
+          quality_defects: { type: Type.STRING },
+          camera_characteristics: { type: Type.STRING }
         },
-        required: ["sensor", "lens", "aperture", "shutter", "focus"]
-      },
-      style: {
-        type: Type.OBJECT,
-        properties: {
-          aesthetic: { type: Type.STRING },
-          color_grading: { type: Type.STRING },
-          texture: { type: Type.STRING }
-        },
-        required: ["aesthetic", "color_grading", "texture"]
+        required: ["quality_defects", "camera_characteristics"]
       }
     },
-    required: ["meta", "frame", "subject", "wardrobe", "environment", "lighting", "camera", "style"]
+    required: ["meta", "atmosphere_and_context", "subject_core", "anatomical_details", "attire_mechanics", "environment_and_depth", "image_texture"]
   };
 
   try {
@@ -716,7 +712,13 @@ export const analyzeImageVisualArchitect = async (
         topK: 64,
         maxOutputTokens: 8192,
         responseMimeType: "application/json",
-        responseSchema: schema
+        responseSchema: schema,
+        safetySettings: [
+          { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+          { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+          { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+          { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE }
+        ]
       }
     });
 
@@ -772,73 +774,68 @@ export const performIdentityGraft = async (
   const schema: Schema = {
     type: Type.OBJECT,
     properties: {
-      _thought_process: { type: Type.STRING },
-      meta: { type: Type.OBJECT, properties: { intent: { type: Type.STRING }, priorities: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["intent", "priorities"] },
-      frame: { type: Type.OBJECT, properties: { aspect_ratio: { type: Type.STRING }, composition: { type: Type.STRING }, layout: { type: Type.STRING } }, required: ["aspect_ratio", "composition", "layout"] },
-      subject: {
+      meta: {
+        type: Type.OBJECT,
+        properties: {
+          medium: { type: Type.STRING },
+          visual_fidelity: { type: Type.STRING }
+        },
+        required: ["medium", "visual_fidelity"]
+      },
+      atmosphere_and_context: {
+        type: Type.OBJECT,
+        properties: {
+          mood: { type: Type.STRING },
+          lighting_source: { type: Type.STRING },
+          shadow_play: { type: Type.STRING }
+        },
+        required: ["mood", "lighting_source", "shadow_play"]
+      },
+      subject_core: {
         type: Type.OBJECT,
         properties: {
           identity: { type: Type.STRING },
-          demographics: { type: Type.STRING },
-          face: { type: Type.STRING },
-          hair: { type: Type.STRING },
-          body: { type: Type.STRING },
-          expression: { type: Type.STRING },
-          pose: { type: Type.STRING }
+          styling: { type: Type.STRING }
         },
-        required: ["identity", "demographics", "face", "hair", "body", "expression", "pose"]
+        required: ["identity", "styling"]
       },
-      wardrobe: {
+      anatomical_details: {
         type: Type.OBJECT,
         properties: {
-          items: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { item: { type: Type.STRING }, details: { type: Type.STRING } }, required: ["item", "details"] } },
-          physics: { type: Type.STRING }
+          posture_and_spine: { type: Type.STRING },
+          limb_placement: { type: Type.STRING },
+          hands_and_fingers: { type: Type.STRING },
+          head_and_gaze: { type: Type.STRING },
+          facial_expression: { type: Type.STRING }
         },
-        required: ["items", "physics"]
+        required: ["posture_and_spine", "limb_placement", "hands_and_fingers", "head_and_gaze", "facial_expression"]
       },
-      environment: {
+      attire_mechanics: {
         type: Type.OBJECT,
         properties: {
-          location: { type: Type.STRING },
-          foreground: { type: Type.STRING },
-          midground: { type: Type.STRING },
-          background: { type: Type.STRING },
-          context: { type: Type.STRING }
+          garments: { type: Type.STRING },
+          fit_and_physics: { type: Type.STRING }
         },
-        required: ["location", "foreground", "midground", "background", "context"]
+        required: ["garments", "fit_and_physics"]
       },
-      lighting: {
+      environment_and_depth: {
         type: Type.OBJECT,
         properties: {
-          type: { type: Type.STRING },
-          direction: { type: Type.STRING },
-          quality: { type: Type.STRING },
-          light_shaping: { type: Type.STRING }
+          background_elements: { type: Type.STRING },
+          surface_interactions: { type: Type.STRING }
         },
-        required: ["type", "direction", "quality", "light_shaping"]
+        required: ["background_elements", "surface_interactions"]
       },
-      camera: {
+      image_texture: {
         type: Type.OBJECT,
         properties: {
-          sensor: { type: Type.STRING },
-          lens: { type: Type.STRING },
-          aperture: { type: Type.STRING },
-          shutter: { type: Type.STRING },
-          focus: { type: Type.STRING }
+          quality_defects: { type: Type.STRING },
+          camera_characteristics: { type: Type.STRING }
         },
-        required: ["sensor", "lens", "aperture", "shutter", "focus"]
-      },
-      style: {
-        type: Type.OBJECT,
-        properties: {
-          aesthetic: { type: Type.STRING },
-          color_grading: { type: Type.STRING },
-          texture: { type: Type.STRING }
-        },
-        required: ["aesthetic", "color_grading", "texture"]
+        required: ["quality_defects", "camera_characteristics"]
       }
     },
-    required: ["_thought_process", "meta", "frame", "subject", "wardrobe", "environment", "lighting", "camera", "style"]
+    required: ["meta", "atmosphere_and_context", "subject_core", "anatomical_details", "attire_mechanics", "environment_and_depth", "image_texture"]
   };
 
   try {
@@ -850,9 +847,9 @@ export const performIdentityGraft = async (
           parts: [
             { text: IDENTITY_GRAFT_DIRECTIVE },
             { inlineData: { mimeType: source.mimeType, data: source.data } },
-            { text: "SOURCE IMAGE (THE SCENE/POSE)" },
+            { text: "SOURCE IMAGE (COMPLETE SCENE/POSE/ATTIRE)" },
             { inlineData: { mimeType: reference.mimeType, data: reference.data } },
-            { text: "REFERENCE IMAGE (THE IDENTITY)" }
+            { text: "REFERENCE IMAGE (IDENTITY ONLY)" }
           ]
         }
       ],
@@ -901,58 +898,52 @@ export const performIdentityGraft = async (
 export const convertVisualArchitectToPrompt = (architect: VisualArchitectResult, stripIdentity: boolean = false): string => {
   const parts: string[] = [];
 
-  // 1. Technical/Style (Frameing the shot)
-  if (architect.style?.aesthetic) parts.push(`Aesthetic: ${architect.style.aesthetic}`);
-  if (architect.frame?.composition) parts.push(`Composition: ${architect.frame.composition}`);
+  // VisionStruct Ultra Conversion - PRIORITIZED ORDER FOR IMAGE GEN
 
-  // 2. Subject (The who)
-  if (architect.subject) {
-    if (architect.subject.demographics) parts.push(`Subject: ${architect.subject.demographics}`);
-    if (!stripIdentity && architect.subject.identity) parts.push(architect.subject.identity);
-    if (architect.subject.pose) parts.push(`Pose: ${architect.subject.pose}`);
-    if (architect.subject.expression) parts.push(`Expression: ${architect.subject.expression}`);
-    if (!stripIdentity && architect.subject.face) parts.push(`Face: ${architect.subject.face}`);
-    if (!stripIdentity && architect.subject.hair) parts.push(`Hair: ${architect.subject.hair}`);
-    if (!stripIdentity && architect.subject.body) parts.push(`Body: ${architect.subject.body}`);
+  // 1. Subject Core (Identity & Styling) - MOST IMPORTANT
+  if (architect.subject_core) {
+    if (!stripIdentity && architect.subject_core.identity) parts.push(`Subject: ${architect.subject_core.identity}`);
+    if (architect.subject_core.styling) parts.push(`Styling: ${architect.subject_core.styling}`);
   }
 
-  // 3. Wardrobe (The wear)
-  if (architect.wardrobe) {
-    if (architect.wardrobe.items && architect.wardrobe.items.length > 0) {
-      const items = architect.wardrobe.items.map(i => `${i.item} (${i.details})`).join(', ');
-      parts.push(`Wardrobe: ${items}`);
-    }
-    if (architect.wardrobe.physics) parts.push(`Fabric Physics: ${architect.wardrobe.physics}`);
+  // 2. Attire Mechanics (Wardrobe) - CRITICAL VISUALS
+  if (architect.attire_mechanics) {
+    if (architect.attire_mechanics.garments) parts.push(`Wardrobe: ${architect.attire_mechanics.garments}`);
+    if (architect.attire_mechanics.fit_and_physics) parts.push(`Fabric Physics: ${architect.attire_mechanics.fit_and_physics}`);
   }
 
-  // 4. Environment (The where)
-  if (architect.environment) {
-    if (architect.environment.location) parts.push(`Location: ${architect.environment.location}`);
-    if (architect.environment.context) parts.push(`Time/Weather: ${architect.environment.context}`);
-    if (architect.environment.background) parts.push(`Background: ${architect.environment.background}`);
+  // 3. Anatomical Details (Pose)
+  if (architect.anatomical_details) {
+    const a = architect.anatomical_details;
+    const anatomical = [];
+    if (a.posture_and_spine) anatomical.push(`Pose: ${a.posture_and_spine}`);
+    if (a.limb_placement) anatomical.push(`Limbs: ${a.limb_placement}`);
+    if (a.hands_and_fingers) anatomical.push(`Hands: ${a.hands_and_fingers}`);
+    if (a.head_and_gaze) anatomical.push(`Head/Gaze: ${a.head_and_gaze}`);
+    if (a.facial_expression) anatomical.push(`Expression: ${a.facial_expression}`);
+    if (anatomical.length > 0) parts.push(`Anatomy: ${anatomical.join(', ')}`);
   }
 
-  // 5. Lighting & Camera (The how)
-  if (architect.lighting) {
-    if (architect.lighting.type) parts.push(`Lighting: ${architect.lighting.type}`);
-    if (architect.lighting.direction) parts.push(`Direction: ${architect.lighting.direction}`);
-    if (architect.lighting.quality) parts.push(`Quality: ${architect.lighting.quality}`);
+  // 4. Atmosphere & Context
+  if (architect.atmosphere_and_context) {
+    if (architect.atmosphere_and_context.mood) parts.push(`Mood: ${architect.atmosphere_and_context.mood}`);
+    if (architect.atmosphere_and_context.lighting_source) parts.push(`Lighting: ${architect.atmosphere_and_context.lighting_source}`);
+    if (architect.atmosphere_and_context.shadow_play) parts.push(`Shadows: ${architect.atmosphere_and_context.shadow_play}`);
   }
 
-  if (architect.camera) {
-    if (architect.camera.lens) parts.push(`Lens: ${architect.camera.lens}`);
-    if (architect.camera.aperture) parts.push(`Aperture: ${architect.camera.aperture}`);
+  // 5. Environment
+  if (architect.environment_and_depth) {
+    if (architect.environment_and_depth.background_elements) parts.push(`Background: ${architect.environment_and_depth.background_elements}`);
+    if (architect.environment_and_depth.surface_interactions) parts.push(`Interactions: ${architect.environment_and_depth.surface_interactions}`);
   }
 
-  if (architect.style?.color_grading) parts.push(`Color Grading: ${architect.style.color_grading}`);
-
-  let prompt = parts.join('. ').replace(/\.\./g, '.');
-
-  if (stripIdentity) {
-    prompt = stripIdentityDescriptions(prompt);
+  // 6. Texture
+  if (architect.image_texture) {
+    if (architect.image_texture.camera_characteristics) parts.push(`Camera: ${architect.image_texture.camera_characteristics}`);
+    if (architect.image_texture.quality_defects) parts.push(`Texture: ${architect.image_texture.quality_defects}`);
   }
 
-  return prompt;
+  return parts.join('\n\n');
 };
 
 export const analyzePhysicalAppearance = async (

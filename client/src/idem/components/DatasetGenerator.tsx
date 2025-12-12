@@ -100,6 +100,12 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         }
     }, [inputIdentity]);
 
+    // Sync: Clear local manual overrides when the input images change (e.g. new generation from Vision tab)
+    useEffect(() => {
+        setLocalHeadshot(null);
+        setLocalBodyshot(null);
+    }, [inputImages]);
+
     useEffect(() => {
         loadSavedData();
     }, []);

@@ -47,54 +47,39 @@ export interface UGCSettings {
 }
 
 // Core Interface
+// Core Interface - VisionStruct Schema
 export interface VisualArchitectResult {
-    _thought_process?: string;
-    meta?: {
-        intent?: string;
-        priorities?: string[];
+    meta: {
+        medium: string;
+        visual_fidelity: string;
     };
-    frame?: {
-        aspect_ratio?: string;
-        composition?: string;
-        layout?: string;
+    atmosphere_and_context: {
+        mood: string;
+        lighting_source: string;
+        shadow_play: string;
     };
-    subject?: {
-        identity?: string;
-        demographics?: string;
-        face?: string;
-        hair?: string;
-        body?: string;
-        expression?: string;
-        pose?: string;
+    subject_core: {
+        identity: string;
+        styling: string;
     };
-    wardrobe?: {
-        items?: Array<{ item: string; details: string }>;
-        physics?: string;
+    anatomical_details: {
+        posture_and_spine: string;
+        limb_placement: string;
+        hands_and_fingers: string;
+        head_and_gaze: string;
+        facial_expression: string;
     };
-    environment?: {
-        location?: string;
-        foreground?: string;
-        midground?: string;
-        background?: string;
-        context?: string;
+    attire_mechanics: {
+        garments: string;
+        fit_and_physics: string;
     };
-    lighting?: {
-        type?: string;
-        direction?: string;
-        quality?: string;
-        light_shaping?: string;
+    environment_and_depth: {
+        background_elements: string;
+        surface_interactions: string;
     };
-    camera?: {
-        sensor?: string;
-        lens?: string;
-        aperture?: string;
-        shutter?: string;
-        focus?: string;
-    };
-    style?: {
-        aesthetic?: string;
-        color_grading?: string;
-        texture?: string;
+    image_texture: {
+        quality_defects: string;
+        camera_characteristics: string;
     };
 }
 

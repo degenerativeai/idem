@@ -75,9 +75,9 @@ const IdemPage: React.FC = () => {
                         const isActive = activeTab === tab;
                         const labels = {
                             vision: 'Create Identity',
-                            dataset: 'Dataset Creator',
+                            dataset: 'LoRA Dataset Creator',
                             clone: 'Image Cloning & Character Swap',
-                            generator: 'Social Media'
+                            generator: 'Social Media / UGC Prompts'
                         };
                         const tabColors = {
                             vision: { bg: 'rgba(168, 85, 247, 0.3)', border: 'rgba(168, 85, 247, 0.5)', text: '#e9d5ff', hover: 'rgba(168, 85, 247, 0.15)', hoverText: '#c4b5fd' },
