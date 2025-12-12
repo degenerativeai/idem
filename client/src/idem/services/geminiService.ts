@@ -6,7 +6,7 @@ import {
   VACUUM_COMPILER_DIRECTIVE,
   RICH_MEDIA_DIRECTIVE_CANDID,
   RICH_MEDIA_DIRECTIVE_STUDIO,
-  VISION_STRUCT_DIRECTIVE,
+
   VISUAL_PROMPT_ARCHITECT,
   CANDID_VIEW_DIRECTIVE,
   PHYSICAL_APPEARANCE_DIRECTIVE,
@@ -117,87 +117,7 @@ const parseDataUrl = (dataUrl: string) => {
   return { mimeType: matches[1], data: matches[2] };
 };
 
-export const analyzeImageWithDirective = async (
-  imageDataUrl: string,
-  modelId: string = 'gemini-2.0-flash'
-): Promise<any> => {
-  const ai = getAiClient();
-  const { mimeType, data } = parseDataUrl(imageDataUrl);
 
-  const schema: Schema = {
-    type: Type.OBJECT,
-    properties: {
-      meta: { type: Type.OBJECT, properties: { medium: { type: Type.STRING }, visual_fidelity: { type: Type.STRING } } },
-      atmosphere_and_context: { type: Type.OBJECT, properties: { mood: { type: Type.STRING }, lighting_source: { type: Type.STRING }, shadow_play: { type: Type.STRING } } },
-      subject_core: {
-        type: Type.OBJECT,
-        properties: {
-          identity: { type: Type.STRING },
-          styling: { type: Type.STRING },
-          imperfections: { type: Type.OBJECT, properties: { skin: { type: Type.STRING }, hair: { type: Type.STRING }, general: { type: Type.STRING } } }
-        }
-      },
-      anatomical_details: {
-        type: Type.OBJECT,
-        properties: {
-          posture_and_spine: { type: Type.STRING },
-          limb_placement: { type: Type.STRING },
-          hands_and_fingers: { type: Type.STRING },
-          head_and_gaze: { type: Type.STRING }
-        }
-      },
-      attire_mechanics: {
-        type: Type.OBJECT,
-        properties: {
-          garments: { type: Type.STRING },
-          fit_and_physics: { type: Type.STRING }
-        }
-      },
-      environment_and_depth: {
-        type: Type.OBJECT,
-        properties: {
-          background_elements: { type: Type.STRING },
-          surface_interactions: { type: Type.STRING }
-        }
-      },
-      image_texture: {
-        type: Type.OBJECT,
-        properties: {
-          quality_defects: { type: Type.STRING },
-          camera_characteristics: { type: Type.STRING }
-        }
-      }
-    }
-  };
-
-  try {
-    const result = await ai.models.generateContent({
-      model: modelId,
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: VISION_STRUCT_DIRECTIVE },
-            { inlineData: { mimeType, data } }
-          ]
-        }
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: schema
-      }
-    });
-
-    const responseText = result.text;
-    if (!responseText) throw new Error("No response from VisionStruct");
-
-    return JSON.parse(responseText);
-
-  } catch (e: any) {
-    console.error("VisionStruct Error:", e);
-    throw new Error("Failed to analyze image: " + e.message);
-  }
-};
 
 export const analyzeSubjectImages = async (
   headshotBase64: string,

@@ -15,7 +15,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
     const [finalPrompt, setFinalPrompt] = useState<string>('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    // Original position of copiedType: const [copiedType, setCopiedType] = useState<'full' | 'json' | null>(null);
+
 
 
 
@@ -729,9 +729,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
 
 
                     <div style={{ padding: '1rem', display: 'grid', gap: '0.75rem' }}>
-                        {/* THE EXISTING OBJECT RENDERING LOGIC GOES HERE - REUSING IT VIA COPY/PASTE OR ASSUMING IT'S INSIDE THE RENDER */}
-                        {/* Since I am replacing the whole block, I must include the object rendering code OR use a simpler approach if the user permits. */}
-                        {/* Use the existing rendering block I see in the file view */}
+
 
                         <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {/* 1. Meta Tags Row */}
