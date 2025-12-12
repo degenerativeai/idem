@@ -8,3 +8,5 @@ vite.config.ts.*
 .replit
 replit.md
 .local
+dist-electron/
+release/

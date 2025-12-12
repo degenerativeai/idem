@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDEM Loading...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0b0c10;
+            /* Obsidian/Dark BG */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            animation: fadeIn 1.5s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-image {
+            width: 450px;
+            /* Wider to show full logo+text */
+            height: auto;
+            border-radius: 20px;
+            /* box-shadow: 0 0 40px rgba(139, 92, 246, 0.4); */
+            /* Remove glow if image has it */
+            margin-bottom: 20px;
+            object-fit: contain;
+        }
+
+        h1 {
+            font-size: 4rem;
+            /* Big bulky letters */
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0;
+            background: linear-gradient(to right, #ffffff, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        .tagline {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #94a3b8;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .loader {
+            margin-top: 20px;
+            width: 200px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Image contains Logo + Text now -->
+        <img src="./splash-hero.png" alt="IDEM" class="hero-image">
+        <div class="loader"></div>
+    </div>
+</body>
+
+</html>

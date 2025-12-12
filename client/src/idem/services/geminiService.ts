@@ -100,12 +100,15 @@ export const stripIdentityDescriptions = (text: string): string => {
 
 const filterPromptItem = (item: any): any => {
   if (item.generation_data?.final_prompt_string) {
-    item.generation_data.final_prompt_string = stripIdentityDescriptions(
-      item.generation_data.final_prompt_string
-    );
+    let clean = stripIdentityDescriptions(item.generation_data.final_prompt_string);
+    // Remove "undefined" artifacts (case insensitive)
+    clean = clean.replace(/\bundefined\b/gi, '').replace(/\s{2,}/g, ' ').trim();
+    item.generation_data.final_prompt_string = clean;
   }
   if (item.subject?.description) {
-    item.subject.description = stripIdentityDescriptions(item.subject.description);
+    let clean = stripIdentityDescriptions(item.subject.description);
+    clean = clean.replace(/\bundefined\b/gi, '').replace(/\s{2,}/g, ' ').trim();
+    item.subject.description = clean;
   }
   return item;
 };
@@ -277,7 +280,7 @@ Generate prompts with everyday, casual scenarios and modest clothing:
 - Keep body descriptions anatomical and professional
 
 === CLOTHING SPECIFICITY PROTOCOL ===
-- BANNED TERMS: "any", "random", "standard", "generic", "typical".
+- BANNED TERMS: "any", "random", "standard", "generic", "typical", "various".
 - REQUIREMENT: Use precise, descriptive terms (e.g., "cable-knit sweater", "denim jacket", "floral sundress") instead of generic categories.
 `;
 
@@ -340,11 +343,11 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     ${formEnhanceInstructions}
     
     IDENTITY CONTEXT:
-    Name: ${params.identity.name}
-    Age: ${params.identity.age_estimate}
-    Profession: ${params.identity.profession}
-    Backstory: ${params.identity.backstory}
-    Body Description: ${params.subjectDescription}
+    Name: ${params.identity.name || "Unknown Identifier"}
+    Age: ${params.identity.age_estimate || "25"}
+    Profession: ${params.identity.profession || "Model"}
+    Backstory: ${params.identity.backstory || "None"}
+    Body Description: ${params.subjectDescription || "Standard model physique"}
     
     TASK: Generate ${params.count} distinct image prompts.
     START INDEX: ${params.startCount + 1}

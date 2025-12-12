@@ -39,7 +39,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
     const isLoRAMode = !!parsedContent?.generation_data;
     const isVisionStruct = !!parsedContent?.subject_core && !!parsedContent?.atmosphere_and_context;
 
-    const finalString = parsedContent?.generation_data?.final_prompt_string || (parsedContent?.subject ? `Hyper-realistic ${parsedContent.photography?.shot_type || 'Shot'}, ${parsedContent.subject.description || ''}, ${parsedContent.background?.setting || ''}, ${parsedContent.subject.clothing?.top?.type || ''} ${parsedContent.subject.clothing?.top?.color || ''}, ${parsedContent.subject.clothing?.bottom?.type || ''} ${parsedContent.subject.clothing?.bottom?.color || ''}, 8k, raw photo.` : promptText);
+    const finalString = parsedContent?.generation_data?.final_prompt_string || (parsedContent?.subject ? `Hyper-realistic ${parsedContent.photography?.shot_type || 'Shot'}, ${parsedContent.subject.description || ''}, ${parsedContent.background?.setting || ''}, ${parsedContent.subject.clothing?.top?.color || ''} ${parsedContent.subject.clothing?.top?.type || ''}, ${parsedContent.subject.clothing?.bottom?.color || ''} ${parsedContent.subject.clothing?.bottom?.type || ''}, 8k, raw photo.`.replace(/\bundefined\b/gi, '').replace(/\s{2,}/g, ' ').trim() : promptText);
     const refLogic = parsedContent?.generation_data?.reference_logic;
 
     const subject = parsedContent?.subject;
@@ -85,18 +85,46 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
         ) : null
     );
 
-    const ClothingItem = ({ label, item }: { label: string, item: { type?: string; style?: string; item?: string; name?: string; color?: string; details?: string; description?: string } | undefined }) => {
+    const ClothingItem = ({ label, item, shotType }: { label: string, item: { type?: string; style?: string; item?: string; name?: string; color?: string; details?: string; description?: string } | undefined, shotType?: string }) => {
+
         let content = <span className="text-gray-600 italic text-[10px]">Not specified</span>;
+
+        // Smart Visibility Logic
+        // If it's a headshot, Bottoms are physically not visible.
+        const isHeadshot = shotType?.toLowerCase().includes('headshot');
+        const isBottom = label.toLowerCase() === 'bottom';
+
+        if (isHeadshot && isBottom) {
+            content = <span className="text-gray-600 italic text-[10px]">Not visible in this shot</span>;
+        }
+
         if (item && Object.keys(item).length > 0) {
-            const type = item.type || item.style || item.item || item.name || "Garment";
-            const color = item.color || "";
+            let type = item.type || item.style || item.item || item.name || "";
+            let color = item.color || "";
             const details = item.details || item.description || "";
-            content = (
-                <div className="flex flex-col">
-                    <span className="text-xs text-gray-200 font-medium">{color} {type}</span>
-                    {details && <span className="text-[9px] text-gray-500 leading-tight mt-0.5">{details}</span>}
-                </div>
-            );
+
+            // Clean up strings
+            const isInvalid = (s: string) => !s || s.toLowerCase() === 'none' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'undefined';
+
+            if (isInvalid(type)) type = "";
+            if (isInvalid(color)) color = "";
+
+            if (type || color || details) {
+                const displayText = `${color} ${type}`.trim();
+
+                // If we have details but no type/color, just show details.
+                // If we have type/color, show that.
+                // If we have both, show both.
+
+                content = (
+                    <div className="flex flex-col">
+                        {displayText && <span className="text-xs text-gray-200 font-medium">{displayText}</span>}
+                        {details && <span className="text-[9px] text-gray-500 leading-tight mt-0.5">{details}</span>}
+                        {/* Fallback if somehow we got here but both are empty (shouldn't happen due to if check above) */}
+                        {!displayText && !details && <span className="text-gray-600 italic text-[10px]">Not specified</span>}
+                    </div>
+                );
+            }
         }
         return (
             <div className="mb-2">
@@ -278,8 +306,30 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
 
                                     <div className="bg-rose-900/10 border border-rose-500/20 rounded-lg p-3">
                                         <SectionHeader title="Wardrobe" colorClass="text-rose-400 border-rose-500" icon={<div className="w-3 h-3 rounded-full bg-rose-400/50" />} />
-                                        <ClothingItem label="Top" item={subject.clothing?.top} />
-                                        <ClothingItem label="Bottom" item={subject.clothing?.bottom} />
+
+                                        {/* Logic to handle One-Piece items and Duplicates */}
+                                        {(() => {
+                                            const topType = (subject.clothing?.top?.type || "").toLowerCase();
+                                            const topColor = (subject.clothing?.top?.color || "").toLowerCase();
+                                            const bottomType = (subject.clothing?.bottom?.type || "").toLowerCase();
+                                            const bottomColor = (subject.clothing?.bottom?.color || "").toLowerCase();
+
+                                            const fullTop = `${topColor} ${topType}`.trim();
+                                            const fullBottom = `${bottomColor} ${bottomType}`.trim();
+
+                                            const isOnePiece = topType.includes('bodysuit') || topType.includes('dress') || topType.includes('jumpsuit') || topType.includes('gown') || topType.includes('swimsuit') || topType.includes('bikini');
+                                            const isDuplicate = fullTop === fullBottom && fullTop.length > 0;
+
+                                            return (
+                                                <>
+                                                    <ClothingItem label={isOnePiece ? "One-Piece / Top" : "Top"} item={subject.clothing?.top} shotType={photography?.shot_type} />
+                                                    {/* Only show bottom if it's NOT a one-piece AND NOT a duplicate */}
+                                                    {!isOnePiece && !isDuplicate && (
+                                                        <ClothingItem label="Bottom" item={subject.clothing?.bottom} shotType={photography?.shot_type} />
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
                                     </div>
 
                                     <div className="bg-emerald-900/10 border border-emerald-500/20 rounded-lg p-3">
