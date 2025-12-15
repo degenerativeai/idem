@@ -47,7 +47,7 @@ export interface UGCSettings {
 }
 
 // Core Interface
-// Core Interface - VisionStruct Schema
+// Core Interface - VisionStruct Schema (V1 - Legacy/Swap)
 export interface VisualArchitectResult {
     meta: {
         medium: string;
@@ -81,6 +81,79 @@ export interface VisualArchitectResult {
         quality_defects: string;
         camera_characteristics: string;
     };
+}
+
+// Core Interface - VisionStruct Schema (V2 - Clone)
+export interface VisualArchitectResultV2 {
+    meta: {
+        intent: string;
+        priorities: string[];
+    };
+    frame: {
+        aspect: string;
+        composition: string;
+        layout: string;
+        perspective: string;
+    };
+    subject: {
+        identity: string;
+        demographics: string;
+        face_shape: string;
+        jaw_chin_structure: string;
+        eye_features: string;
+        eye_aperture_during_smile: string;
+        Skin_Porosity_Texture: string;
+        Lip_Volume_Mapping: string;
+        hair: string;
+        detailed_body_descriptions: string;
+        expression: string;
+        pose: string;
+    };
+    wardrobe: {
+        garments: string;
+        light_behavior: string;
+    };
+    accessories: {
+        jewelry: string;
+        eyewear: string;
+        bags: string;
+        misc: string;
+    };
+    environment: {
+        setting: string;
+        surfaces: string;
+        depth: string;
+        atmosphere: string;
+    };
+    lighting: {
+        key: string;
+        fill: string;
+        rim: string;
+        shadows: string;
+        color_temperature: string;
+    };
+    camera: {
+        lens: string;
+        aperture: string;
+        focus: string;
+        perspective: string;
+        distortion: string;
+    };
+    post_processing: {
+        color: string;
+        tonality: string;
+        texture: string;
+        film_qualities: string;
+    };
+    subjective_attractiveness: {
+        facial_harmony_rating: string;
+        Asian_Beauty_Archetype_Selector: string;
+        Feature_Idealization_Score: string;
+        Phenotype_Description: string;
+        overall_subjective_rating: string;
+    };
+    negative_specifications: string;
+    panel_specifications?: string;
 }
 
 export interface ImageGenerationOptions {

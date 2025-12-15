@@ -664,6 +664,17 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                 {/* Batch Mode Controls */}
                 {mode === 'api' && (
                     <div style={{ ...panelStyle, padding: '1rem', gap: '0.75rem' }} className="animate-fade-in-up">
+                        <div style={{ marginTop: '0rem' }}>
+                            <label style={labelStyle}>Wardrobe Style</label>
+                            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <button onClick={() => setSafetyMode('sfw')} data-testid="button-safety-sfw-batch" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'sfw' ? '#3b82f6' : 'transparent', color: safetyMode === 'sfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
+                                    <IconShirt style={{ width: '14px', color: safetyMode === 'sfw' ? 'white' : '#a855f7' }} /> Everyday
+                                </button>
+                                <button onClick={() => setSafetyMode('nsfw')} data-testid="button-safety-nsfw-batch" onMouseEnter={handleBtnEnter} onMouseLeave={handleBtnLeave} onMouseDown={handleBtnDown} onMouseUp={handleBtnUp} style={{ ...buttonBaseStyle, padding: '0.5rem', flex: 1, borderRadius: '0.35rem', background: safetyMode === 'nsfw' ? '#ef4444' : 'transparent', color: safetyMode === 'nsfw' ? 'white' : '#94a3b8', boxShadow: 'none' }}>
+                                    <IconFlame style={{ width: '14px', color: safetyMode === 'nsfw' ? 'white' : '#ef4444' }} /> Racy
+                                </button>
+                            </div>
+                        </div>
                         <div>
                             <label style={labelStyle}>Provider</label>
                             <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle} data-testid="select-provider">

@@ -24,11 +24,11 @@ By combining forensic-level image analysis with a "LoRA Forge" workflow, IDEM al
 ### 🧬 1. Identity Engineering (VisionStruct)
 Stop guessing. IDEM uses computer vision to analyze your source images and extract a "VisionStruct" — a forensic map of physical traits.
 - **Reference Generator**: Automatically generate perfect 1:1 Headshot and Bodyshot references.
-- **Multi-Provider Support**: Switch between **Nano Banana Pro** (Google) and **Wavespeed** engines.
+- **Multi-Provider Support**: Switch between **Nano Banana Pro** (Google) and **Wavespeed** API endpoints.
 - **Consistency Lock**: Ensures your subject looks the same across thousands of generations.
 
 ### 🏭 2. LoRA Forge / Dataset Generator
-Build professional training datasets in minutes, not days.
+Build professional training datasets in minutes, not hours.
 - **Deep Analysis**: Extracts "Realism Stack" (skin texture, lighting physics) and "Body Stack" (morphology).
 - **Auto-Synthesizer**: Generates 100+ unique training prompts based on your subject's actual identity.
 - **Batch Processing**: Auto-generates the images, zips them up with JSON metadata, and prepares them for LoRA training.
@@ -37,10 +37,10 @@ Build professional training datasets in minutes, not days.
 ### 📸 3. Image Cloning & Forensic Analysis
 Reverse-engineer any image into a perfect prompt.
 - **Image → INI**: Converts any image into a sophisticated configuration file (INI format) describing lighting, camera angles, and geometry.
-- **Scene Only Mode**: The "Privacy Filter" for AI. Intelligently strips all physical identity traits from a scene, allowing you to copy the *vibe* of a photo without copying the *person*.
+- **Scene Only Mode**: The "Face Swap". Intelligently strips all physical identity traits from a scene, allowing you to copy the scene as well as the pose, emotion and clothing of the subject.
 
 ### 📱 4. UGC & Social Media Architect
-Scale your content creation with structure.
+Create hyper-realistic prompts for social media and UGC.
 - **Scenario Builder**: Describe a niche (e.g., "Coffee shop aesthetic") and get structured prompts.
 - **Smart Formatting**: Automatically breaks down prompts into Setting, Outfit, Pose, and Camera settings.
 - **Batch Generation**: Create weeks of content concepts in seconds.

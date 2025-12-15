@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { VisualArchitectResult, ImageProvider, ImageAspect, ImageGenerationResult } from '../types';
+import { VisualArchitectResult, VisualArchitectResultV2, ImageProvider, ImageAspect, ImageGenerationResult } from '../types';
 import { analyzeImageVisualArchitect, convertVisualArchitectToPrompt, performIdentityGraft } from '../services/geminiService';
 import { generateImage } from '../services/imageGenerationService';
 
@@ -11,7 +11,7 @@ interface CloneImageProps {
 const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
     const [targetImage, setTargetImage] = useState<string | null>(null);
 
-    const [architectResult, setArchitectResult] = useState<VisualArchitectResult | null>(null);
+    const [architectResult, setArchitectResult] = useState<VisualArchitectResult | VisualArchitectResultV2 | null>(null);
     const [finalPrompt, setFinalPrompt] = useState<string>('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
 
     // Image Generation State
     const [includeImage, setIncludeImage] = useState(false);
-    const [provider, setProvider] = useState<ImageProvider>('wavespeed');
+    const [provider, setProvider] = useState<ImageProvider>('google');
     const [resolution, setResolution] = useState<'2k' | '4k'>('2k');
     const [aspectRatio, setAspectRatio] = useState<ImageAspect>('3:4');
     const [batchSize, setBatchSize] = useState(1);
@@ -161,7 +161,7 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                     // For SWAP, we might want to pass the Reference Image as an image ref?
                     // User requested "Native Image Generation" using the prompt.
 
-                    const promptText = convertVisualArchitectToPrompt(result, mode === 'swap'); // Strip identity for swap? Or keep it? The graft result HAS the ref identity injected.
+                    const promptText = convertVisualArchitectToPrompt(result, false); // Keep identity for swap, as the graft result has the CORRECT identity injected.
 
                     const genOptions = {
                         provider,
@@ -217,6 +217,10 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
         marginBottom: '0.4rem',
         display: 'block',
         letterSpacing: '0.05em'
+    };
+
+    const isV2Result = (result: VisualArchitectResult | VisualArchitectResultV2): result is VisualArchitectResultV2 => {
+        return (result as VisualArchitectResultV2).subject !== undefined && (result as VisualArchitectResultV2).subject.demographics !== undefined;
     };
 
     return (
@@ -732,78 +736,181 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
 
 
                         <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {/* 1. Meta Tags Row */}
-                            {architectResult && architectResult.meta && (
-                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                    <span style={{ fontSize: '0.6rem', padding: '0.2rem 0.6rem', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                        {architectResult.meta.medium}
-                                    </span>
-                                    <span style={{ fontSize: '0.6rem', padding: '0.2rem 0.6rem', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                        {architectResult.meta.visual_fidelity}
-                                    </span>
-                                </div>
+                            {/* V2 RENDER LOGIC */}
+                            {architectResult && isV2Result(architectResult) && (
+                                <>
+                                    {/* 1. Meta / Intent */}
+                                    {architectResult.meta && (
+                                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                                            <span style={{ fontSize: '0.6rem', padding: '0.2rem 0.6rem', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                {architectResult.meta.intent}
+                                            </span>
+                                            {architectResult.meta.priorities?.map((p, i) => (
+                                                <span key={i} style={{ fontSize: '0.6rem', padding: '0.2rem 0.6rem', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.1)' }}>
+                                                    {p}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* 2. Geometric Hardening & Subject (Prominent) */}
+                                    <div style={{ background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '12px', padding: '1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#4ade80', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Geometric Hardening & Subject</span>
+                                        </div>
+                                        <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                            <div>
+                                                <span style={{ fontSize: '0.6rem', color: '#86efac', textTransform: 'uppercase', display: 'block', marginBottom: '0.1rem' }}>Identity</span>
+                                                <p style={{ margin: 0, fontSize: '0.9rem', color: '#e5e7eb', lineHeight: '1.4' }}>{architectResult.subject.identity}</p>
+                                            </div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#86efac', opacity: 0.8 }}>Face Shape</span>
+                                                    <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.subject.face_shape}</p>
+                                                </div>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#86efac', opacity: 0.8 }}>Jaw Analysis</span>
+                                                    <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.subject.jaw_chin_structure}</p>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#86efac', opacity: 0.8 }}>Eyes</span>
+                                                    <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.subject.eye_features}</p>
+                                                </div>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#86efac', opacity: 0.8 }}>Smile Aperture</span>
+                                                    <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.subject.eye_aperture_during_smile}</p>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span style={{ fontSize: '0.6rem', color: '#86efac', opacity: 0.8 }}>Skin Texture</span>
+                                                <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.subject.Skin_Porosity_Texture}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 3. Subjective Attractiveness */}
+                                    <div style={{ background: 'rgba(244, 114, 182, 0.05)', border: '1px solid rgba(244, 114, 182, 0.2)', borderRadius: '12px', padding: '1rem' }}>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#f472b6', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.75rem' }}>Attractiveness Metrics</span>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            <div>
+                                                <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Archetype</span>
+                                                <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.subjective_attractiveness.Asian_Beauty_Archetype_Selector}</p>
+                                            </div>
+                                            <div>
+                                                <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Idealization Score</span>
+                                                <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.subjective_attractiveness.Feature_Idealization_Score}</p>
+                                            </div>
+                                            <div>
+                                                <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Phenotype</span>
+                                                <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.subjective_attractiveness.Phenotype_Description}</p>
+                                            </div>
+                                            <div>
+                                                <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Overall Rating</span>
+                                                <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.subjective_attractiveness.overall_subjective_rating}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 4. Scene Context */}
+                                    <div style={{ background: 'rgba(236, 72, 153, 0.05)', border: '1px solid rgba(236, 72, 153, 0.2)', borderRadius: '12px', padding: '1rem' }}>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#f472b6', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Scene & Context</span>
+                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                            <div>
+                                                <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Setting</span>
+                                                <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.environment.setting}</p>
+                                            </div>
+                                            <div>
+                                                <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Atmosphere</span>
+                                                <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.environment.atmosphere}</p>
+                                            </div>
+                                            <div>
+                                                <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Lighting</span>
+                                                <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.lighting.key} / {architectResult.lighting.shadows}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
                             )}
 
-                            {/* 2. Subject Core (Prominent) */}
-                            {architectResult && architectResult.subject_core && (
-                                <div style={{ background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '12px', padding: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#4ade80', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Subject Core</span>
-                                    </div>
-                                    <div style={{ display: 'grid', gap: '0.5rem' }}>
-                                        <div>
-                                            <span style={{ fontSize: '0.6rem', color: '#86efac', textTransform: 'uppercase', display: 'block', marginBottom: '0.1rem' }}>Identity</span>
-                                            <p style={{ margin: 0, fontSize: '0.9rem', color: '#e5e7eb', lineHeight: '1.4' }}>{architectResult.subject_core.identity}</p>
+                            {/* V1 RENDER LOGIC (LEGACY / SWAP) */}
+                            {architectResult && !isV2Result(architectResult) && (
+                                <>
+                                    {/* 1. Meta Tags Row */}
+                                    {architectResult.meta && (
+                                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.6rem', padding: '0.2rem 0.6rem', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                {architectResult.meta.medium}
+                                            </span>
+                                            <span style={{ fontSize: '0.6rem', padding: '0.2rem 0.6rem', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                {architectResult.meta.visual_fidelity}
+                                            </span>
                                         </div>
-                                        <div>
-                                            <span style={{ fontSize: '0.6rem', color: '#86efac', textTransform: 'uppercase', display: 'block', marginBottom: '0.1rem' }}>Styling</span>
-                                            <p style={{ margin: 0, fontSize: '0.9rem', color: '#d1d5db', lineHeight: '1.4' }}>{architectResult.subject_core.styling}</p>
+                                    )}
+
+                                    {/* 2. Subject Core (Prominent) */}
+                                    {architectResult.subject_core && (
+                                        <div style={{ background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '12px', padding: '1rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#4ade80', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Subject Core</span>
+                                            </div>
+                                            <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#86efac', textTransform: 'uppercase', display: 'block', marginBottom: '0.1rem' }}>Identity</span>
+                                                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#e5e7eb', lineHeight: '1.4' }}>{architectResult.subject_core.identity}</p>
+                                                </div>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#86efac', textTransform: 'uppercase', display: 'block', marginBottom: '0.1rem' }}>Styling</span>
+                                                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#d1d5db', lineHeight: '1.4' }}>{architectResult.subject_core.styling}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    )}
+
+                                    {/* 3. Anatomical Details (Grid) */}
+                                    {architectResult.anatomical_details && (
+                                        <div style={{ background: 'rgba(244, 114, 182, 0.05)', border: '1px solid rgba(244, 114, 182, 0.2)', borderRadius: '12px', padding: '1rem' }}>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#f472b6', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.75rem' }}>Anatomical Details</span>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Head & Gaze</span>
+                                                    <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.anatomical_details.head_and_gaze}</p>
+                                                </div>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Expression</span>
+                                                    <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.anatomical_details.facial_expression}</p>
+                                                </div>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Hands</span>
+                                                    <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.anatomical_details.hands_and_fingers}</p>
+                                                </div>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Posture</span>
+                                                    <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.anatomical_details.posture_and_spine}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 4. Attire Mechanics */}
+                                    {architectResult.attire_mechanics && (
+                                        <div style={{ background: 'rgba(236, 72, 153, 0.05)', border: '1px solid rgba(236, 72, 153, 0.2)', borderRadius: '12px', padding: '1rem' }}>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#f472b6', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Attire Mechanics</span>
+                                            <div style={{ marginBottom: '0.75rem' }}>
+                                                <p style={{ margin: 0, fontSize: '0.9rem', color: '#e5e7eb', lineHeight: '1.4' }}>{architectResult.attire_mechanics.garments}</p>
+                                            </div>
+                                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>
+                                                <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Fit & Physics</span>
+                                                <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.attire_mechanics.fit_and_physics}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
 
-                            {/* 3. Anatomical Details (Grid) */}
-                            {architectResult && architectResult.anatomical_details && (
-                                <div style={{ background: 'rgba(244, 114, 182, 0.05)', border: '1px solid rgba(244, 114, 182, 0.2)', borderRadius: '12px', padding: '1rem' }}>
-                                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#f472b6', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.75rem' }}>Anatomical Details</span>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                        <div>
-                                            <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Head & Gaze</span>
-                                            <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.anatomical_details.head_and_gaze}</p>
-                                        </div>
-                                        <div>
-                                            <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Expression</span>
-                                            <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.anatomical_details.facial_expression}</p>
-                                        </div>
-                                        <div>
-                                            <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Hands</span>
-                                            <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.anatomical_details.hands_and_fingers}</p>
-                                        </div>
-                                        <div>
-                                            <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Posture</span>
-                                            <p style={{ fontSize: '0.8rem', color: '#e5e7eb', marginTop: '0.2rem' }}>{architectResult.anatomical_details.posture_and_spine}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 4. Attire Mechanics */}
-                            {architectResult && architectResult.attire_mechanics && (
-                                <div style={{ background: 'rgba(236, 72, 153, 0.05)', border: '1px solid rgba(236, 72, 153, 0.2)', borderRadius: '12px', padding: '1rem' }}>
-                                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#f472b6', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Attire Mechanics</span>
-                                    <div style={{ marginBottom: '0.75rem' }}>
-                                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#e5e7eb', lineHeight: '1.4' }}>{architectResult.attire_mechanics.garments}</p>
-                                    </div>
-                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>
-                                        <span style={{ fontSize: '0.6rem', color: '#fbcfe8', opacity: 0.8 }}>Fit & Physics</span>
-                                        <p style={{ fontSize: '0.8rem', color: '#d1d5db', marginTop: '0.2rem' }}>{architectResult.attire_mechanics.fit_and_physics}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 5. Atmosphere & Environment (Split) */}
-                            {architectResult && (
+                            {/* 5. Atmosphere & Environment (Split) - V1 ONLY */}
+                            {architectResult && !isV2Result(architectResult) && (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                     {architectResult.atmosphere_and_context && (
                                         <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '12px', padding: '0.75rem' }}>
@@ -828,8 +935,8 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
                                 </div>
                             )}
 
-                            {/* 6. Technical / Texture */}
-                            {architectResult && architectResult.image_texture && (
+                            {/* 6. Technical / Texture - V1 ONLY */}
+                            {architectResult && !isV2Result(architectResult) && architectResult.image_texture && (
                                 <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.75rem', display: 'flex', gap: '1rem' }}>
                                     <div style={{ flex: 1 }}>
                                         <span style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>Quality</span>

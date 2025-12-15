@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Schema, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
-import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, VisualArchitectResult, UGCPromptCard, PhysicalAppearance } from "../types";
+import { PromptItem, IdentityContext, TaskType, SafetyMode, AnalysisResult, UGCSettings, VisualArchitectResult, VisualArchitectResultV2, UGCPromptCard, PhysicalAppearance } from "../types";
 import {
   LORA_FORGE_DIRECTIVE,
   VACUUM_COMPILER_DIRECTIVE,
@@ -546,7 +546,7 @@ Generate prompts with everyday, casual scenarios and modest clothing:
 export const analyzeImageVisualArchitect = async (
   imageDataUrl: string,
   modelId: string = 'gemini-2.5-pro'
-): Promise<VisualArchitectResult> => {
+): Promise<VisualArchitectResultV2> => {
   const ai = getAiClient();
   const { mimeType, data } = parseDataUrl(imageDataUrl);
 
@@ -556,65 +556,114 @@ export const analyzeImageVisualArchitect = async (
       meta: {
         type: Type.OBJECT,
         properties: {
-          medium: { type: Type.STRING },
-          visual_fidelity: { type: Type.STRING }
+          intent: { type: Type.STRING },
+          priorities: { type: Type.ARRAY, items: { type: Type.STRING } }
         },
-        required: ["medium", "visual_fidelity"]
+        required: ["intent", "priorities"]
       },
-      atmosphere_and_context: {
+      frame: {
         type: Type.OBJECT,
         properties: {
-          mood: { type: Type.STRING },
-          lighting_source: { type: Type.STRING },
-          shadow_play: { type: Type.STRING }
+          aspect: { type: Type.STRING },
+          composition: { type: Type.STRING },
+          layout: { type: Type.STRING },
+          perspective: { type: Type.STRING },
         },
-        required: ["mood", "lighting_source", "shadow_play"]
+        required: ["aspect", "composition", "layout", "perspective"]
       },
-      subject_core: {
+      subject: {
         type: Type.OBJECT,
         properties: {
           identity: { type: Type.STRING },
-          styling: { type: Type.STRING }
+          demographics: { type: Type.STRING },
+          face_shape: { type: Type.STRING },
+          jaw_chin_structure: { type: Type.STRING },
+          eye_features: { type: Type.STRING },
+          eye_aperture_during_smile: { type: Type.STRING },
+          Skin_Porosity_Texture: { type: Type.STRING },
+          Lip_Volume_Mapping: { type: Type.STRING },
+          hair: { type: Type.STRING },
+          detailed_body_descriptions: { type: Type.STRING },
+          expression: { type: Type.STRING },
+          pose: { type: Type.STRING },
         },
-        required: ["identity", "styling"]
+        required: ["identity", "demographics", "face_shape", "jaw_chin_structure", "eye_features", "eye_aperture_during_smile", "Skin_Porosity_Texture", "Lip_Volume_Mapping", "hair", "detailed_body_descriptions", "expression", "pose"]
       },
-      anatomical_details: {
-        type: Type.OBJECT,
-        properties: {
-          posture_and_spine: { type: Type.STRING },
-          limb_placement: { type: Type.STRING },
-          hands_and_fingers: { type: Type.STRING },
-          head_and_gaze: { type: Type.STRING },
-          facial_expression: { type: Type.STRING }
-        },
-        required: ["posture_and_spine", "limb_placement", "hands_and_fingers", "head_and_gaze", "facial_expression"]
-      },
-      attire_mechanics: {
+      wardrobe: {
         type: Type.OBJECT,
         properties: {
           garments: { type: Type.STRING },
-          fit_and_physics: { type: Type.STRING }
+          light_behavior: { type: Type.STRING }
         },
-        required: ["garments", "fit_and_physics"]
+        required: ["garments", "light_behavior"]
       },
-      environment_and_depth: {
+      accessories: {
         type: Type.OBJECT,
         properties: {
-          background_elements: { type: Type.STRING },
-          surface_interactions: { type: Type.STRING }
+          jewelry: { type: Type.STRING },
+          eyewear: { type: Type.STRING },
+          bags: { type: Type.STRING },
+          misc: { type: Type.STRING }
         },
-        required: ["background_elements", "surface_interactions"]
+        required: ["jewelry", "eyewear", "bags", "misc"]
       },
-      image_texture: {
+      environment: {
         type: Type.OBJECT,
         properties: {
-          quality_defects: { type: Type.STRING },
-          camera_characteristics: { type: Type.STRING }
+          setting: { type: Type.STRING },
+          surfaces: { type: Type.STRING },
+          depth: { type: Type.STRING },
+          atmosphere: { type: Type.STRING }
         },
-        required: ["quality_defects", "camera_characteristics"]
-      }
+        required: ["setting", "surfaces", "depth", "atmosphere"]
+      },
+      lighting: {
+        type: Type.OBJECT,
+        properties: {
+          key: { type: Type.STRING },
+          fill: { type: Type.STRING },
+          rim: { type: Type.STRING },
+          shadows: { type: Type.STRING },
+          color_temperature: { type: Type.STRING }
+        },
+        required: ["key", "fill", "rim", "shadows", "color_temperature"]
+      },
+      camera: {
+        type: Type.OBJECT,
+        properties: {
+          lens: { type: Type.STRING },
+          aperture: { type: Type.STRING },
+          focus: { type: Type.STRING },
+          perspective: { type: Type.STRING },
+          distortion: { type: Type.STRING }
+        },
+        required: ["lens", "aperture", "focus", "perspective", "distortion"]
+      },
+      post_processing: {
+        type: Type.OBJECT,
+        properties: {
+          color: { type: Type.STRING },
+          tonality: { type: Type.STRING },
+          texture: { type: Type.STRING },
+          film_qualities: { type: Type.STRING }
+        },
+        required: ["color", "tonality", "texture", "film_qualities"]
+      },
+      subjective_attractiveness: {
+        type: Type.OBJECT,
+        properties: {
+          facial_harmony_rating: { type: Type.STRING },
+          Asian_Beauty_Archetype_Selector: { type: Type.STRING },
+          Feature_Idealization_Score: { type: Type.STRING },
+          Phenotype_Description: { type: Type.STRING },
+          overall_subjective_rating: { type: Type.STRING }
+        },
+        required: ["facial_harmony_rating", "Asian_Beauty_Archetype_Selector", "Feature_Idealization_Score", "Phenotype_Description", "overall_subjective_rating"]
+      },
+      negative_specifications: { type: Type.STRING },
+      panel_specifications: { type: Type.STRING }
     },
-    required: ["meta", "atmosphere_and_context", "subject_core", "anatomical_details", "attire_mechanics", "environment_and_depth", "image_texture"]
+    required: ["meta", "frame", "subject", "wardrobe", "accessories", "environment", "lighting", "camera", "post_processing", "subjective_attractiveness", "negative_specifications"]
   };
 
   try {
@@ -649,29 +698,22 @@ export const analyzeImageVisualArchitect = async (
     if (!responseText) throw new Error("No response from Visual Architect");
 
     // --- CLEANING STEP ---
-    // 1. Remove Markdown code blocks if present ( ```json ... ``` )
     let cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    // 2. Locate the first '{' and the last '}' to handle partial introductory text
     const firstOpen = cleanedText.indexOf('{');
     const lastClose = cleanedText.lastIndexOf('}');
 
     if (firstOpen !== -1 && lastClose !== -1) {
       cleanedText = cleanedText.substring(firstOpen, lastClose + 1);
     } else if (firstOpen !== -1) {
-      // If we have an opening brace but no closing one (truncation), take everything from open
       cleanedText = cleanedText.substring(firstOpen);
     }
 
-    // 3. Parse safely using recovery
     try {
-      // Try standard parse first
-      const jsonResponse = JSON.parse(cleanedText) as VisualArchitectResult;
+      const jsonResponse = JSON.parse(cleanedText) as VisualArchitectResultV2;
       return jsonResponse;
     } catch (parseError) {
-      // Fallback to recovery if standard parse fails
       try {
-        const recovered = parseJSONWithRecovery(cleanedText) as VisualArchitectResult;
+        const recovered = parseJSONWithRecovery(cleanedText) as VisualArchitectResultV2;
         return recovered;
       } catch (recoveryError) {
         console.error("JSON Parse Failed. Raw text was:", cleanedText.substring(0, 2000) + "...");
@@ -818,52 +860,99 @@ export const performIdentityGraft = async (
 };
 
 
-export const convertVisualArchitectToPrompt = (architect: VisualArchitectResult, stripIdentity: boolean = false): string => {
+export const convertVisualArchitectToPrompt = (architect: VisualArchitectResult | VisualArchitectResultV2, stripIdentity: boolean = false): string => {
   const parts: string[] = [];
 
-  // VisionStruct Ultra Conversion - PRIORITIZED ORDER FOR IMAGE GEN
+  // Helper to check for V2
+  const isV2 = (res: any): res is VisualArchitectResultV2 => !!res.subject;
 
-  // 1. Subject Core (Identity & Styling) - MOST IMPORTANT
-  if (architect.subject_core) {
-    if (!stripIdentity && architect.subject_core.identity) parts.push(`Subject: ${architect.subject_core.identity}`);
-    if (architect.subject_core.styling) parts.push(`Styling: ${architect.subject_core.styling}`);
-  }
+  if (isV2(architect)) {
+    // --- V2 Conversion ---
 
-  // 2. Attire Mechanics (Wardrobe) - CRITICAL VISUALS
-  if (architect.attire_mechanics) {
-    if (architect.attire_mechanics.garments) parts.push(`Wardrobe: ${architect.attire_mechanics.garments}`);
-    if (architect.attire_mechanics.fit_and_physics) parts.push(`Fabric Physics: ${architect.attire_mechanics.fit_and_physics}`);
-  }
+    // 1. Meta / Intent
+    if (architect.meta) {
+      parts.push(`Intent: ${architect.meta.intent}`);
+      if (architect.meta.priorities) parts.push(`Priorities: ${architect.meta.priorities.join(', ')}`);
+    }
 
-  // 3. Anatomical Details (Pose)
-  if (architect.anatomical_details) {
-    const a = architect.anatomical_details;
-    const anatomical = [];
-    if (a.posture_and_spine) anatomical.push(`Pose: ${a.posture_and_spine}`);
-    if (a.limb_placement) anatomical.push(`Limbs: ${a.limb_placement}`);
-    if (a.hands_and_fingers) anatomical.push(`Hands: ${a.hands_and_fingers}`);
-    if (a.head_and_gaze) anatomical.push(`Head/Gaze: ${a.head_and_gaze}`);
-    if (a.facial_expression) anatomical.push(`Expression: ${a.facial_expression}`);
-    if (anatomical.length > 0) parts.push(`Anatomy: ${anatomical.join(', ')}`);
-  }
+    // 2. Subject
+    if (architect.subject) {
+      if (!stripIdentity && architect.subject.identity) parts.push(`Subject Identity: ${architect.subject.identity}`);
+      parts.push(`Demographics: ${architect.subject.demographics}`);
+      parts.push(`Face: ${architect.subject.face_shape}, ${architect.subject.jaw_chin_structure}`);
+      parts.push(`Eyes: ${architect.subject.eye_features}, ${architect.subject.eye_aperture_during_smile}`);
+      parts.push(`Skin: ${architect.subject.Skin_Porosity_Texture}`);
+      parts.push(`Hair: ${architect.subject.hair}`);
+      parts.push(`Body: ${architect.subject.detailed_body_descriptions}`);
+      parts.push(`Expression: ${architect.subject.expression}`);
+      parts.push(`Pose: ${architect.subject.pose}`);
+    }
 
-  // 4. Atmosphere & Context
-  if (architect.atmosphere_and_context) {
-    if (architect.atmosphere_and_context.mood) parts.push(`Mood: ${architect.atmosphere_and_context.mood}`);
-    if (architect.atmosphere_and_context.lighting_source) parts.push(`Lighting: ${architect.atmosphere_and_context.lighting_source}`);
-    if (architect.atmosphere_and_context.shadow_play) parts.push(`Shadows: ${architect.atmosphere_and_context.shadow_play}`);
-  }
+    // 3. Wardrobe & Accessories
+    if (architect.wardrobe) parts.push(`Wardrobe: ${architect.wardrobe.garments} (${architect.wardrobe.light_behavior})`);
+    if (architect.accessories) {
+      const acc = [];
+      if (architect.accessories.jewelry) acc.push(architect.accessories.jewelry);
+      if (architect.accessories.eyewear) acc.push(architect.accessories.eyewear);
+      if (acc.length) parts.push(`Accessories: ${acc.join(', ')}`);
+    }
 
-  // 5. Environment
-  if (architect.environment_and_depth) {
-    if (architect.environment_and_depth.background_elements) parts.push(`Background: ${architect.environment_and_depth.background_elements}`);
-    if (architect.environment_and_depth.surface_interactions) parts.push(`Interactions: ${architect.environment_and_depth.surface_interactions}`);
-  }
+    // 4. Environment & Lighting
+    if (architect.environment) parts.push(`Environment: ${architect.environment.setting}, ${architect.environment.atmosphere}`);
+    if (architect.lighting) parts.push(`Lighting: ${architect.lighting.key}, ${architect.lighting.shadows}, ${architect.lighting.color_temperature}`);
 
-  // 6. Texture
-  if (architect.image_texture) {
-    if (architect.image_texture.camera_characteristics) parts.push(`Camera: ${architect.image_texture.camera_characteristics}`);
-    if (architect.image_texture.quality_defects) parts.push(`Texture: ${architect.image_texture.quality_defects}`);
+    // 5. Camera & Post
+    if (architect.camera) parts.push(`Camera: ${architect.camera.lens}, ${architect.camera.perspective}`);
+    if (architect.post_processing) parts.push(`Style: ${architect.post_processing.color}, ${architect.post_processing.film_qualities}`);
+
+    // 6. Negatives
+    if (architect.negative_specifications) parts.push(`Negative Prompt: ${architect.negative_specifications}`);
+
+  } else {
+    // --- V1 Conversion (Legacy/Swap) ---
+
+    // 1. Subject Core (Identity & Styling) - MOST IMPORTANT
+    if (architect.subject_core) {
+      if (!stripIdentity && architect.subject_core.identity) parts.push(`Subject: ${architect.subject_core.identity}`);
+      if (architect.subject_core.styling) parts.push(`Styling: ${architect.subject_core.styling}`);
+    }
+
+    // 2. Attire Mechanics (Wardrobe) - CRITICAL VISUALS
+    if (architect.attire_mechanics) {
+      if (architect.attire_mechanics.garments) parts.push(`Wardrobe: ${architect.attire_mechanics.garments}`);
+      if (architect.attire_mechanics.fit_and_physics) parts.push(`Fabric Physics: ${architect.attire_mechanics.fit_and_physics}`);
+    }
+
+    // 3. Anatomical Details (Pose)
+    if (architect.anatomical_details) {
+      const a = architect.anatomical_details;
+      const anatomical = [];
+      if (a.posture_and_spine) anatomical.push(`Pose: ${a.posture_and_spine}`);
+      if (a.limb_placement) anatomical.push(`Limbs: ${a.limb_placement}`);
+      if (a.hands_and_fingers) anatomical.push(`Hands: ${a.hands_and_fingers}`);
+      if (a.head_and_gaze) anatomical.push(`Head/Gaze: ${a.head_and_gaze}`);
+      if (a.facial_expression) anatomical.push(`Expression: ${a.facial_expression}`);
+      if (anatomical.length > 0) parts.push(`Anatomy: ${anatomical.join(', ')}`);
+    }
+
+    // 4. Atmosphere & Context
+    if (architect.atmosphere_and_context) {
+      if (architect.atmosphere_and_context.mood) parts.push(`Mood: ${architect.atmosphere_and_context.mood}`);
+      if (architect.atmosphere_and_context.lighting_source) parts.push(`Lighting: ${architect.atmosphere_and_context.lighting_source}`);
+      if (architect.atmosphere_and_context.shadow_play) parts.push(`Shadows: ${architect.atmosphere_and_context.shadow_play}`);
+    }
+
+    // 5. Environment
+    if (architect.environment_and_depth) {
+      if (architect.environment_and_depth.background_elements) parts.push(`Background: ${architect.environment_and_depth.background_elements}`);
+      if (architect.environment_and_depth.surface_interactions) parts.push(`Interactions: ${architect.environment_and_depth.surface_interactions}`);
+    }
+
+    // 6. Texture
+    if (architect.image_texture) {
+      if (architect.image_texture.camera_characteristics) parts.push(`Camera: ${architect.image_texture.camera_characteristics}`);
+      if (architect.image_texture.quality_defects) parts.push(`Texture: ${architect.image_texture.quality_defects}`);
+    }
   }
 
   return parts.join('\n\n');
