@@ -341,43 +341,27 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     ${VACUUM_COMPILER_DIRECTIVE}
     
     /// PRIMARY DIRECTIVE: REFERENCE IMAGE DECONFLICTION ///
-    You are generating a LoRA training dataset using Nano Banana Pro. Two reference images (Headshot + Body Shot) are provided for every generation to establish Identity.
+    You are generating a LoRA training dataset. Two reference images (Headshot + Body Shot) establish the Identity.
 
-    CRITICAL RULE: The Reference Images are the SOLE SOURCE OF TRUTH for facial geometry and identity. The Text Prompt is the SOLE SOURCE OF TRUTH for clothing, environment, and lighting.
+    CRITICAL SOURCE OF TRUTH:
+    - Reference Images = Identity (Face, Body Shape, Skin, Hair)
+    - Text Prompt = Context (Clothing, Pose, Expression, Environment, Lighting)
 
-    1. STRICT PROMPT SANITIZATION (The "Silence" Protocol)
-    When constructing ALL fields (especially final_prompt_string), you must NEVER describe the physical appearance of the subject.
+    1. THE "SILENCE" PROTOCOL (STRICT ENFORCEMENT)
+    The text prompt must be completely SILENT regarding the subject's physical appearance. 
+    
+    If you describe the face or body in text, it conflicts with the reference image training data.
+    
+    RULE: Do not generate ANY adjectives describing the subject's physical traits.
+    - NO: "slender", "curvy", "pale", "tan", "smooth", "athletic", "hourglass", "tall", "petite"
+    - NO: references to body parts ("long legs", "toned arms", "small waist")
+    - YES: Age ("20s young woman"), Expression ("laughing"), Clothing ("red silk dress"), Pose ("running")
 
-    FORBIDDEN WORDS/PHRASES (DO NOT USE ANYWHERE - COMPREHENSIVE LIST):
-    - Body type/shape: "slender", "athletic", "toned", "curvy", "petite", "tall", "short", "muscular", "lean", "physique", "figure", "build", "hourglass", "pear-shaped", "apple-shaped", "rectangular", "inverted triangle"
-    - Body parts: "waist", "hips", "bust", "chest", "arms", "legs", "thighs", "calves", "shoulders", "back", "torso", "abs", "stomach"
-    - Body descriptors: "slim", "thick", "voluptuous", "statuesque", "compact", "lithe", "willowy", "buxom"
-    - Skin: "smooth skin", "fair skin", "tan skin", "pale", "glowing", "flawless", "skin texture", "pores", "complexion", "radiant", "dewy", "matte"
-    - Facial features: "sharp features", "soft features", "round face", "angular", "delicate", "striking", "chiseled", "high cheekbones", "full lips", "button nose"
-    - Hair: Any description of hair color, style, length, or texture
-    - Demographics: Any ethnic, racial, or demographic descriptors
-    
-    CORRECT FORMAT FOR SUBJECT IDENTITY:
-    - Use: "<age> young woman" (e.g., "20s young woman", "30s young woman")
-    - DO NOT use the subject's name
-    - DO NOT describe physical attributes
-    
-    EXAMPLE GOOD final_prompt_string:
-    "Hyper-realistic headshot, left 1/4 view, 20s young woman, playfully glancing aside, wearing strapless latex bodysuit with silver hardware, dimly lit artistic studio, 8k, raw photo, sharp focus"
-    
-    EXAMPLE BAD final_prompt_string (NEVER DO THIS):
-    "20s Sofia Diaz, slender waist, hourglass figure, smooth skin, pores visible, wearing..."
-    
-    REQUIRED ACTION: In final_prompt_string and all other fields, describe ONLY:
-    - Age-based identity (e.g., "20s young woman")
-    - Expression (e.g., "playfully glancing aside")
-    - Clothing (detailed fabrics, colors, styles)
-    - Environment (location, lighting, background)
-    - Camera specs (shot type, angle, lens)
-    
-    REASONING: Physical descriptions conflict with reference images and cause identity drift.
+    2. IDENTITY FORMAT
+    - Use ONLY: "<age> young woman" (e.g., "25-year-old young woman")
+    - Do NOT use names. Do NOT use physical descriptors.
 
-    2. IDENTITY ANCHOR RULE
+    3. IDENTITY ANCHOR RULE (Required Fields)
     - face_anchor: "Use exact facial features from headshot reference image with no modifications"
     - body_anchor: "Use exact body proportions and form from bodyshot reference image"
     
