@@ -340,14 +340,27 @@ Generate prompts with everyday, casual scenarios and modest clothing:
   const context = `
     ${VACUUM_COMPILER_DIRECTIVE}
     
+    /// PRIMARY DIRECTIVE: REFERENCE IMAGE DECONFLICTION ///
+    You are generating a LoRA training dataset using Nano Banana Pro. Two reference images (Headshot + Body Shot) are provided for every generation to establish Identity.
+
+    CRITICAL RULE: The Reference Images are the SOLE SOURCE OF TRUTH for facial geometry and identity. The Text Prompt is the SOLE SOURCE OF TRUTH for clothing, environment, and lighting.
+
+    1. STRICT PROMPT SANITIZATION (The "Silence" Protocol)
+    When constructing the subject JSON block, you must NEVER describe the physical facial features or body type of the subject.
+
+    FORBIDDEN: Do NOT write descriptions for facial features, body type, skin texture, or demographics.
+    REQUIRED ACTION: In subject fields, use ONLY Name, Age, Expression, and Clothing.
+    REASONING: Detailed text descriptions conflict with the reference pixels and cause identity failure.
+
+    2. IDENTITY ANCHOR RULE
+    - face_anchor: "Use exact facial features from headshot reference image with no modifications"
+    - body_anchor: "Use exact body proportions and form from bodyshot reference image"
+    
     ${formEnhanceInstructions}
     
-    IDENTITY CONTEXT:
+    IDENTITY CONTEXT (NAME AND AGE ONLY):
     Name: ${params.identity.name || "Unknown Identifier"}
     Age: ${params.identity.age_estimate || "25"}
-    Profession: ${params.identity.profession || "Model"}
-    Backstory: ${params.identity.backstory || "None"}
-    Body Description: ${params.subjectDescription || "Standard model physique"}
     
     TASK: Generate ${params.count} distinct image prompts.
     START INDEX: ${params.startCount + 1}
@@ -375,10 +388,10 @@ Generate prompts with everyday, casual scenarios and modest clothing:
             reference_logic: {
               type: Type.OBJECT,
               properties: {
-                primary_ref: { type: Type.STRING },
-                secondary_ref: { type: Type.STRING }
+                face_anchor: { type: Type.STRING },
+                body_anchor: { type: Type.STRING }
               },
-              required: ["primary_ref", "secondary_ref"]
+              required: ["face_anchor", "body_anchor"]
             }
           },
           required: ["final_prompt_string", "shot_type", "angle", "reference_logic"]
@@ -386,18 +399,15 @@ Generate prompts with everyday, casual scenarios and modest clothing:
         subject: {
           type: Type.OBJECT,
           properties: {
-            description: { type: Type.STRING },
             age: { type: Type.STRING },
             expression: { type: Type.STRING },
-            body: { type: Type.STRING },
             imperfections: {
               type: Type.OBJECT,
               properties: {
-                body_texture: { type: Type.STRING },
                 clothing_wear: { type: Type.STRING },
                 general: { type: Type.STRING }
               },
-              required: ["body_texture", "clothing_wear", "general"]
+              required: ["clothing_wear", "general"]
             },
             clothing: {
               type: Type.OBJECT,
@@ -422,7 +432,7 @@ Generate prompts with everyday, casual scenarios and modest clothing:
               required: ["top", "bottom"]
             }
           },
-          required: ["description", "age", "expression", "imperfections", "clothing"]
+          required: ["age", "expression", "imperfections", "clothing"]
         },
         background: {
           type: Type.OBJECT,
