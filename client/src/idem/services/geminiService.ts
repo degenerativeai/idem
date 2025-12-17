@@ -153,6 +153,31 @@ export const analyzeSubjectImages = async (
     promptParts.push({ text: "Note: No body shot provided. Infer body structure from headshot hints (neck/shoulders) or assign a realistic body type fitting the estimated age/archetype." });
   }
 
+  // Inject Naming Protocol
+  promptParts.push({
+    text: `
+    /// SYSTEM OVERRIDE: IDENTITY & NAMING PROTOCOL ///
+    AUTOMATED SYSTEM INSTRUCTION: SPECIFICITY REQUIRED.
+    
+    1. NAMING PROTOCOL (STRICT):
+    - DEFAULT: Generate a UNIQUE name (e.g., "Elena", "Tanya", "Zoe"). Avoid "Maria", "Sofia".
+    - CELEBRITY OVERRIDE: IF the face matches a celebrity (>90% confidence), YOU MUST USE THEIR NAME in the final string.
+       * Example: "Natalie Portman", "Cameron Diaz", "Brad Pitt".
+       * CRITICAL: If a celebrity is detected, put their FULL NAME in the \`name\` field.
+
+    2. AGE ESTIMATION (VISUAL BIOMARKERS):
+    - GOAL: EXACT VISUAL AGE AS AN INTEGER (e.g., "24", "19", "42").
+    - FORBIDDEN: Do NOT use ranges like "20s", "30s". Do NOT use "Early/Mid/Late".
+    - METHOD: Analyze nasolabial folds, skin texture, and orbital area.
+    - CELEBRITY NOTE: Estimate age from the PHOTO, not the person's current age. 
+      (e.g. if the photo is of Cameron Diaz in The Mask, output "21", not her current age).
+
+    3. OUTPUT FORMAT
+    - name: The specific name (or Celebrity Name).
+    - age_estimate: A single integer string (e.g. "24"). NO "s" suffix.
+  `
+  });
+
   const schema: Schema = {
     type: Type.OBJECT,
     properties: {
@@ -340,45 +365,32 @@ Generate prompts with everyday, casual scenarios and modest clothing:
   const context = `
     ${VACUUM_COMPILER_DIRECTIVE}
     
-    /// PRIMARY DIRECTIVE: REFERENCE IMAGE DECONFLICTION ///
-    You are generating a LoRA training dataset. Two reference images (Headshot + Body Shot) establish the Identity.
-
-    CRITICAL SOURCE OF TRUTH:
-    - Reference Images = Identity (Face, Body Shape, Skin, Hair)
-    - Text Prompt = Context (Clothing, Pose, Expression, Environment, Lighting)
-
-    1. THE "SILENCE" PROTOCOL (STRICT ENFORCEMENT)
-    The text prompt must be completely SILENT regarding the subject's physical appearance. 
+    /// SYSTEM OVERRIDE: IDENTITY & NAMING PROTOCOL ///
+    AUTOMATED SYSTEM INSTRUCTION: SPECIFICITY REQUIRED.
     
-    If you describe the face or body in text, it conflicts with the reference image training data.
+    1. NAMING PROTOCOL (STRICT):
+    - YOU MUST USE THE PROVIDED IDENTITY NAME: "${params.identity.name}"
+    - YOU MUST USE THE PROVIDED AGE: "${params.identity.age_estimate}"
+    - DO NOT generate a new name or age. Use the source of truth provided in the Identity Context.
     
-    RULE: Do not generate ANY adjectives describing the subject's physical traits.
-    - NO: "slender", "curvy", "pale", "tan", "smooth", "athletic", "hourglass", "tall", "petite"
-    - NO: references to body parts ("long legs", "toned arms", "small waist")
-    - YES: Age ("20s young woman"), Expression ("laughing"), Clothing ("red silk dress"), Pose ("running")
-
     2. FINAL PROMPT STRING STRUCTURE (STRICT TEMPLATE)
     You must construct \`final_prompt_string\` using ONLY this template:
-    "<Shot Type>, <Angle>, <Age> young woman, <Expression>, <Pose>, wearing <Clothing Description>, <Environment Description>, <Lighting>, <Camera Specs>"
+    "<Shot Type>, <Angle>, <Age> <Identity String>, <Expression>, <Pose>, wearing <Clothing Description>, <Environment Description>, <Lighting>, <Camera Specs>"
     
-    - Do NOT add headers like "Body:", "Wardrobe:", "Realism:".
-    - Do NOT add "skin texture", "pores", or "physique".
+    <Identity String> Logic:
+    - CONSTRUCT USING: "${params.identity.age_estimate} year old ${params.identity.name}"
+    - Example: "24 year old Elena" or "30 year old Natalie Portman"
     
-    EXAMPLE GOOD:
-    "Hyper-realistic headshot, 20s young woman, looking left, soft smile, wearing silk robe with floral detail, bedroom setting, soft lighting, 8k, sharp focus"
-
-    EXAMPLE BAD (REJECT):
-    "Hyper-realistic headshot, 20s, Body: slender arms, Wardrobe: silk robe, Realism: skin texture..."
-
-    3. IDENTITY ANCHOR RULE (Required Fields)
-    - face_anchor: "Use exact facial features from headshot reference image with no modifications"
-    - body_anchor: "Use exact body proportions and form from bodyshot reference image"
+    CRITICAL: 
+    - DO NOT use the string "young woman" alone. ALWAYS attach the name.
+    - DO NOT include body/skin headers.
     
     ${formEnhanceInstructions}
     
-    IDENTITY CONTEXT (AGE ONLY):
-    Subject Age: ${params.identity.age_estimate || "25"}
-    (Use format: "<age> young woman" in all prompts)
+    IDENTITY CONTEXT:
+    Subject Name: ${params.identity.name}
+    Subject Age: ${params.identity.age_estimate}
+    (Use these EXACT values).
     
     
     TASK: Generate ${params.count} distinct image prompts.
