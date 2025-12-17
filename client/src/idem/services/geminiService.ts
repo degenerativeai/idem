@@ -125,7 +125,7 @@ const parseDataUrl = (dataUrl: string) => {
 export const analyzeSubjectImages = async (
   headshotBase64: string,
   bodyshotBase64?: string | null,
-  modelId: string = 'gemini-2.0-flash'
+  modelId: string = 'models/gemini-3-flash-preview'
 ): Promise<AnalysisResult> => {
   const ai = getAiClient();
   const headshot = parseDataUrl(headshotBase64);
@@ -272,7 +272,7 @@ export const generateDatasetPrompts = async (params: {
   modelId?: string;
 }): Promise<PromptItem[]> => {
   const ai = getAiClient();
-  const modelId = params.modelId || 'gemini-2.0-flash';
+  const modelId = params.modelId || 'models/gemini-3-flash-preview';
 
   // ... (rest of function setup) ...
 
@@ -353,12 +353,16 @@ Generate prompts with everyday, casual scenarios and modest clothing:
       shotType = "Full Body (Head to Toe)";
     }
 
-    // 2. Determine Expression (10% Varied/Unique check)
-    // Simple deterministic way: every 10th prompt (index ending in 9) gets varied?
-    // Or randomized? User said "90% Neutral/Smiling, 10% Varied".
-    // Let's use a modulus to be deterministic and evenly distributed.
-    if ((globalIndex + 1) % 10 === 0) {
-      expression = "Varied / Unique / Emotional";
+    // 2. Determine Expression (Targeting ~15% variety)
+    const VARIED_EMOTIONS = [
+      "Frustrated", "Sad", "Pensive", "Excited", "Bored",
+      "Annoyed", "Surprised", "Determined", "Melancholy", "Anxious"
+    ];
+
+    // Every 6th item gives ~16.6% distribution
+    if ((globalIndex + 1) % 6 === 0) {
+      const emotionIndex = Math.floor((globalIndex + 1) / 6) % VARIED_EMOTIONS.length;
+      expression = VARIED_EMOTIONS[emotionIndex];
     }
 
     batchPlan.push(`Item ${i + 1} (Global #${globalIndex + 1}): Shot=[${shotType}], Expression=[${expression}]`);
@@ -607,7 +611,7 @@ Generate prompts with everyday, casual scenarios and modest clothing:
 
 export const analyzeImageVisualArchitect = async (
   imageDataUrl: string,
-  modelId: string = 'gemini-2.5-pro'
+  modelId: string = 'models/gemini-3-flash-preview'
 ): Promise<VisualArchitectResultV2> => {
   const ai = getAiClient();
   const { mimeType, data } = parseDataUrl(imageDataUrl);
@@ -792,7 +796,7 @@ export const analyzeImageVisualArchitect = async (
 export const performIdentityGraft = async (
   sourceImageBase64: string,
   referenceImageBase64: string,
-  modelId: string = 'gemini-2.0-flash'
+  modelId: string = 'models/gemini-3-flash-preview'
 ): Promise<VisualArchitectResult> => {
   const ai = getAiClient();
   const source = parseDataUrl(sourceImageBase64);
@@ -1023,7 +1027,7 @@ export const convertVisualArchitectToPrompt = (architect: VisualArchitectResult 
 export const analyzePhysicalAppearance = async (
   headshotBase64?: string | null,
   bodyshotBase64?: string | null,
-  modelId: string = 'gemini-2.0-flash'
+  modelId: string = 'models/gemini-3-flash-preview'
 ): Promise<PhysicalAppearance | null> => {
   if (!headshotBase64 && !bodyshotBase64) return null;
 
@@ -1133,7 +1137,7 @@ export const generateUGCPrompts = async (params: {
   mode: 'social' | 'studio';
 }): Promise<UGCPromptCard[]> => {
   const ai = getAiClient();
-  const modelId = params.modelId || 'gemini-2.0-flash';
+  const modelId = params.modelId || 'models/gemini-3-flash-preview';
 
   const directive = params.mode === 'studio' ? RICH_MEDIA_DIRECTIVE_STUDIO : RICH_MEDIA_DIRECTIVE_CANDID;
   const authenticityTerms = params.mode === 'social' ? UGC_PHOTO_AUTHENTICITY_TERMS : '';

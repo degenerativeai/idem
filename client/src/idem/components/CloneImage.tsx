@@ -135,14 +135,14 @@ const CloneImage: React.FC<CloneImageProps> = ({ identityImages }) => {
             let result;
             if (mode === 'clone') {
                 console.log("Running Clone Analysis...");
-                result = await analyzeImageVisualArchitect(targetImage, 'gemini-2.5-pro');
+                result = await analyzeImageVisualArchitect(targetImage, 'models/gemini-3-flash-preview');
             } else {
                 console.log("Running Identity Graft...");
                 // Swap Mode
                 if (!referenceImage) {
                     throw new Error("Reference image required");
                 }
-                result = await performIdentityGraft(targetImage, referenceImage, 'gemini-2.5-pro');
+                result = await performIdentityGraft(targetImage, referenceImage, 'models/gemini-3-flash-preview');
             }
 
             console.log("Result received:", result ? "YES" : "NO");
