@@ -357,9 +357,18 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     - NO: references to body parts ("long legs", "toned arms", "small waist")
     - YES: Age ("20s young woman"), Expression ("laughing"), Clothing ("red silk dress"), Pose ("running")
 
-    2. IDENTITY FORMAT
-    - Use ONLY: "<age> young woman" (e.g., "25-year-old young woman")
-    - Do NOT use names. Do NOT use physical descriptors.
+    2. FINAL PROMPT STRING STRUCTURE (STRICT TEMPLATE)
+    You must construct \`final_prompt_string\` using ONLY this template:
+    "<Shot Type>, <Angle>, <Age> young woman, <Expression>, <Pose>, wearing <Clothing Description>, <Environment Description>, <Lighting>, <Camera Specs>"
+    
+    - Do NOT add headers like "Body:", "Wardrobe:", "Realism:".
+    - Do NOT add "skin texture", "pores", or "physique".
+    
+    EXAMPLE GOOD:
+    "Hyper-realistic headshot, 20s young woman, looking left, soft smile, wearing silk robe with floral detail, bedroom setting, soft lighting, 8k, sharp focus"
+
+    EXAMPLE BAD (REJECT):
+    "Hyper-realistic headshot, 20s, Body: slender arms, Wardrobe: silk robe, Realism: skin texture..."
 
     3. IDENTITY ANCHOR RULE (Required Fields)
     - face_anchor: "Use exact facial features from headshot reference image with no modifications"
