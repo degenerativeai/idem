@@ -348,14 +348,28 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     1. STRICT PROMPT SANITIZATION (The "Silence" Protocol)
     When constructing ALL fields (especially final_prompt_string), you must NEVER describe the physical appearance of the subject.
 
-    FORBIDDEN WORDS/PHRASES (DO NOT USE ANYWHERE):
-    - Body descriptors: "slender", "athletic", "toned", "curvy", "petite", "tall", "short", "muscular", "lean", "physique", "figure", "build"
-    - Skin descriptors: "smooth skin", "fair skin", "tan skin", "pale", "glowing", "flawless", "skin texture", "complexion"
-    - Facial descriptors: "sharp features", "soft features", "round face", "angular", "delicate", "striking"
-    - Body parts: "toned arms", "long legs", "slim waist", "defined abs"
+    FORBIDDEN WORDS/PHRASES (DO NOT USE ANYWHERE - COMPREHENSIVE LIST):
+    - Body type/shape: "slender", "athletic", "toned", "curvy", "petite", "tall", "short", "muscular", "lean", "physique", "figure", "build", "hourglass", "pear-shaped", "apple-shaped", "rectangular", "inverted triangle"
+    - Body parts: "waist", "hips", "bust", "chest", "arms", "legs", "thighs", "calves", "shoulders", "back", "torso", "abs", "stomach"
+    - Body descriptors: "slim", "thick", "voluptuous", "statuesque", "compact", "lithe", "willowy", "buxom"
+    - Skin: "smooth skin", "fair skin", "tan skin", "pale", "glowing", "flawless", "skin texture", "pores", "complexion", "radiant", "dewy", "matte"
+    - Facial features: "sharp features", "soft features", "round face", "angular", "delicate", "striking", "chiseled", "high cheekbones", "full lips", "button nose"
+    - Hair: Any description of hair color, style, length, or texture
+    - Demographics: Any ethnic, racial, or demographic descriptors
+    
+    CORRECT FORMAT FOR SUBJECT IDENTITY:
+    - Use: "<age> young woman" (e.g., "20s young woman", "30s young woman")
+    - DO NOT use the subject's name
+    - DO NOT describe physical attributes
+    
+    EXAMPLE GOOD final_prompt_string:
+    "Hyper-realistic headshot, left 1/4 view, 20s young woman, playfully glancing aside, wearing strapless latex bodysuit with silver hardware, dimly lit artistic studio, 8k, raw photo, sharp focus"
+    
+    EXAMPLE BAD final_prompt_string (NEVER DO THIS):
+    "20s Sofia Diaz, slender waist, hourglass figure, smooth skin, pores visible, wearing..."
     
     REQUIRED ACTION: In final_prompt_string and all other fields, describe ONLY:
-    - Name + Age (e.g., "Sofia Diaz, 23")
+    - Age-based identity (e.g., "20s young woman")
     - Expression (e.g., "playfully glancing aside")
     - Clothing (detailed fabrics, colors, styles)
     - Environment (location, lighting, background)
@@ -369,9 +383,10 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     
     ${formEnhanceInstructions}
     
-    IDENTITY CONTEXT (NAME AND AGE ONLY):
-    Name: ${params.identity.name || "Unknown Identifier"}
-    Age: ${params.identity.age_estimate || "25"}
+    IDENTITY CONTEXT (AGE ONLY):
+    Subject Age: ${params.identity.age_estimate || "25"}
+    (Use format: "<age> young woman" in all prompts)
+    
     
     TASK: Generate ${params.count} distinct image prompts.
     START INDEX: ${params.startCount + 1}
