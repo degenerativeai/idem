@@ -161,9 +161,9 @@ export const analyzeSubjectImages = async (
     
     1. NAMING PROTOCOL (STRICT):
     - DEFAULT: Generate a UNIQUE name (e.g., "Elena", "Tanya", "Zoe"). Avoid "Maria", "Sofia".
-    - CELEBRITY OVERRIDE: IF the face matches a celebrity (>90% confidence), YOU MUST USE THEIR NAME in the final string.
-       * Example: "Natalie Portman", "Cameron Diaz", "Brad Pitt".
-       * CRITICAL: If a celebrity is detected, put their FULL NAME in the \`name\` field.
+    - CELEBRITY CHECK:
+       * Recognize the face? If YES (>90% confidence), set \`is_celebrity\` to TRUE and \`name\` to Full Name.
+       * If NO (Generic Person), set \`is_celebrity\` to FALSE and \`name\` to a generated unique name.
 
     2. AGE ESTIMATION (VISUAL BIOMARKERS):
     - GOAL: EXACT VISUAL AGE AS AN INTEGER (e.g., "24", "19", "42").
@@ -174,6 +174,7 @@ export const analyzeSubjectImages = async (
 
     3. OUTPUT FORMAT
     - name: The specific name (or Celebrity Name).
+    - is_celebrity: Boolean (true/false).
     - age_estimate: A single integer string (e.g. "24"). NO "s" suffix.
   `
   });
@@ -185,13 +186,14 @@ export const analyzeSubjectImages = async (
         type: Type.OBJECT,
         properties: {
           name: { type: Type.STRING },
+          is_celebrity: { type: Type.BOOLEAN },
           age_estimate: { type: Type.STRING },
           archetype_anchor: { type: Type.STRING },
           facial_description: { type: Type.STRING },
           body_stack: { type: Type.STRING },
           realism_stack: { type: Type.STRING }
         },
-        required: ["name", "age_estimate", "archetype_anchor", "facial_description", "body_stack", "realism_stack"]
+        required: ["name", "is_celebrity", "age_estimate", "archetype_anchor", "facial_description", "body_stack", "realism_stack"]
       }
     }
   };
@@ -362,6 +364,10 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     batchPlan.push(`Item ${i + 1} (Global #${globalIndex + 1}): Shot=[${shotType}], Expression=[${expression}]`);
   }
 
+  const identityDescription = params.identity.is_celebrity
+    ? `${params.identity.age_estimate} year old ${params.identity.name}`
+    : `${params.identity.age_estimate} year old young woman`;
+
   const context = `
     ${VACUUM_COMPILER_DIRECTIVE}
     
@@ -375,34 +381,49 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     
     2. FINAL PROMPT STRING STRUCTURE (STRICT TEMPLATE)
     You must construct \`final_prompt_string\` using ONLY this template:
-    "<Shot Type>, <Angle>, <Age> <Identity String>, <Expression>, <Pose>, wearing <Clothing Description>, <Environment Description>, <Lighting>, <Camera Specs>"
+    "<Shot Type>, <Angle>, <Identity String>, <Expression>, <Pose>, wearing <Clothing Description>, <Environment Description>, <Lighting>, <Camera Specs>"
     
     <Identity String> Logic:
-    - CONSTRUCT USING: "${params.identity.age_estimate} year old ${params.identity.name}"
-    - Example: "24 year old Elena" or "30 year old Natalie Portman"
+    - YOU MUST USE EXACTLY THIS STRING: "${identityDescription}"
+    - Do NOT add the name again if it's already in the string.
+    - Do NOT change "young woman" to a name if it's set to "young woman".
     
-    CRITICAL: 
-    - DO NOT use the string "young woman" alone. ALWAYS attach the name.
-    - DO NOT include body/skin headers.
-    
-    ${formEnhanceInstructions}
-    
-    IDENTITY CONTEXT:
-    Subject Name: ${params.identity.name}
-    Subject Age: ${params.identity.age_estimate}
-    (Use these EXACT values).
-    
-    
-    TASK: Generate ${params.count} distinct image prompts.
-    START INDEX: ${params.startCount + 1}
-    TOTAL TARGET: ${params.totalTarget}
+    3. IDENTITY ANCHOR RULE (Required Fields)
+    - face_anchor: "Use exact facial features from headshot reference image with no modifications"
+    - body_anchor: "Use exact body proportions and form from bodyshot reference image"
 
-    === BATCH DISTRIBUTION PLAN (STRICTLY FOLLOW) ===
-    You must generate the prompts efficiently following this exact plan for this batch:
-    ${batchPlan.join("\n")}
+    === DIVERSITY & SAFETY PROTOCOL ===
     
-    PREVIOUSLY GENERATED (AVOID REPEATING THESE EXACT SCENARIOS):
-    ${params.previousSettings?.join("\n") || "None"}
+    1. CLOTHING DIVERSITY (STRICT MIX OF EVERYDAY & ALLURE):
+       You MUST vary the wardrobe significantly. Do NOT default to sweaters/t-shirts.
+       
+       [PROHIBITED WORDS - SAFETY TRIGGER]: "Sheer", "Lace", "See-through", "Transparent", "Lingerie", "Underwear".
+       [USE SAFE ALTERNATIVES]: "Chiffon overlay", "Intricate embroidery", "Laser-cut patterns", "Gossamer fabric", "Structured bodice", "Fitted silhouette", "Open-weave knit", "Satin finish", "Silk drape".
+       
+       [WARDROBE MENU - MIX THESE STYLES]:
+       - EVERYDAY: Denim jacket, oversized hoodie, cargo pants, leather leggings, trench coat, bomber jacket, flannel shirt, graphic tee, turtle neck, wide-leg trousers, pleated midi skirt, denim shorts, jumpsuit, romper, pinafore dress.
+       - ALLURE/EVENING: Slip dress (silk/satin), backless gown, off-shoulder blouse, corset-style top (structured), crop top with high-waist skirt, bodycon midi, halter neck top, strapless sundress, velvet blazer, wrap dress, sequin top, asymmetrical hem dress.
+       - TEXTURES: Leather, denim, silk, satin, velvet, corduroy, linen, wool, chiffon (layered), metallic, knitted, ribbed.
+       
+    2. LOCATION DIVERSITY (100+ VARIATIONS):
+       Never repeat a location type within a batch.
+       
+       [LOCATION MENU]:
+       - URBAN: Rooftop terrace, subway station, busy crosswalk, neon-lit alley, cafe patio, fire escape, bridge walkway, skate park, industrial loft, glass elevator, museum gallery, library stacks, record store, arcade, laundromat (aesthetic), diner booth.
+       - NATURE: Sand dunes, cliff edge, forest trail, sunflower field, snowy path, lakeside pier, waterfall base, botanical garden, desert highway, rocky cove, bamboo forest, autumn park, misty meadow, flower garden.
+       - USE CONTEXT: Luxury hotel lobby, modern kitchen, cozy reading nook, art studio, gym, pool deck (clothed), vintage car interior, balcony at sunset, spiral staircase, greenhouse.
+    
+    3. REPETITION CHECK (MEMORY):
+    - PREVIOUSLY USED: ${params.previousSettings?.join(", ") || "None"}
+    - RULE: If a clothing item (e.g., "White Sweater") appears in the list above, YOU ARE BANNED FROM USING IT.
+    - PENALTY: Generating a repeated item effectively fails the task. Verify against the list before finalizing.
+    
+    === BATCH DISTRIBUTION PLAN ===
+    You must generate ${params.count} prompts.
+    - Distribution: 40% Everyday Casual, 40% Allure/Chic, 20% Creative/Avant-Garde.
+    - Locations: Must be unique for EVERY image.
+    
+    ${batchPlan.join("\n")}
   `;
 
   const schema: Schema = {

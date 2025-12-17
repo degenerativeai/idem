@@ -148,9 +148,14 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         const file = e.target.files?.[0];
         if (!file) return;
         try {
+            console.log(`Uploading ${type} image...`);
             const base64 = await fileToBase64(file);
+            console.log(`${type} image converted to base64 length: ${base64.length}`);
             if (type === 'head') setLocalHeadshot(base64);
             else setLocalBodyshot(base64);
+
+            // Reset input so same file can be selected again
+            e.target.value = '';
         } catch (err) {
             console.error("Upload failed", err);
         }
@@ -299,7 +304,8 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     name: identity.identity_profile.name,
                     age_estimate: identity.identity_profile.age_estimate,
                     profession: identity.identity_profile.archetype_anchor,
-                    backstory: identity.identity_profile.realism_stack
+                    backstory: identity.identity_profile.realism_stack,
+                    is_celebrity: identity.identity_profile.is_celebrity
                 },
                 safetyMode: safetyMode,
                 count: batchSize,
@@ -337,7 +343,8 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                     name: identity.identity_profile.name,
                     age_estimate: identity.identity_profile.age_estimate,
                     profession: identity.identity_profile.archetype_anchor,
-                    backstory: identity.identity_profile.realism_stack
+                    backstory: identity.identity_profile.realism_stack,
+                    is_celebrity: identity.identity_profile.is_celebrity
                 },
                 safetyMode: safetyMode,
                 count: batchSize,
@@ -408,7 +415,8 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         name: identity.identity_profile.name,
                         age_estimate: identity.identity_profile.age_estimate,
                         profession: identity.identity_profile.archetype_anchor,
-                        backstory: identity.identity_profile.realism_stack
+                        backstory: identity.identity_profile.realism_stack,
+                        is_celebrity: identity.identity_profile.is_celebrity
                     },
                     safetyMode: safetyMode,
                     count: apiBatchSize,
@@ -567,6 +575,9 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
         backgroundPosition: 'right 0.75rem center',
         paddingRight: '2rem'
     };
+
+    const headInputRef = useRef<HTMLInputElement>(null);
+    const bodyInputRef = useRef<HTMLInputElement>(null);
 
     return (
         <div style={{
@@ -766,7 +777,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                         {/* Column 1: Headshot */}
                         <div>
                             <label style={labelStyle}>Headshot</label>
-                            <div style={{ aspectRatio: '3 / 4', borderRadius: '0.5rem', overflow: 'hidden', border: effectiveHeadshot ? '2px solid #a855f7' : '2px dashed #4b5563', background: 'rgba(0,0,0,0.2)', position: 'relative', cursor: 'pointer' }} onClick={() => document.getElementById('head-upload')?.click()}>
+                            <div style={{ aspectRatio: '3 / 4', borderRadius: '0.5rem', overflow: 'hidden', border: effectiveHeadshot ? '2px solid #a855f7' : '2px dashed #4b5563', background: 'rgba(0,0,0,0.2)', position: 'relative', cursor: 'pointer' }} onClick={() => headInputRef.current?.click()}>
                                 {effectiveHeadshot ? (
                                     <img src={effectiveHeadshot} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Headshot" />
                                 ) : (
@@ -774,14 +785,14 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                                         <span>Upload</span>
                                     </div>
                                 )}
-                                <input type="file" id="head-upload" hidden accept="image/*" onChange={(e) => handleImageUpload(e, 'head')} data-testid="input-headshot" />
+                                <input type="file" ref={headInputRef} hidden accept="image/*" onChange={(e) => handleImageUpload(e, 'head')} data-testid="input-headshot" />
                             </div>
                         </div>
 
                         {/* Column 2: Full Body */}
                         <div>
                             <label style={labelStyle}>Full Body</label>
-                            <div style={{ aspectRatio: '3 / 4', borderRadius: '0.5rem', overflow: 'hidden', border: effectiveBodyshot ? '2px solid #a855f7' : '2px dashed #4b5563', background: 'rgba(0,0,0,0.2)', position: 'relative', cursor: 'pointer' }} onClick={() => document.getElementById('body-upload')?.click()}>
+                            <div style={{ aspectRatio: '3 / 4', borderRadius: '0.5rem', overflow: 'hidden', border: effectiveBodyshot ? '2px solid #a855f7' : '2px dashed #4b5563', background: 'rgba(0,0,0,0.2)', position: 'relative', cursor: 'pointer' }} onClick={() => bodyInputRef.current?.click()}>
                                 {effectiveBodyshot ? (
                                     <img src={effectiveBodyshot} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Body" />
                                 ) : (
@@ -789,7 +800,7 @@ const DatasetGenerator: React.FC<DatasetGeneratorProps> = ({ inputIdentity, inpu
                                         <span>Upload</span>
                                     </div>
                                 )}
-                                <input type="file" id="body-upload" hidden accept="image/*" onChange={(e) => handleImageUpload(e, 'body')} data-testid="input-bodyshot" />
+                                <input type="file" ref={bodyInputRef} hidden accept="image/*" onChange={(e) => handleImageUpload(e, 'body')} data-testid="input-bodyshot" />
                             </div>
                         </div>
 

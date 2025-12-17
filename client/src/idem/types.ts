@@ -23,6 +23,7 @@ export interface IdentityContext {
     age_estimate: string;
     profession: string;
     backstory: string;
+    is_celebrity?: boolean;
 }
 
 export interface AnalysisResult {
@@ -33,6 +34,7 @@ export interface AnalysisResult {
         facial_description: string;
         body_stack: string;
         realism_stack: string;
+        is_celebrity: boolean;
     }
 }
 
