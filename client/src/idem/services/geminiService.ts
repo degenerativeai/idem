@@ -346,11 +346,22 @@ Generate prompts with everyday, casual scenarios and modest clothing:
     CRITICAL RULE: The Reference Images are the SOLE SOURCE OF TRUTH for facial geometry and identity. The Text Prompt is the SOLE SOURCE OF TRUTH for clothing, environment, and lighting.
 
     1. STRICT PROMPT SANITIZATION (The "Silence" Protocol)
-    When constructing the subject JSON block, you must NEVER describe the physical facial features or body type of the subject.
+    When constructing ALL fields (especially final_prompt_string), you must NEVER describe the physical appearance of the subject.
 
-    FORBIDDEN: Do NOT write descriptions for facial features, body type, skin texture, or demographics.
-    REQUIRED ACTION: In subject fields, use ONLY Name, Age, Expression, and Clothing.
-    REASONING: Detailed text descriptions conflict with the reference pixels and cause identity failure.
+    FORBIDDEN WORDS/PHRASES (DO NOT USE ANYWHERE):
+    - Body descriptors: "slender", "athletic", "toned", "curvy", "petite", "tall", "short", "muscular", "lean", "physique", "figure", "build"
+    - Skin descriptors: "smooth skin", "fair skin", "tan skin", "pale", "glowing", "flawless", "skin texture", "complexion"
+    - Facial descriptors: "sharp features", "soft features", "round face", "angular", "delicate", "striking"
+    - Body parts: "toned arms", "long legs", "slim waist", "defined abs"
+    
+    REQUIRED ACTION: In final_prompt_string and all other fields, describe ONLY:
+    - Name + Age (e.g., "Sofia Diaz, 23")
+    - Expression (e.g., "playfully glancing aside")
+    - Clothing (detailed fabrics, colors, styles)
+    - Environment (location, lighting, background)
+    - Camera specs (shot type, angle, lens)
+    
+    REASONING: Physical descriptions conflict with reference images and cause identity drift.
 
     2. IDENTITY ANCHOR RULE
     - face_anchor: "Use exact facial features from headshot reference image with no modifications"
