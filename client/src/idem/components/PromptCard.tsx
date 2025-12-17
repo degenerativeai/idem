@@ -47,7 +47,8 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, onUpdate, onTogg
     const photography = parsedContent?.photography;
 
     const handleCopy = () => {
-        const textToCopy = isLoRAMode ? finalString : (parsedContent ? JSON.stringify(parsedContent, null, 2) : promptText);
+        // Always copy full JSON to preserve all prompt details
+        const textToCopy = parsedContent ? JSON.stringify(parsedContent, null, 2) : promptText;
         navigator.clipboard.writeText(textToCopy);
         onToggleCopy(prompt.id);
     };
